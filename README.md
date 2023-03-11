@@ -1,6 +1,14 @@
 # NOMAD 2.0
 ## Introduction
-This repository is much more efficient implementation of [NOMAD](https://github.com/salzman-lab/nomad/) pipeline.
+NOMAD is an unsupervised and reference-free unifying framework to discover regulated sequence variation through statistical analysis of k-mer compulsion in both DNA and RNA sequence. 
+NOMAD leverages our observation that detecting sample-regulated sequence variation, such as alternative splicing, RNA editing, gene fusions, V(D)J, transposable element mobilization, allele-specific splicing, and genetic variation in a population, among and many other regulated events can unified–in theory and in practice.
+This is achieved with a simple model that analyzes k-mer composition of raw sequencing reads (Chaung et al. 2022). 
+NOMAD finds constant sequences (anchors) that are followed by a set of sequences (targets) with sample-specific target variation and provides valid p-values (Chaung et al. 2022). 
+NOMAD is reference-free, sidestepping the computational challenges associated with alignment and making it significantly faster and more efficient than alignment, and enabling discovery and statistical precision not currently available, even from pseudo-alignment.
+
+The first version of [NOMAD](https://github.com/salzman-lab/nomad/) pipeline proved its usefullness.
+It was implemented mainly in Python with a use of NextFlow.
+Here we provide its new version implemented in the C++ and Pyton programming languages.
 
 **TODO: ADD SOME MORE DESCRIBTION HERE, SOME BIOLOGICAL TEXT WOULD BE GREAT**
 
