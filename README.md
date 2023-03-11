@@ -23,6 +23,16 @@ The substrings can be adjacent in reads of can be separated by a *gap*.
 
 ![image](https://user-images.githubusercontent.com/9378882/224449978-309a4708-0fa1-4cb8-8483-a32e36ec2d58.png)
 ## Installation
+### Precompiled binaries
+The easiest way to get nomad is to use [precompiled release](https://github.com/refresh-bio/NOMAD/releases).
+To get the version 2.0.0 and run the example is is sufficient to do:
+```
+wget https://github.com/refresh-bio/NOMAD/releases/download/v2.0.0/nomad-2.0.0.linux.x64.tar.gz
+tar xvf nomad-2.0.0.linux.x64.tar.gz
+cd example
+./run-exmaple.sh
+```
+### Compile from sources
 NOMAD is implemented as a number of applications written in the C++ programming language and a Python wrapper to run the whole pipeline.
 Currently the software may be used only under Linux. 
 A compiler supporting C++17 is needed to compile the code.
@@ -33,7 +43,7 @@ cd nomad
 make -j32
 sudo make install
 ```
-## Running the example
+#### Running the example
 To verify the installation on small example one may perform:
 ```
 cd example
