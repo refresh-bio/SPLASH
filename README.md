@@ -15,7 +15,11 @@ This new version is much more efficient and allows to analyze datasets of 1TB si
 
 ## How does it work
 
+A key concept of NOMAD is the analysis of composition of pairs of substrings *anchor*&ndash;*target* across many samples.
+The substrings can be adjacent in reads of can be separated by a *gap*.
+
 **TODO: HOW DETAILED WE WANT TO BE HERE??**
+
 
 ![image](https://user-images.githubusercontent.com/9378882/224449978-309a4708-0fa1-4cb8-8483-a32e36ec2d58.png)
 ## Installation
