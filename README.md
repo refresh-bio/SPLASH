@@ -40,7 +40,7 @@ Use following snippet to install NOMAD.
 ```
 git clone https://github.com/refresh-bio/nomad
 cd nomad
-make -j32
+make -j
 sudo make install
 ```
 #### Running the example
