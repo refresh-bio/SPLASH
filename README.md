@@ -9,6 +9,7 @@ NOMAD is reference-free, sidestepping the computational challenges associated wi
 The first version of [NOMAD](https://github.com/salzman-lab/nomad/) pipeline proved its usefullness.
 It was implemented mainly in Python with a use of NextFlow.
 Here we provide its new version implemented in the C++ and Pyton programming languages.
+This new version is much more efficient and allows to analyze datasets of 1TB size in hours on a workstation or even laptop.
 
 **TODO: ADD SOME MORE DESCRIBTION HERE, SOME BIOLOGICAL TEXT WOULD BE GREAT**
 
