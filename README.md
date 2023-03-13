@@ -27,8 +27,7 @@ The substrings can be adjacent in reads of can be separated by a *gap*.
 The easiest way to get nomad is to use [precompiled release](https://github.com/refresh-bio/NOMAD/releases).
 To get the version 2.0.0 and run the example is is sufficient to do:
 ```
-wget https://github.com/refresh-bio/NOMAD/releases/download/v2.0.0/nomad-2.0.0.linux.x64.tar.gz
-tar xvf nomad-2.0.0.linux.x64.tar.gz
+curl -L https://github.com/refresh-bio/NOMAD/releases/download/v2.0.0/nomad-2.0.0.linux.x64.tar.gz | tar xz
 cd example
 ./run-exmaple.sh
 ```
