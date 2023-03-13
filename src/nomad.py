@@ -236,7 +236,7 @@ for executable_path in [satc, satc_dump, satc_merge, sig_anch]:
 if not os.path.exists(logs_dir):
     os.makedirs(logs_dir)
 
-with open(f"{logs_dir}/r-nomad-cmd.log", "w") as f:
+with open(f"{logs_dir}/nomad-cmd.log", "w") as f:
     f.writelines(" ".join(sys.argv))
 
 inputs = []
