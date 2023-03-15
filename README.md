@@ -16,7 +16,7 @@ This new version is much more efficient and allows to analyze datasets of 1TB si
 ## How does it work
 
 A key concept of NOMAD is the analysis of composition of pairs of substrings *anchor*&ndash;*target* across many samples.
-The substrings can be adjacent in reads of can be separated by a *gap*.
+The substrings can be adjacent in reads or can be separated by a *gap*.
 
 **TODO: HOW DETAILED WE WANT TO BE HERE??**
 
@@ -59,19 +59,19 @@ There are following columns in the resulting tsv files
 |                 Column            |     Meaning                            |     Notes                                                                              |
 | ----------------------------------| -------------------------------------- | -------------------------------------------------------------------------------------- |
 | anchor                            | anchor                                 |                                                                                        |
-| pval_rand_init_alt_max            | p-value form alternating maximization  | number of iterations and other parameters can be configured with switches              |
-| effect_size_bin                   | **TODO**                               |                                                                                        |
-| pval_asymp_base                   | **TODO**                               |                                                                                        |
-| pval_base                         | **TODO**                               |                                                                                        |
+| pval_rand_init_alt_max            | p-value from alternating maximization  | number of iterations and other parameters can be configured with switches. Optimization formulation and statistical exposition in [OASIS].              |
+| effect_size_bin                   | measure of anchor's effect size        | bounded between [0,1], indicates how well the data is divided between 2 groups of columns. 0 indicates no different between groups, 1 indicates two groups of columns with disjoint row supports [OASIS].                    |
+| pval_base                         | p-value based on random partitionings      | Compute base p-value (using num_rand_cf random c,f), Bonferroni correction to yield valid p-value. |
+| pval_asymp_base                   | asymptotically valid p-value based on random partitionings                  | compute base p-value (using random c,f), and evaluate approximate p-value given by asymptotic normality [OASIS]. |
 | M                                 | anchor count                           | number of anchor occurences in the input (= the sum of elements in contingency table)  |
-| anch_uniqTargs                    | number of unique targets for anchor    | (=number of rows in contingency table)                                                 |
+| anch_uniqTargs                    | number of unique targets for anchor    | (=number of rows in contingency table)                                                  |
 | number_nonzero_samples            | number of samples containing anchor    | (=number of columns in contingency table)                                              |
-| target_entropy                    | **TODO**                               |                                                                                        |
-| avg_hamming_distance_max_target   | **TODO**                               |                                                                                        |
-| avg_hamming_distance_all_pairs    | **TODO**                               |                                                                                        |
-| avg_edit_distance_max_target      | **TODO**                               |                                                                                        |
-| avg_edit_distance_all_pairs       | **TODO**                               |                                                                                        |
-| pval_rand_init_alt_max_corrected  | corrected pval_rand_init_alt_max       |   only `*.scores.tsv` file                                                             |
+| target_entropy                    | measure of diversity of target distribution         | entropy of empirical target distribution                                                                                        |
+| avg_hamming_distance_max_target   | average hamming distance to most abundant target | for each observed target (count), compute the hamming distance between it and the most abundant target (highest counts), average this over all targets. Useful in identifying / filtering SNPs (this measure will be low). |
+| avg_hamming_distance_all_pairs    | average hamming distance between all pairs of targets | For the M counts in the matrix, compute the hamming distance between all pairs of targets, output the average.                                                                                       |
+| avg_edit_distance_max_target      | average Levenshtein distance to most abundant target | Same as avg_hamming_distance_max_target, but Levenshtein distance as opposed to hamming distance. If an anchor has high avg_hamming_distance_max_target but low avg_edit_distance_max_target, this is indicative that the discrepancy between the top targets is due to an insertion or deletion. If the two quantities are similar, then this discrepancy is most likely due to a SNP.                                                                                        |
+| avg_edit_distance_all_pairs       | average Levenshtein distance between all pairs of targets | Same as avg_hamming_distance_all_pairs but with Levenshtein distance as opposed to hamming distance.                                                                                       |
+| pval_rand_init_alt_max_corrected  | Benjamini-Yekutieli corrected pval_rand_init_alt_max       |   only present in `*.scores.tsv` file                                                             |
 
 ## Input format
 In the example the `input.txt` file was used. This file defines the set of input samples for the algorithm.
