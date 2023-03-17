@@ -82,6 +82,18 @@ Its format is one sample per line. Each line should contain the name of a sample
 
 **Important note:** if relative path is specified it is relative to the current working directory, not the directory of `input.txt`.
 
+## Additional output 
+### SATC format
+NOMAD stores intermediate and optional output files in SATC format (**S**ample **A**nchor **T**arget **C**ount).
+### Sample representation
+The unique id is assigned to each sample. The ids are consecutive numbers starting with 0. The first sample from the input file gets id 0, the second one gets 1, and so on. By default NOMAD will store the mapping in `sample_name_to_id.mapping.txt` file, but this may be redefined with `--sample_name_to_id` parameter. This mapping file may be useful to access the data stored in SATC format.
+### Output sample, anchor, target, count
+#### Textual
+When `--dump_sample_anchor_target_count_txt` switch is used there will ba additional output directory (named `result_dump` by default, but the `results` part may be redefined with `--outname_prefix` switch). This directory will contain number of files (equal to the number of bins, default 128, may be redefined with `--n_bins` switch). The extension of these files is `.satc.dump`. Each line of these files is a tab-separated list of <sample_name> <anchor> <target> <count>. This is the easiest way to be able to reproduce contingency tables used during computation. Each file contains some number of anchors, but it is assured that a certain anchor is present in a single file. Since these text files could be large, it may be proficient to use binary (SATC) files instead.
+#### Binary
+When `--dump_sample_anchor_target_count_binary` switch is used there will be additional output directory (named `result_satc` by default, but the `results` part may be redefined with `--outname_prefix` switch). This directory will contain number of files (equal to the number of bins, default 128, may be redefined with `--n_bins` switch). The extension of these files is `.satc`. These are binary files in SATC format. Their content may be converted to textual representatnion with `satc_dump` program (part of NOMAD package). Each file contains some number of anchors, but it is assured that a certain anchor is present in a single file. Since these text files could be large, it may be proficient to use binary (SATC) files instead.
+### satc_dump
+ 
 ## Configuration
 There is a lot of parameters allowing to customize the pipeline. These parameters are splitted in a number of groups. 
 These parameters will be displayed when running nomad without parameters (or with `--help`).
@@ -126,5 +138,4 @@ Below the groups with parameters are listed.
  * `--dont_clean_up` - if set then intermediate files will not be removed (default: False)
  * `--logs_dir` - director where run logs of each thread will be stored (default: logs)
 
-## Sample representation
-The unique id is assigned to each sample. The ids are consecutive numbers starting with 0. The first sample from the input file gets id 0, the second one gets 1, and so on.
+
