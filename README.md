@@ -18,10 +18,12 @@ This new version is much more efficient and allows to analyze datasets of 1TB si
 A key concept of NOMAD is the analysis of composition of pairs of substrings *anchor*&ndash;*target* across many samples.
 The substrings can be adjacent in reads or can be separated by a *gap*.
 
-**TODO: HOW DETAILED WE WANT TO BE HERE??**
+The image below presents the NOMAD pipeline on a high-level.
 
+![image](https://user-images.githubusercontent.com/9378882/225988504-70266e4d-37e0-4c85-8c95-e47ad208cda9.png)
 
-![image](https://user-images.githubusercontent.com/9378882/224449978-309a4708-0fa1-4cb8-8483-a32e36ec2d58.png)
+<!-- ![image](https://user-images.githubusercontent.com/9378882/224449978-309a4708-0fa1-4cb8-8483-a32e36ec2d58.png) -->
+
 ## Installation
 ### Precompiled binaries
 The easiest way to get nomad is to use [precompiled release](https://github.com/refresh-bio/NOMAD/releases).
@@ -79,6 +81,30 @@ Its format is one sample per line. Each line should contain the name of a sample
 
 **Important note:** if relative path is specified it is relative to the current working directory, not the directory of `input.txt`.
 
+## Additional output
+### Most frequent targets per each anchor
+By default NOMAD will store 2 most frequent targets per each anchor in the resulting TSV files. This should be sufficient for splicing, but for RNA editing/missmatches 4 may be a better choice. It may be set with `--n_most_freq_targets` switch. If the number of targets for a given anchor is lower than specified value there will be a single `-` for each missing target.
+### SATC format
+NOMAD stores intermediate and optional output files in SATC format (**S**ample **A**nchor **T**arget **C**ount).
+### Sample representation
+The unique id is assigned to each sample. The ids are consecutive numbers starting with 0. The first sample from the input file gets id 0, the second one gets 1, and so on. By default NOMAD will store the mapping in `sample_name_to_id.mapping.txt` file, but this may be redefined with `--sample_name_to_id` parameter. This mapping file may be useful to access the data stored in SATC format.
+### Output sample, anchor, target, count
+#### Textual
+When `--dump_sample_anchor_target_count_txt` switch is used there will be an additional output directory (named `result_dump` by default, but the `results` part may be redefined with `--outname_prefix` switch). This directory will contain a number of files (equal to the number of bins, default 128, may be redefined with `--n_bins` switch). The extension of these files is `.satc.dump`. Each line of these files is a tab-separated list of <sample_name> <anchor> <target> <count>. This is the easiest way to be able to reproduce contingency tables used during computation. Each file contains some number of anchors, but it is assured that a specific anchor is present in a single file. Since these text files could be large, it may be proficient to use binary (SATC) files instead.
+#### Binary
+When `--dump_sample_anchor_target_count_binary` switch is used there will be an additional output directory (named `result_satc` by default, but the `results` part may be redefined with `--outname_prefix` switch). This directory will contain a number of files (equal to the number of bins, default 128, may be redefined with `--n_bins` switch). The extension of these files is `.satc`. These are binary files in SATC format. Their content may be converted to textual representation with `satc_dump` program (part of the NOMAD package). Each file contains some number of anchors, but it is assured that a specific anchor is present in a single file. Since these text files could be large, it may be proficient to use binary (SATC) files instead, especially if one wants to investigate only some of all anchors.
+### satc_dump
+To convert SATC files into textual representation one may use `satc_dump` program. The simples usage is
+```
+ satc_dump input.satc output.satc.dump
+```
+There are also additional parameters that may be useful, namely:
+ * `--anchor_list` - path to text file containing anchors separated by whitespaces, only anchors from this file will be dumped
+ * `--sample_names` - path for decode sample id, each line should contain <sample_name> <sample_id>
+ * `--n_bins <int>` - if set to value different than 0 the input is interpreted as a list of bins (each bin in separate line, first list is bin_0, second line is bin_1, etc. (in case of ill-formed input results will be incorrect)
+ * `--separately` - if set with n_bins != 0 output param will be treated as suffix name and there will be output for each bin
+ 
+ If `--sample_names` is not used in the output there will be sample ids instead of its names. NOMAD by default write mapping to `sample_name_to_id.mapping.txt` file (may be redefined with `--sample_name_to_id` switch of NOMAD.
 ## Configuration
 There is a lot of parameters allowing to customize the pipeline. These parameters are splitted in a number of groups. 
 These parameters will be displayed when running nomad without parameters (or with `--help`).
@@ -123,5 +149,4 @@ Below the groups with parameters are listed.
  * `--dont_clean_up` - if set then intermediate files will not be removed (default: False)
  * `--logs_dir` - director where run logs of each thread will be stored (default: logs)
 
-## Sample representation
-The unique id is assigned to each sample. The ids are consecutive numbers starting with 0. The first sample from the input file gets id 0, the second one gets 1, and so on.
+
