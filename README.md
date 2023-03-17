@@ -20,8 +20,11 @@ The substrings can be adjacent in reads or can be separated by a *gap*.
 
 **TODO: HOW DETAILED WE WANT TO BE HERE??**
 
+![image](https://user-images.githubusercontent.com/9378882/225988504-70266e4d-37e0-4c85-8c95-e47ad208cda9.png)
 
-![image](https://user-images.githubusercontent.com/9378882/224449978-309a4708-0fa1-4cb8-8483-a32e36ec2d58.png)
+<!-- ![image](https://user-images.githubusercontent.com/9378882/224449978-309a4708-0fa1-4cb8-8483-a32e36ec2d58.png) -->
+
+
 ## Installation
 ### Precompiled binaries
 The easiest way to get nomad is to use [precompiled release](https://github.com/refresh-bio/NOMAD/releases).
