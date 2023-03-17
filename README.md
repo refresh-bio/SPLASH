@@ -18,12 +18,11 @@ This new version is much more efficient and allows to analyze datasets of 1TB si
 A key concept of NOMAD is the analysis of composition of pairs of substrings *anchor*&ndash;*target* across many samples.
 The substrings can be adjacent in reads or can be separated by a *gap*.
 
-**TODO: HOW DETAILED WE WANT TO BE HERE??**
+The image below presents the NOMAD pipeline on a high-level.
 
 ![image](https://user-images.githubusercontent.com/9378882/225988504-70266e4d-37e0-4c85-8c95-e47ad208cda9.png)
 
 <!-- ![image](https://user-images.githubusercontent.com/9378882/224449978-309a4708-0fa1-4cb8-8483-a32e36ec2d58.png) -->
-
 
 ## Installation
 ### Precompiled binaries
@@ -82,7 +81,9 @@ Its format is one sample per line. Each line should contain the name of a sample
 
 **Important note:** if relative path is specified it is relative to the current working directory, not the directory of `input.txt`.
 
-## Additional output 
+## Additional output
+### Most frequent targets per each anchor
+By default NOMAD will store 2 most frequent targets per each anchor in the resulting TSV files. This should be sufficient for splicing, but for RNA editing/missmatches 4 may be a better choice. It may be set with `--n_most_freq_targets` switch. If the number of targets for a given anchor is lower than specified value there will be a single `-` for each missing target.
 ### SATC format
 NOMAD stores intermediate and optional output files in SATC format (**S**ample **A**nchor **T**arget **C**ount).
 ### Sample representation
