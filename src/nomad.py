@@ -174,6 +174,12 @@ def get_prog_or_fail(prog):
     if os.path.exists(p):
         return p
 
+    #maybe it is in the same dir where cur script
+    script_path = os.path.dirname(__file__)
+    p = os.path.join(script_path, prog)
+    if os.path.exists(p):
+        return p
+
     #maybe it is installed
     if shutil.which(prog) is not None:
         return prog
