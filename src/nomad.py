@@ -387,7 +387,12 @@ def stage_2_task(bin_id, out, err):
             f.write(f"{x}\n")
     
     _with_effect_size_cts_param = "--with_effect_size_cts" if with_effect_size_cts else ""
-    _cjs_out_param = f"--cjs_out {outname_prefix}.bin{bin_id}.cjs" if dump_Cjs else ""
+
+    Cjs_dir = f"{outname_prefix}_Cjs"
+        if dump_Cjs and not os.path.exists(Cjs_dir):
+            os.makedirs(Cjs_dir)
+
+    _cjs_out_param = f"--cjs_out Cjs_dir/bin{bin_id}.cjs" if dump_Cjs else ""
 
     cmd=f"{satc_merge} \
     {_with_effect_size_cts_param} \
