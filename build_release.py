@@ -33,12 +33,14 @@ run_cmd("cp example/download.py bin/example/download.py")
 
 run_cmd("cp example/input.txt bin/example")
 
+
 with open("bin/example/run-example.sh", "w") as f:
     f.write("#!/bin/bash\n")
     f.write("./download.py\n")
     f.write("../nomad --bin_path .. input.txt\n")
 
 os.chmod("bin/example/run-example.sh", os.stat("bin/example/run-example.sh").st_mode | stat.S_IEXEC)
+
 
 ver = get_ver("bin/nomad")
 
