@@ -52,8 +52,8 @@ void my_sample(size_t start, size_t end, OutIter dest, size_t N, RNG&& eng) {
 }
 
 template<typename RNG>
-//refresh::matrix_sparse<uint32_t, double, refresh::matrix_col_major> get_train_mtx_2(const refresh::matrix_sparse<uint32_t, double, refresh::matrix_col_major>& X, double train_fraction, RNG&& eng) 
-refresh::matrix_sparse_compact<uint32_t, double, refresh::matrix_col_major> get_train_mtx_2(const refresh::matrix_sparse_compact<uint32_t, double, refresh::matrix_col_major>& X, double train_fraction, RNG&& eng) 
+//refresh::matrix_sparse<uint32_t, double, refresh::matrix_col_major> get_train_mtx_2(const refresh::matrix_sparse<uint32_t, double, refresh::matrix_col_major>& X, double opt_train_fraction, RNG&& eng)
+refresh::matrix_sparse_compact<uint32_t, double, refresh::matrix_col_major> get_train_mtx_2(const refresh::matrix_sparse_compact<uint32_t, double, refresh::matrix_col_major>& X, double opt_train_fraction, RNG&& eng)
 {
 	//refresh::matrix_sparse<uint32_t, double, refresh::matrix_col_major> res(X.rows(), X.cols());
 	refresh::matrix_sparse_compact<uint32_t, double, refresh::matrix_col_major> res(X.rows(), X.cols());
@@ -71,7 +71,7 @@ refresh::matrix_sparse_compact<uint32_t, double, refresh::matrix_col_major> get_
 		for (; p_col_end != X.end() && p_col_end->first.col == col_id; ++p_col_end)
 			tot_cs += p_col_end->second;
 
-		size_t to_select = tot_cs * train_fraction;
+		size_t to_select = tot_cs * opt_train_fraction;
 		indices.resize(to_select + 1);								// + 1 for a guard
 		my_sample(0, tot_cs, indices.begin(), to_select, eng);
 		indices.back() = std::numeric_limits<size_t>::max();		// guard

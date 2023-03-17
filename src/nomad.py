@@ -36,7 +36,7 @@ group_base_configuration.add_argument("--anchor_len", default=27, type=int, help
 group_base_configuration.add_argument("--gap_len", default="0", type=str, help="gap length, if 'auto' it will be inferred from the data, in the opposite case it must be an int")
 group_base_configuration.add_argument("--target_len", default=27, type=int, help="target length")
 group_base_configuration.add_argument("--anchor_list", default="", type=str, help="list of accepted anchors, this is path to plain text file with one anchor per line without any header")
-group_base_configuration.add_argument("--pvals_correction_col_name", default="pval_rand_init_alt_max", type=str, help="for which column correction should be applied")
+group_base_configuration.add_argument("--pvals_correction_col_name", default="pval_opt", type=str, help="for which column correction should be applied")
 
 group_filters_and_thresholds = parser.add_argument_group('Filters and thresholds')
 group_filters_and_thresholds.add_argument("--poly_ACGT_len", default=8, type=int, help="filter out all anchors containing poly(ACGT) of length at least <poly_ACGT_len> (0 means no filtering)")
@@ -49,7 +49,7 @@ group_filters_and_thresholds.add_argument("--fdr_threshold", default=0.05, type=
 
 group_additional_out = parser.add_argument_group('Additional output configuration')
 group_additional_out.add_argument("--dump_Cjs", default=False, action='store_true', help="output Cjs")
-group_additional_out.add_argument("--max_pval_rand_init_alt_max_for_Cjs", default=0.10, type=float, help="dump only Cjs for anchors that have pval_rand_init_alt_max <= max_pval_rand_init_alt_max_for_Cjs")
+group_additional_out.add_argument("--max_pval_opt_for_Cjs", default=0.10, type=float, help="dump only Cjs for anchors that have pval_opt <= max_pval_opt_for_Cjs")
 group_additional_out.add_argument("--n_most_freq_targets", default=2, type=int, help="number of most frequent tragets printed per each anchor in stats mode")
 group_additional_out.add_argument("--with_effect_size_cts", default=False, action='store_true', help="if set effect_size_cts will be computed")
 group_additional_out.add_argument("--sample_name_to_id", default="sample_name_to_id.mapping.txt", type=str, help="file name with mapping sample name <-> sammpe id")
@@ -57,10 +57,10 @@ group_additional_out.add_argument("--dump_sample_anchor_target_count_txt", defau
 group_additional_out.add_argument("--dump_sample_anchor_target_count_binary", default=False, action='store_true', help="if set contignency tables will be generated in binary (satc) format, to convert to text format later satc_dump program may be used, it may take optionally maping from id to sample_name (--sample_names param)")
 
 group_tuning_stats = parser.add_argument_group('Tuning statistics computation')
-group_tuning_stats.add_argument("--generate_alt_max_cf_no_tires", default=10, type=int, help="the number of altMaximize runs")
-group_tuning_stats.add_argument("--altMaximize_iters", default=50, type=int, help="the number of iteration in altMaximize")
+group_tuning_stats.add_argument("--opt_num_inits", default=10, type=int, help="the number of altMaximize runs")
+group_tuning_stats.add_argument("--opt_num_iters", default=50, type=int, help="the number of iteration in altMaximize")
 group_tuning_stats.add_argument("--num_rand_cf", default=50, type=int, help="the number of rand cf")
-group_tuning_stats.add_argument("--train_fraction", default=0.25, type=float, help="in calc_stats mode use this fraction to create train X from contingency table")
+group_tuning_stats.add_argument("--opt_train_fraction", default=0.25, type=float, help="in calc_stats mode use this fraction to create train X from contingency table")
 
 group_technical = parser.add_argument_group('Technical and performance-related')
 group_technical.add_argument("--bin_path", default="./", type=str, help="path to a directory where satc, satc_dump, satc_merge, sig_anch, kmc, kmc_tools binaries are (if any not found there nomad will check if installed and use installed)")
@@ -96,10 +96,10 @@ anchor_samples_threshold = args.anchor_samples_threshold
 anchor_sample_counts_threshold = args.anchor_sample_counts_threshold
 n_most_freq_targets = args.n_most_freq_targets
 n_most_freq_targets_for_stats=args.n_most_freq_targets_for_stats
-generate_alt_max_cf_no_tires=args.generate_alt_max_cf_no_tires
-altMaximize_iters=args.altMaximize_iters
+opt_num_inits=args.opt_num_inits
+opt_num_iters=args.opt_num_iters
 num_rand_cf=args.num_rand_cf
-train_fraction=args.train_fraction
+opt_train_fraction=args.opt_train_fraction
 kmc_use_RAM_only_mode = args.kmc_use_RAM_only_mode
 kmc_max_mem_GB = args.kmc_max_mem_GB
 with_effect_size_cts = args.with_effect_size_cts
@@ -110,7 +110,7 @@ pvals_correction_col_name = args.pvals_correction_col_name
 fdr_threshold = args.fdr_threshold
 outname_prefix=args.outname_prefix
 dump_Cjs=args.dump_Cjs
-max_pval_rand_init_alt_max_for_Cjs=args.max_pval_rand_init_alt_max_for_Cjs
+max_pval_opt_for_Cjs=args.max_pval_opt_for_Cjs
 clean_up=not args.dont_clean_up
 logs_dir=args.logs_dir
 input_file=args.input_file
@@ -165,8 +165,8 @@ else:
         sys.exit(1)
     gap_len = int(gap_len)
 
-if train_fraction <= 0.0 or train_fraction >= 1.0:
-    print("Error: train_fraction must be in range (0.0;1.0)", flush=True)
+if opt_train_fraction <= 0.0 or opt_train_fraction >= 1.0:
+    print("Error: opt_train_fraction must be in range (0.0;1.0)", flush=True)
     sys.exit(1)
 
 def get_prog_or_fail(prog):
@@ -392,16 +392,16 @@ def stage_2_task(bin_id, out, err):
     cmd=f"{satc_merge} \
     {_with_effect_size_cts_param} \
     {_cjs_out_param} \
-    --max_pval_rand_init_alt_max_for_Cjs {max_pval_rand_init_alt_max_for_Cjs} \
+    --max_pval_opt_for_Cjs {max_pval_opt_for_Cjs} \
     --anchor_count_threshold {anchor_count_threshold} \
     --anchor_samples_threshold {anchor_samples_threshold} \
     --anchor_unique_targets_threshold {anchor_unique_targets_threshold} \
     --n_most_freq_targets {n_most_freq_targets} \
     --n_most_freq_targets_for_stats {n_most_freq_targets_for_stats} \
-    --generate_alt_max_cf_no_tires {generate_alt_max_cf_no_tires} \
-    --altMaximize_iters {altMaximize_iters} \
+    --opt_num_inits {opt_num_inits} \
+    --opt_num_iters {opt_num_iters} \
     --num_rand_cf {num_rand_cf} \
-    --train_fraction {train_fraction} \
+    --opt_train_fraction {opt_train_fraction} \
     --run_mode calc_stats \
     --sample_names {sample_name_to_id} \
     {anchor_list_param} \

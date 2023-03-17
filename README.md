@@ -59,7 +59,7 @@ There are following columns in the resulting tsv files
 |                 Column            |     Meaning                            |     Notes                                                                              |
 | ----------------------------------| -------------------------------------- | -------------------------------------------------------------------------------------- |
 | anchor                            | anchor                                 |                                                                                        |
-| pval_rand_init_alt_max            | p-value from alternating maximization  | number of iterations and other parameters can be configured with switches. Optimization formulation and statistical exposition in [OASIS].              |
+| pval_opt                          | p-value from alternating maximization  | number of iterations and other parameters can be configured with switches. Optimization formulation and statistical exposition in [OASIS].              |
 | effect_size_bin                   | measure of anchor's effect size        | bounded between [0,1], indicates how well the data is divided between 2 groups of columns. 0 indicates no different between groups, 1 indicates two groups of columns with disjoint row supports [OASIS].                    |
 | pval_base                         | p-value based on random partitionings      | Compute base p-value (using num_rand_cf random c,f), Bonferroni correction to yield valid p-value. |
 | pval_asymp_base                   | asymptotically valid p-value based on random partitionings                  | compute base p-value (using random c,f), and evaluate approximate p-value given by asymptotic normality [OASIS]. |
@@ -71,7 +71,7 @@ There are following columns in the resulting tsv files
 | avg_hamming_distance_all_pairs    | average hamming distance between all pairs of targets | For the M counts in the matrix, compute the hamming distance between all pairs of targets, output the average.                                                                                       |
 | avg_edit_distance_max_target      | average Levenshtein distance to most abundant target | Same as avg_hamming_distance_max_target, but Levenshtein distance as opposed to hamming distance. If an anchor has high avg_hamming_distance_max_target but low avg_edit_distance_max_target, this is indicative that the discrepancy between the top targets is due to an insertion or deletion. If the two quantities are similar, then this discrepancy is most likely due to a SNP.                                                                                        |
 | avg_edit_distance_all_pairs       | average Levenshtein distance between all pairs of targets | Same as avg_hamming_distance_all_pairs but with Levenshtein distance as opposed to hamming distance.                                                                                       |
-| pval_rand_init_alt_max_corrected  | Benjamini-Yekutieli corrected pval_rand_init_alt_max       |   only present in `*.scores.tsv` file                                                             |
+| pval_opt_corrected  | Benjamini-Yekutieli corrected pval_opt       |   only present in `*.scores.tsv` file                                                             |
 
 ## Input format
 In the example the `input.txt` file was used. This file defines the set of input samples for the algorithm.
@@ -89,7 +89,7 @@ Below the groups with parameters are listed.
  * `--gap_len` - gap length, if 'auto' it will be inferred from the data, in the opposite case it must be an int (default: 0)
  * `--target_len` - target length (default: 27)
  * `--anchor_list` - list of accepted anchors, this is path to plain text file with one anchor per line without any header (default accept all achnors)
- * `--pvals_correction_col_name` - for which column correction should be applied (default: pval_rand_init_alt_max)
+ * `--pvals_correction_col_name` - for which column correction should be applied (default: pval_opt)
 ### Filters and thresholds:
  * `--poly_ACGT_len` - filter out all anchors containing poly(ACGT) of length at least <poly_ACGT_len> (0 means no filtering) (default: 8)
  * `--anchor_unique_targets_threshold` - filter out all anchors for which the number of unique targets is <= anchor_unique_targets_threshold (default: 1)
@@ -100,14 +100,17 @@ Below the groups with parameters are listed.
  * `--fdr_threshold` - keep anchors having corrected p-val below this value (default: 0.05)
 ### Additional output configuration:
  * `--dump_Cjs` - output Cjs (default: False)
- * `--max_pval_rand_init_alt_max_for_Cjs` - dump only Cjs for anchors that have pval_rand_init_alt_max <= max_pval_rand_init_alt_max_for_Cjs (default: 0.1)
- * `--n_most_freq_targets` - number of most frequent tragets printed per each anchor in stats mode (default: 0)
+ * `--max_pval_opt_for_Cjs` - dump only Cjs for anchors that have pval_opt <= max_pval_opt_for_Cjs (default: 0.1)
+ * `--n_most_freq_targets` - number of most frequent tragets printed per each anchor in stats mode (default: 2)
  * `--with_effect_size_cts` - if set effect_size_cts will be computed (default: False)
+ * `--sample_name_to_id` - file name with mapping sample name <-> sammpe id (default: sample_name_to_id.mapping.txt)
+ * `--dump_sample_anchor_target_count_txt` - if set contignency tables will be generated in text format (default: False)
+ * `--dump_sample_anchor_target_count_binary` - if set contignency tables will be generated in binary (SATC) format, to convert to text format later `satc_dump` program may be used, it may take optionally mapping from id to sample_name (--sample_names param) (default: False)
 ### Tuning statistics computation:
- * `--generate_alt_max_cf_no_tires` - the number of altMaximize runs (default: 10)
- * `--altMaximize_iters` - the number of iteration in altMaximize (default: 50)
+ * `--opt_num_inits` - the number of altMaximize runs (default: 10)
+ * `--opt_num_iters` - the number of iteration in altMaximize (default: 50)
  * `--num_rand_cf` - the number of rand cf (default: 50)
- * `--train_fraction` - in calc_stats mode use this fraction to create train X from contingency table (default: 0.25)
+ * `--opt_train_fraction` - in calc_stats mode use this fraction to create train X from contingency table (default: 0.25)
 ### Technical and performance-related:
  * `--bin_path` - path to a directory where satc, satc_dump, satc_merge, sig_anch, kmc, kmc_tools binaries are (if any not found there nomad will check if installed and use installed) (default: ./)
  * `--tmp_dir` - path to a directory where temporary files will be stored (default: let nomad decide)

@@ -74,13 +74,13 @@ struct Params
 
 	uint32_t n_most_freq_targets_for_stats{}; // if 0 - keep all, else keep only <n_most_freq_targets_for_stats>
 
-	double train_fraction = 0.25;
+	double opt_train_fraction = 0.25;
 
 	bool is_10X = false; //true for 10X data
 
-	int generate_alt_max_cf_no_tires = 10;
+	int opt_num_inits = 10;
 
-	int altMaximize_iters = 50;
+	int opt_num_iters = 50;
 
 	size_t num_rand_cf = 50;
 
@@ -96,7 +96,7 @@ struct Params
 
 	std::string cjs_out;
 
-	double max_pval_rand_init_alt_max_for_Cjs = 0.1;
+	double max_pval_opt_for_Cjs = 0.1;
 
 	std::string sample_names;
 
@@ -120,13 +120,13 @@ struct Params
 		oss << "\toutpath                            : " << outpath << "\n";
 		oss << "\tanchor_list                        : " << anchor_list << "\n";
 		oss << "\tcjs_out                            : " << cjs_out << "\n";
-		oss << "\tmax_pval_rand_init_alt_max_for_Cjs : " << max_pval_rand_init_alt_max_for_Cjs << "\n";
+		oss << "\tmax_pval_opt_for_Cjs               : " << max_pval_opt_for_Cjs << "\n";
 		oss << "\tsample_names	                     : " << sample_names << "\n";
 		oss << "\tn_most_freq_targets                : " << n_most_freq_targets << "\n";
 		oss << "\tn_most_freq_targets_for_stats      : " << n_most_freq_targets_for_stats << "\n";
-		oss << "\ttrain_fraction                     : " << train_fraction << "\n";
-		oss << "\tgenerate_alt_max_cf_no_tires       : " << generate_alt_max_cf_no_tires << "\n";
-		oss << "\taltMaximize_iters                  : " << altMaximize_iters << "\n";
+		oss << "\topt_train_fraction                 : " << opt_train_fraction << "\n";
+		oss << "\topt_num_inits                      : " << opt_num_inits << "\n";
+		oss << "\topt_num_iters                      : " << opt_num_iters << "\n";
 		oss << "\tnum_rand_cf                        : " << num_rand_cf << "\n";
 		oss << "\tcell_type_samplesheet              : " << cell_type_samplesheet << "\n";
 		oss << "\tCjs_samplesheet                    : " << Cjs_samplesheet << "\n";
@@ -154,14 +154,14 @@ struct Params
 			<< "    --anchor_unique_targets_threshold <int>       - filter out all anchors for which the number of unique targets is <= anchor_unique_targets_threshold\n"
 			<< "    --n_most_freq_targets <int>                   - in calc_stats mode output also n_most_freq_targets most frequent targets and their counts (default: 0)\n"
 			<< "    --n_most_freq_targets_for_stats <int>         - in calc_stats mode use at most n_most_freq_targets_for_stats for each contignency table, 0 means use all (default: 0)\n"
-			<< "    --train_fraction <double> (0.0;1.0)           - in calc_stats mode use this fraction to create train X from contingency table\n"
-			<< "    --generate_alt_max_cf_no_tires <int>          - in calc_stats mode the number of altMaximize runs (default: 10)\n"
-			<< "    --altMaximize_iters <int>                     - in calc_stats mode the number of iteration in altMaximize (default: 50)\n"
+			<< "    --opt_train_fraction <double> (0.0;1.0)       - in calc_stats mode use this fraction to create train X from contingency table\n"
+			<< "    --opt_num_inits <int>                         - in calc_stats mode the number of altMaximize runs (default: 10)\n"
+			<< "    --opt_num_iters <int>                         - in calc_stats mode the number of iteration in altMaximize (default: 50)\n"
 			<< "    --num_rand_cf <int>                           - in calc_stats mode the number of rand cf (default: 50)\n"
 			<< "    --anchor_samples_threshold <int>              - filter out all anchors for which the number of unique samples is <= anchor_samples_threshold\n"
 			<< "    --anchor_list <string>                        - path to text file containing anchors separated by whitespaces, only anchors from this file will be processed\n"
 			<< "    --cjs_out <string>                            - path to output text file where Cjs will be stored\n"
-			<< "    --max_pval_rand_init_alt_max_for_Cjs <double> - dump only Cjs for anchors that have pval_rand_init_alt_max <= max_pval_rand_init_alt_max_for_Cjs\n"
+			<< "    --max_pval_opt_for_Cjs <double>               - dump only Cjs for anchors that have pval_opt <= max_pval_opt_for_Cjs\n"
 			<< "    --run_mode <string>                           - what to do with merged anchors, available options: calc_stats, just_merge, just_merge_and_dump (default: calc_stats)\n"
 			<< "    --without_alt_max                             - disable alt max computation\n"
 			<< "    --with_effect_size_cts                        - compute effect_size_cts\n"
@@ -225,22 +225,22 @@ Params read_params(int argc, char** argv)
 			std::string tmp = argv[++i];
 			res.n_most_freq_targets_for_stats = std::stoull(tmp);
 		}
-		if (param == "--train_fraction") {
+		if (param == "--opt_train_fraction") {
 			std::string tmp = argv[++i];
 			double val = std::stod(tmp);
 			if (val <= 0.0 || val >= 1.0) {
-				std::cerr << "Error: train_fraction must be in range (0.0;1.0)\n";
+				std::cerr << "Error: opt_train_fraction must be in range (0.0;1.0)\n";
 				exit(1);
 			}
-			res.train_fraction = val;
+			res.opt_train_fraction = val;
 		}
-		if (param == "--generate_alt_max_cf_no_tires") {
+		if (param == "--opt_num_inits") {
 			std::string tmp = argv[++i];
-			res.generate_alt_max_cf_no_tires = std::stoull(tmp);
+			res.opt_num_inits = std::stoull(tmp);
 		}
-		if (param == "--altMaximize_iters") {
+		if (param == "--opt_num_iters") {
 			std::string tmp = argv[++i];
-			res.altMaximize_iters = std::stoull(tmp);
+			res.opt_num_iters = std::stoull(tmp);
 		}
 		if (param == "--num_rand_cf") {
 			std::string tmp = argv[++i];
@@ -261,9 +261,9 @@ Params read_params(int argc, char** argv)
 		if (param == "--cjs_out") {
 			res.cjs_out = argv[++i];
 		}
-		if (param == "--max_pval_rand_init_alt_max_for_Cjs") {
+		if (param == "--max_pval_opt_for_Cjs") {
 			std::string tmp = argv[++i];
-			res.max_pval_rand_init_alt_max_for_Cjs = std::stod(tmp);
+			res.max_pval_opt_for_Cjs = std::stod(tmp);
 		}
 		if (param == "--sample_names") {
 			res.sample_names = argv[++i];
@@ -435,7 +435,7 @@ void write_out_header(std::ofstream& out, bool without_alt_max, bool with_effect
 		out << "effect_size_bin_old" << "\t";
 	}
 	if (!without_alt_max) {
-		out << "pval_rand_init_alt_max" << "\t";
+		out << "pval_opt" << "\t";
 
 		if (with_effect_size_cts)
 			out << "effect_size_cts" << "\t";
@@ -528,7 +528,7 @@ void write_out_rec(
 	}
 	if (!without_alt_max) {
 		out
-			<< anchor_stats.pval_rand_init_alt_max << "\t";
+			<< anchor_stats.pval_opt << "\t";
 
 		if (with_effect_size_cts)
 			out << anchor_stats.effect_size_cts << "\t";
@@ -665,14 +665,14 @@ class StatsWriter : public IAnchorProcessor {
 	bool compute_also_old_base_pvals;
 	bool is_removing_least_freq_targets_enabled;
 	uint32_t n_most_freq_targets;
-	double train_fraction;
-	int generate_alt_max_cf_no_tires;
-	int altMaximize_iters;
+	double opt_train_fraction;
+	int opt_num_inits;
+	int opt_num_iters;
 	size_t num_rand_cf;
 	CExtraStats extra_stats;
 	AnchorStats anchor_stats;
 	CjWriter cj_writer;
-	double max_pval_rand_init_alt_max_for_Cjs;
+	double max_pval_opt_for_Cjs;
 	CBCToCellType* cbc_to_cell_type;
 	Non10XSupervised* non_10X_supervised;
 
@@ -687,16 +687,16 @@ public:
 		bool compute_also_old_base_pvals,
 		bool is_removing_least_freq_targets_enabled,
 		uint32_t n_most_freq_targets,
-		double train_fraction,
-		int generate_alt_max_cf_no_tires,
-		int altMaximize_iters,
+		double opt_train_fraction,
+		int opt_num_inits,
+		int opt_num_iters,
 		size_t num_rand_cf,
 		const std::string& cjs_out,
 		bool is_10X,
 		size_t anchor_len_symbols,
 		size_t barcode_len_symbols,
 		const std::string& sample_names,
-		double max_pval_rand_init_alt_max_for_Cjs,
+		double max_pval_opt_for_Cjs,
 		CBCToCellType* cbc_to_cell_type,
 		Non10XSupervised* non_10X_supervised) :
 		out(outpath, std::ios_base::binary),
@@ -706,12 +706,12 @@ public:
 		compute_also_old_base_pvals(compute_also_old_base_pvals),
 		is_removing_least_freq_targets_enabled(is_removing_least_freq_targets_enabled),
 		n_most_freq_targets(n_most_freq_targets),
-		train_fraction(train_fraction),
-		generate_alt_max_cf_no_tires(generate_alt_max_cf_no_tires),
-		altMaximize_iters(altMaximize_iters),
+		opt_train_fraction(opt_train_fraction),
+		opt_num_inits(opt_num_inits),
+		opt_num_iters(opt_num_iters),
 		num_rand_cf(num_rand_cf),
 		cj_writer(cjs_out, is_10X, anchor_len_symbols, barcode_len_symbols, sample_names),
-		max_pval_rand_init_alt_max_for_Cjs(max_pval_rand_init_alt_max_for_Cjs),
+		max_pval_opt_for_Cjs(max_pval_opt_for_Cjs),
 		cbc_to_cell_type(cbc_to_cell_type),
 		non_10X_supervised(non_10X_supervised) {
 		if (!out) {
@@ -766,12 +766,12 @@ public:
 					with_effect_size_cts,
 					compute_also_old_base_pvals,
 					n_most_freq_targets,
-					train_fraction,
-					generate_alt_max_cf_no_tires,
-					altMaximize_iters,
+					opt_train_fraction,
+					opt_num_inits,
+					opt_num_iters,
 					num_rand_cf,
 					cj_writer,
-					max_pval_rand_init_alt_max_for_Cjs,
+					max_pval_opt_for_Cjs,
 					cbc_to_cell_type,
 					non_10X_supervised);
 
@@ -972,13 +972,13 @@ std::unique_ptr<IAnchorProcessor> get_anchor_processor(
 	bool compute_also_old_base_pvals,
 	bool is_removing_least_freq_targets_enabled,
 	uint32_t n_most_freq_targets,
-	double train_fraction,
-	int generate_alt_max_cf_no_tires,
-	int altMaximize_iters,
+	double opt_train_fraction,
+	int opt_num_inits,
+	int opt_num_iters,
 	size_t num_rand_cf,
 	const std::string& cjs_out,
 	bool is_10X,
-	double max_pval_rand_init_alt_max_for_Cjs,
+	double max_pval_opt_for_Cjs,
 	CBCToCellType* cbc_to_cell_type,
 	Non10XSupervised* non_10X_supervised) {
 	switch (run_mode)
@@ -1019,16 +1019,16 @@ std::unique_ptr<IAnchorProcessor> get_anchor_processor(
 			compute_also_old_base_pvals,
 			is_removing_least_freq_targets_enabled,
 			n_most_freq_targets,
-			train_fraction,
-			generate_alt_max_cf_no_tires,
-			altMaximize_iters,
+			opt_train_fraction,
+			opt_num_inits,
+			opt_num_iters,
 			num_rand_cf,
 			cjs_out,
 			is_10X,
 			anchor_len_symbols,
 			barcode_len_symbols,
 			sample_names,
-			max_pval_rand_init_alt_max_for_Cjs,
+			max_pval_opt_for_Cjs,
 			cbc_to_cell_type,
 			non_10X_supervised);
 		break;
@@ -1098,13 +1098,13 @@ void run_non_10X(const Params& params) {
 		params.compute_also_old_base_pvals,
 		params.n_most_freq_targets_for_stats != 0,
 		params.n_most_freq_targets,
-		params.train_fraction,
-		params.generate_alt_max_cf_no_tires,
-		params.altMaximize_iters,
+		params.opt_train_fraction,
+		params.opt_num_inits,
+		params.opt_num_iters,
 		params.num_rand_cf,
 		params.cjs_out,
 		false,
-		params.max_pval_rand_init_alt_max_for_Cjs,
+		params.max_pval_opt_for_Cjs,
 		nullptr,
 		non_10X_supervised.get()
 	);
@@ -1266,13 +1266,13 @@ void run_10X(const Params& params) {
 		params.compute_also_old_base_pvals,
 		false, //mkokot_TODO: add support to remove least freq targets from contignency table for 10X
 		params.n_most_freq_targets,
-		params.train_fraction,
-		params.generate_alt_max_cf_no_tires,
-		params.altMaximize_iters,
+		params.opt_train_fraction,
+		params.opt_num_inits,
+		params.opt_num_iters,
 		params.num_rand_cf,
 		params.cjs_out,
 		true,
-		params.max_pval_rand_init_alt_max_for_Cjs,
+		params.max_pval_opt_for_Cjs,
 		cbc_to_cell_type.get(),
 		nullptr
 	);

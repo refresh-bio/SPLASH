@@ -363,8 +363,8 @@ double altMaximize(const refresh::matrix_sparse_compact<uint32_t, double, refres
 	return 0;
 }
 
-//void generate_alt_max_cf(const refresh::matrix_sparse<uint32_t, double, refresh::matrix_col_major>& X_org, refresh::matrix_1d<double>& cOpt, refresh::matrix_1d<double>& fOpt, int no_tries, int altMaximize_iters)
-void generate_alt_max_cf(const refresh::matrix_sparse_compact<uint32_t, double, refresh::matrix_col_major>& X_org, refresh::matrix_1d<double>& cOpt, refresh::matrix_1d<double>& fOpt, int no_tries, int altMaximize_iters)
+//void generate_alt_max_cf(const refresh::matrix_sparse<uint32_t, double, refresh::matrix_col_major>& X_org, refresh::matrix_1d<double>& cOpt, refresh::matrix_1d<double>& fOpt, int no_tries, int opt_num_iters)
+void generate_alt_max_cf(const refresh::matrix_sparse_compact<uint32_t, double, refresh::matrix_col_major>& X_org, refresh::matrix_1d<double>& cOpt, refresh::matrix_1d<double>& fOpt, int no_tries, int opt_num_iters)
 {
 	std::default_random_engine eng;
 	std::uniform_int_distribution<int> dist_0_1(0, 1);
@@ -395,7 +395,7 @@ void generate_alt_max_cf(const refresh::matrix_sparse_compact<uint32_t, double, 
 			return minus_1_and_1[dist_0_1(eng)];
 			});
 
-		double S = altMaximize(X, c, f, altMaximize_iters);
+		double S = altMaximize(X, c, f, opt_num_iters);
 
 		if (S > Sbase)
 		{
@@ -576,12 +576,12 @@ void compute_stats(
 	bool with_effect_size_cts,
 	bool compute_also_old_base_pvals,
 	uint32_t n_most_freq_targets,
-	double train_fraction,
-	int generate_alt_max_cf_no_tires,
-	int altMaximize_iters,
+	double opt_train_fraction,
+	int opt_num_inits,
+	int opt_num_iters,
 	size_t num_rand_cf,
 	CjWriter& cj_writer,
-	double max_pval_rand_init_alt_max_for_Cjs,
+	double max_pval_opt_for_Cjs,
 	CBCToCellType* cbc_to_cell_type,
 	Non10XSupervised* non_10X_supervised) {
 
@@ -645,7 +645,7 @@ void compute_stats(
 	if (n_most_freq_targets)
 		get_most_freq_targets(sp_anch_contingency_table, targets, n_most_freq_targets, anchor_stats.most_freq_targets);
 
-	auto Xtrain = get_train_mtx_2(sp_anch_contingency_table, train_fraction, eng);
+	auto Xtrain = get_train_mtx_2(sp_anch_contingency_table, opt_train_fraction, eng);
 
 	if (compute_also_old_base_pvals)
 	{
@@ -670,9 +670,9 @@ void compute_stats(
 	// AltMax
 	if (!without_alt_max)
 	{
-		generate_alt_max_cf(Xtrain, cOpt, fOpt, generate_alt_max_cf_no_tires, altMaximize_iters);
+		generate_alt_max_cf(Xtrain, cOpt, fOpt, opt_num_inits, opt_num_iters);
 
-		anchor_stats.pval_rand_init_alt_max = testPval(Xtest, cOpt, fOpt);
+		anchor_stats.pval_opt = testPval(Xtest, cOpt, fOpt);
 
 		anchor_stats.effect_size_bin = effectSize_bin(Xtest, cOpt, fOpt);
 
@@ -681,7 +681,7 @@ void compute_stats(
 
 		anchor_stats.pval_asymp_base = computeAsympNOMAD(Xtest, cOpt, fOpt);
 
-		if (cj_writer && anchor_stats.pval_rand_init_alt_max <= max_pval_rand_init_alt_max_for_Cjs)
+		if (cj_writer && anchor_stats.pval_opt <= max_pval_opt_for_Cjs)
 		{
 			for (size_t col_id = 0; col_id < cOpt.size(); ++col_id)
 			{

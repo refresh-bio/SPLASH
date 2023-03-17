@@ -17,7 +17,7 @@ struct KmerAndCounter {
 struct AnchorStats {
 	double pval_base;
 	double pval_base_old;
-	double pval_rand_init_alt_max;
+	double pval_opt;
 	double effect_size_cts;
 	double effect_size_bin;
 	double effect_size_bin_old;
@@ -42,7 +42,7 @@ struct AnchorStats {
 
 	std::vector<uint32_t> cell_types_ids;  //unique ids of cell types for a given Xtrain contignency table
 
-	AnchorStats(double pval_base, double pval_base_old, double pval_rand_init_alt_max,
+	AnchorStats(double pval_base, double pval_base_old, double pval_opt,
 		double effect_size_cts, double effect_size_bin, double effect_size_bin_old, double pval_asymp_base, double entropy,
 		double avg_no_homopolymer_targets,
 		double avg_hamming_distance_max_target, double avg_hamming_distance_all_pairs,
@@ -50,7 +50,7 @@ struct AnchorStats {
 	) :
 		pval_base(pval_base),
 		pval_base_old(pval_base_old),
-		pval_rand_init_alt_max(pval_rand_init_alt_max),
+		pval_opt(pval_opt),
 		effect_size_cts(effect_size_cts),
 		effect_size_bin(effect_size_bin),
 		effect_size_bin_old(effect_size_bin_old),
@@ -66,7 +66,7 @@ struct AnchorStats {
 	AnchorStats() :
 		pval_base(1),
 		pval_base_old(1),
-		pval_rand_init_alt_max(1),
+		pval_opt(1),
 		effect_size_cts(0),
 		effect_size_bin(0),
 		effect_size_bin_old(0),
@@ -83,7 +83,7 @@ struct AnchorStats {
 	{
 		pval_base = 1;
 		pval_base_old = 1;
-		pval_rand_init_alt_max = 1;
+		pval_opt = 1;
 		
 		clear_extra();
 	}
@@ -324,12 +324,12 @@ void compute_stats(
 	bool with_effect_size_cts,
 	bool compute_also_old_base_pvals,
 	uint32_t n_most_freq_targets,
-	double train_fraction,
-	int generate_alt_max_cf_no_tires,
-	int altMaximize_iters,
+	double opt_train_fraction,
+	int opt_num_inits,
+	int opt_num_iters,
 	size_t num_rand_cf,
 	CjWriter& cj_writer,
-	double max_pval_rand_init_alt_max_for_Cjs,
+	double max_pval_opt_for_Cjs,
 	CBCToCellType* cbc_to_cell_type,
 	Non10XSupervised* non_10X_supervised);
 

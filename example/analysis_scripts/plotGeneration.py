@@ -310,7 +310,7 @@ def generatePlots(ctsDf):
         M=np.nan
         if anch in pvDf.index:
             anchRow = pvDf.loc[anch]
-            pv = anchRow.pval_rand_init_alt_max_corrected
+            pv = anchRow.pval_opt_corrected
             esize=anchRow.effect_size_bin
             M=int(anchRow.M)
             
