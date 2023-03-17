@@ -50,8 +50,11 @@ group_filters_and_thresholds.add_argument("--fdr_threshold", default=0.05, type=
 group_additional_out = parser.add_argument_group('Additional output configuration')
 group_additional_out.add_argument("--dump_Cjs", default=False, action='store_true', help="output Cjs")
 group_additional_out.add_argument("--max_pval_rand_init_alt_max_for_Cjs", default=0.10, type=float, help="dump only Cjs for anchors that have pval_rand_init_alt_max <= max_pval_rand_init_alt_max_for_Cjs")
-group_additional_out.add_argument("--n_most_freq_targets", default=0, type=int, help="number of most frequent tragets printed per each anchor in stats mode")
+group_additional_out.add_argument("--n_most_freq_targets", default=2, type=int, help="number of most frequent tragets printed per each anchor in stats mode")
 group_additional_out.add_argument("--with_effect_size_cts", default=False, action='store_true', help="if set effect_size_cts will be computed")
+group_additional_out.add_argument("--sample_name_to_id", default="sample_name_to_id.mapping.txt", type=str, help="file name with mapping sample name <-> sammpe id")
+group_additional_out.add_argument("--dump_sample_anchor_target_count_txt", default=False, action='store_true', help="if set contignency tables will be generated in text format")
+group_additional_out.add_argument("--dump_sample_anchor_target_count_binary", default=False, action='store_true', help="if set contignency tables will be generated in binary (satc) format, to convert to text format later satc_dump program may be used, it may take optionally maping from id to sample_name (--sample_names param)")
 
 group_tuning_stats = parser.add_argument_group('Tuning statistics computation')
 group_tuning_stats.add_argument("--generate_alt_max_cf_no_tires", default=10, type=int, help="the number of altMaximize runs")
@@ -100,6 +103,9 @@ train_fraction=args.train_fraction
 kmc_use_RAM_only_mode = args.kmc_use_RAM_only_mode
 kmc_max_mem_GB = args.kmc_max_mem_GB
 with_effect_size_cts = args.with_effect_size_cts
+sample_name_to_id = args.dump_sample_anchor_target_count_txt
+dump_sample_anchor_target_count_txt = args.dump_sample_anchor_target_count_txt
+dump_sample_anchor_target_count_binary = args.dump_sample_anchor_target_count_binary
 pvals_correction_col_name = args.pvals_correction_col_name
 fdr_threshold = args.fdr_threshold
 outname_prefix=args.outname_prefix
@@ -241,6 +247,8 @@ with open(f"{logs_dir}/nomad-cmd.log", "w") as f:
 
 inputs = []
 
+sample_name_to_id_file = open(sample_name_to_id, "w")
+
 def remove_kmc_output(path):
     os.remove(f"{path}.kmc_pre")
     os.remove(f"{path}.kmc_suf")
@@ -330,6 +338,7 @@ for i in range(n_threads_stage_1):
 
 for id, input in enumerate(inputs):
     sample_name = input[1]
+    sample_name_to_id_file.write(f"{sample_name} {id}\n")
     stage_1_queue.put((id, input))
 
 stage_1_queue.join()
@@ -341,6 +350,7 @@ for t in stage_1_threads:
     t.join()
 check_and_handle_error()
 
+sample_name_to_id_file.close()
 if len(anchor_list):    
     anchor_list_param = f"--anchor_list {anchor_list}"
 else:
@@ -393,9 +403,40 @@ def stage_2_task(bin_id, out, err):
     --num_rand_cf {num_rand_cf} \
     --train_fraction {train_fraction} \
     --run_mode calc_stats \
+    --sample_names {sample_name_to_id} \
     {anchor_list_param} \
     {tmp_dir}/{outname_prefix}.bin{bin_id}.stats.tsv {in_file_name}"
     run_cmd(cmd, out, err)
+
+    if dump_sample_anchor_target_count_txt:
+        dump_dir = f"{outname_prefix}_dumps"
+        if not os.path.exists(dump_dir):
+            os.makedirs(dump_dir)
+
+        cmd=f"{satc_merge} \
+        --anchor_count_threshold {anchor_count_threshold} \
+        --anchor_samples_threshold {anchor_samples_threshold} \
+        --anchor_unique_targets_threshold {anchor_unique_targets_threshold} \
+        --run_mode just_merge_and_dump \
+        --sample_names {sample_name_to_id} \
+        --format satc \
+        {anchor_list_param} \
+        {dump_dir}/bin{bin_id}.satc.dump {in_file_name}"
+        run_cmd(cmd, out, err)
+
+    if dump_sample_anchor_target_count_binary:
+        satc_dir = f"{outname_prefix}_satc"
+        if not os.path.exists(satc_dir):
+            os.makedirs(satc_dir)
+
+        cmd=f"{satc_merge} \
+        --anchor_count_threshold {anchor_count_threshold} \
+        --anchor_samples_threshold {anchor_samples_threshold} \
+        --anchor_unique_targets_threshold {anchor_unique_targets_threshold} \
+        --run_mode just_merge \
+        {anchor_list_param} \
+        {satc_dir}/bin{bin_id}.satc {in_file_name}"
+        run_cmd(cmd, out, err)
 
     if clean_up:
         os.remove(in_file_name)
