@@ -392,7 +392,7 @@ def stage_2_task(bin_id, out, err):
     if dump_Cjs and not os.path.exists(Cjs_dir):
         os.makedirs(Cjs_dir)
 
-    _cjs_out_param = f"--cjs_out Cjs_dir/bin{bin_id}.cjs" if dump_Cjs else ""
+    _cjs_out_param = f"--cjs_out {Cjs_dir}/bin{bin_id}.cjs" if dump_Cjs else ""
 
     cmd=f"{satc_merge} \
     {_with_effect_size_cts_param} \
