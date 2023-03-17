@@ -378,8 +378,8 @@ print("Starting stage 2")
 print("Current time:", get_cur_time(), flush=True)
 
 Cjs_dir = f"{outname_prefix}_Cjs"
-    if dump_Cjs and not os.path.exists(Cjs_dir):
-        os.makedirs(Cjs_dir)
+if dump_Cjs and not os.path.exists(Cjs_dir):
+    os.makedirs(Cjs_dir)
 
 def stage_2_task(bin_id, out, err):
     satc_merge_inputs = []
