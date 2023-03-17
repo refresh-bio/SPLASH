@@ -114,9 +114,4 @@ clean:
 	-rm $(SATC_DUMP_MAIN_DIR)/*.o
 	-rm $(COMMON_DIR)/*.o
 	-rm $(SIG_ANCH_MAIN_DIR)/*.o
-	-rm $(OUT_BIN_DIR)/satc	
-	-rm $(OUT_BIN_DIR)/satc_merge
-	-rm $(OUT_BIN_DIR)/sig_anch
-	-rm $(OUT_BIN_DIR)/nomad
-	-rm $(OUT_BIN_DIR)/kmc
-	-rm $(OUT_BIN_DIR)/kmc_tools	
+	-rm -rf $(OUT_BIN_DIR)
