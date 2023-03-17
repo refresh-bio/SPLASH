@@ -377,6 +377,10 @@ print("Stage 1 done")
 print("Starting stage 2")
 print("Current time:", get_cur_time(), flush=True)
 
+Cjs_dir = f"{outname_prefix}_Cjs"
+    if dump_Cjs and not os.path.exists(Cjs_dir):
+        os.makedirs(Cjs_dir)
+
 def stage_2_task(bin_id, out, err):
     satc_merge_inputs = []
 
@@ -393,10 +397,6 @@ def stage_2_task(bin_id, out, err):
             f.write(f"{x}\n")
     
     _with_effect_size_cts_param = "--with_effect_size_cts" if with_effect_size_cts else ""
-
-    Cjs_dir = f"{outname_prefix}_Cjs"
-    if dump_Cjs and not os.path.exists(Cjs_dir):
-        os.makedirs(Cjs_dir)
 
     _cjs_out_param = f"--cjs_out {Cjs_dir}/bin{bin_id}.cjs" if dump_Cjs else ""
 
