@@ -1,15 +1,15 @@
 # NOMAD 2.0
 ## Introduction
-NOMAD is an unsupervised and reference-free unifying framework to discover regulated sequence variation through statistical analysis of k-mer compulsion in both DNA and RNA sequence. 
-NOMAD leverages our observation that detecting sample-regulated sequence variation, such as alternative splicing, RNA editing, gene fusions, V(D)J, transposable element mobilization, allele-specific splicing, and genetic variation in a population, among and many other regulated events can unified–in theory and in practice.
-This is achieved with a simple model that analyzes k-mer composition of raw sequencing reads (Chaung et al. 2022). 
-NOMAD finds constant sequences (anchors) that are followed by a set of sequences (targets) with sample-specific target variation and provides valid p-values (Chaung et al. 2022). 
+NOMAD is an unsupervised and reference-free unifying framework to discover regulated sequence variation through statistical analysis of k-mer composition in both DNA and RNA sequence. 
+NOMAD leverages our observation that detecting sample-regulated sequence variation, such as alternative splicing, RNA editing, gene fusions, V(D)J, transposable element mobilization, allele-specific splicing, genetic variation in a population, and many other regulated events can be unified–in theory and in practice.
+This is achieved with a simple model, NOMAD, that analyzes k-mer composition of raw sequencing reads (Chaung et al. 2022). 
+NOMAD finds constant sequences (anchors) that are followed by a set of sequences (targets) with sample-specific target variation and provides valid p-values. 
 NOMAD is reference-free, sidestepping the computational challenges associated with alignment and making it significantly faster and more efficient than alignment, and enabling discovery and statistical precision not currently available, even from pseudo-alignment.
 
 The first version of [NOMAD](https://github.com/salzman-lab/nomad/) pipeline proved its usefullness.
-It was implemented mainly in Python with a use of NextFlow.
-Here we provide its new version implemented in the C++ and Pyton programming languages (Kokot et al. 2023).
-This new version is much more efficient and allows to analyze datasets of 1TB size in hours on a workstation or even laptop.
+It was implemented mainly in Python with the use of NextFlow.
+Here we provide a new and improved implementation based in C++ and Python (Kokot et al. 2023).
+This new version is much more efficient and allows for the analysis of datasets >1TB size in hours on a workstation or even a laptop.
 
 ## How does it work
 
@@ -151,10 +151,10 @@ The parameters will be displayed when running nomad without parameters (or with 
 
 [Kaitlin Chaung, Tavor Baharav,  Ivan Zheludev, Julia Salzman. A statistical, reference-free algorithm subsumes myriad problems in genome science and enables novel discovery, biorXiv (2022) 2022.06.24.497555](https://doi.org/10.1101/2022.06.24.497555)
  
-[Baharav, Tavor, David Tse, and Julia Salzman. 
+[Tavor Baharav, David Tse, and Julia Salzman. 
 An Interpretable, Finite Sample Valid Alternative to Pearson’s X2 for Scientific Discovery.
-bioRxiv (2023) ](https://...)
+bioRxiv (2023) BIORXIV/2023/533008](https://www.biorxiv.org/content/10.1101/2023.03.16.533008)
  
-[Marek Kokot, Roozbeh Dehghannasiri, Tavor Z Baharav, Julia Salzman, and Sebastian Deorowicz.
+[Marek Kokot, Roozbeh Dehghannasiri, Tavor Baharav, Julia Salzman, and Sebastian Deorowicz.
 NOMAD2 provides ultra-efficient, scalable, and unsupervised discovery on raw sequencing reads, 
 bioRxiv (2023) BIORXIV/2023/533189](https://..)
