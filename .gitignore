@@ -1,0 +1,10 @@
+bin
+src/satc/*.o
+src/common/*.o
+src/satc/kmc_api/*.o
+src/satc_merge/*.o
+src/satc_dump/*.o
+src/sig_anch/*.o
+*.fastq
+*.fastq.gz
+*.tsv
