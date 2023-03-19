@@ -16,9 +16,6 @@ from bisect import bisect_left, bisect_right
 import argparse
 import seaborn as sns
 
-import colorlover as cl
-
-
 
 
 ### command line inputs
@@ -30,9 +27,9 @@ def get_args():
         help='Dataset name to be used in title of plots.',
     )
     parser.add_argument(
-        "--satcFolder",
+        "--outFolder",
         type=str,
-        help='Folder containing .satc files.'
+        help='Output folder to save files to.'
     )
     parser.add_argument(
         "--metadataPath",
@@ -40,14 +37,19 @@ def get_args():
         help='.tsv file containing two columns with names [\'sampleName\', \'metadata\'].'
     )
     parser.add_argument(
-        "--outFolder",
+        "--satcFolder",
         type=str,
-        help='Output folder to save files to.'
+        help='Folder containing .satc files.'
     )
     parser.add_argument(
         "--pvDfPath",
         type=str,
         help='Path to p-value .tsv file.'
+    )
+    parser.add_argument(
+        "--sampleMappingTxt",
+        type=str,
+        help='Path to sample_name_to_id.mapping.txt file'
     )
     parser.add_argument(
         "--anchorFile",
@@ -66,7 +68,7 @@ def get_args():
         type=str,
         help='Path to satc_dump utility file (within NOMAD2, /bin/satc_dump)'
     )
-
+    
     args = parser.parse_args()
     return args
 
@@ -75,12 +77,12 @@ def get_args():
 ### parse satc files to dump files
 def parseSATC():
     print('parsing SATC')
-    Path(outFolder+'/satc_unpacked/all').mkdir(parents=True, exist_ok=True)
+    Path(outFolder+'/satc_unpacked/satc').mkdir(parents=True, exist_ok=True)
     
-    for fname in tqdm(glob.glob(satcFolder+'/result.bin*.satc')):
+    for fname in tqdm(glob.glob(satcFolder+'/bin*.satc')):
         outFile = outFolder+'/satc_unpacked/'+fname.split('_')[-1]+'.dump'
         
-        cmd=f"{satc_dump_file} --anchor_list {anchorFile} {fname} {outFile}"
+        cmd=f"{satc_dump_file} --sample_names {sampleMapping} --anchor_list {anchorFile} {fname} {outFile}"
         print(cmd)
         os.system(cmd)
 
@@ -88,14 +90,11 @@ def parseSATC():
 ### generate counts dataframe from dumped files
 def generateCtsDf():
     dfArr = []
-    for fname in tqdm(glob.glob(outFolder+'/satc_unpacked/all/*.dump'), desc='reading .dump files'):
-        dfArr.append(pd.read_csv(fname,names=['id','anchor','target','counts'],sep='\t'))
+    for fname in tqdm(glob.glob(outFolder+'/satc_unpacked/satc/*.dump'), desc='reading .dump files'):
+        dfArr.append(pd.read_csv(fname,names=['sample','anchor','target','counts'],sep='\t'))
     
     ctsDf = pd.concat(dfArr)
 
-    id_to_sample_mapping = pd.read_csv(satcFolder+'/sample_name_to_id.mapping.txt',names=['sample','id'],sep=' ')
-
-    ctsDf = pd.merge(ctsDf,id_to_sample_mapping).drop(columns='id')
     ctsDf = ctsDf.groupby(['anchor','target','sample']).counts.sum().reset_index()
     ctsDf.to_csv(outFolder+'/countsDf.tsv',sep='\t')
     return ctsDf
@@ -140,7 +139,8 @@ def generatePlots(ctsDf):
     anchSet = set(ctsDf.anchor.to_list())
     ctsDf = ctsDf.set_index('anchor')
     
-    metadataDf = pd.read_csv(metadataPath)
+    metadataDf = pd.read_csv(metadataPath,sep='\t')
+#     print(metadataDf)
     
     ### if more than one anchor, perform clustering on anchors to more easily parse through list of outputted anchors
     if len(anchSet)<=1:
@@ -488,6 +488,7 @@ outFolder = args.outFolder
 skipSATC = args.skipSATC
 pvDfPath = args.pvDfPath
 satc_dump_file = args.satc_dump_file
+sampleMapping = args.sampleMappingTxt
 
 statusStr = "Dataset: {}\nAnchor file: {}\nSATC folder: {}\nmetadata: {}\npvDf: {}\nOut folder: {}\nskipSATC: {}".format(
 dsName, anchorFile,satcFolder, metadataPath, pvDfPath,outFolder,skipSATC
@@ -498,4 +499,3 @@ if not skipSATC:
     parseSATC()
 ctsDf = generateCtsDf()
 generatePlots(ctsDf)
-
