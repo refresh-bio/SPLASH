@@ -103,10 +103,29 @@ There are also additional parameters that may be useful, namely:
  * `--separately` &mdash; if set with n_bins != 0 output param will be treated as suffix name and there will be output for each bin
  
  If `--sample_names` is not used in the output there will be sample ids instead of its names. NOMAD by default write mapping to `sample_name_to_id.mapping.txt` file (may be redefined with `--sample_name_to_id` switch of NOMAD.
+ 
+ ### Interpreting results
+ `plotGeneration.py` provides basic functionality to visualize contingency tables. To use, run NOMAD with the --dump_sample_anchor_target_count_binary flag. Then, `plotGeneration.py` can be run with inputs:
+- `--dsName` &mdash; dataset name to be used in title of plots
+- `outFolder` &mdash; path to save files to
+- `metadataPath` &mdash; path to .tsv file containing two columns titled `sampleName` and `metadata`
+- `satcFolder` &mdash; path to folder containing .satc files
+- `pvDfPath` &mdash; path to p-value .tsv file (result.after_correction.scores.tsv)
+- `sampleMappingTxt` &mdash; path to sample_name_to_id.mapping.txt file
+- `anchorFile` &mdash; file of anchors to be plotted, one anchor per line
+- `satc_dump_file` &mdash; path to satc_dump utility file, within NOMAD /bin folder
+- `skipSATC` &mdash; optional flag, if .satc files have already been dumped for this set of anchors into the output folder, and the desire is to regenerate plots.
+
+The generated output is 1 file per anchor, each file containing 4 subplots. At bottom left is the raw I x J contingency table, where each column is a sample, and each row represents a target (low abundance targets not shown). Each sample’s target counts are normalized by $n_j$ and plotted. At bottom right, the targets for the contingency table are displayed in a I x k table (corresponding to the rows of the contingency table, visually aligned). Each target of length k is shown, with basepairs colored as in the below colorbar. The target sequence for each row is displayed on the right. At top left,  the sample metadata is shown in a 1 x J table. Each entry corresponds to the column in the contingency table directly below it. The sample metadata is shown in a colorbar below. At top right, the column counts ($n_j$) are shown in a 1 x J table, where the colorbar below provides the scale. Again, columns are sorted as the contingency table.
+
+
+The script `c_analysis.ipynb` shows how the saved c vectors can be loaded in for further analysis. `--dump_Cjs` must be enabled for this.
+ 
+ 
 ## Configuration
 There is a lot of parameters allowing to customize the pipeline. They can be grouped into several categories. 
 The parameters will be displayed when running nomad without parameters (or with `--help`).
-
+ 
  ### Base configuration
  * `--outname_prefix` &mdash; prefix of output file names (default: result)
  * `--anchor_len` &mdash; anchor length (default: 27)
@@ -131,10 +150,10 @@ The parameters will be displayed when running nomad without parameters (or with 
  * `--dump_sample_anchor_target_count_txt` &mdash; if set contignency tables will be generated in text format (default: False)
  * `--dump_sample_anchor_target_count_binary` &mdash; if set contignency tables will be generated in binary (SATC) format, to convert to text format later `satc_dump` program may be used, it may take optionally mapping from id to sample_name (--sample_names param) (default: False)
 ### Tuning statistics computation:
- * `--opt_num_inits` &mdash; the number of altMaximize runs (default: 10)
- * `--opt_num_iters` &mdash; the number of iteration in altMaximize (default: 50)
- * `--num_rand_cf` &mdash; the number of rand cf (default: 50)
- * `--opt_train_fraction` &mdash; in calc_stats mode use this fraction to create train X from contingency table (default: 0.25)
+ * `--opt_num_inits` &mdash; the number of altMaximize random initializations (default: 10)
+ * `--opt_num_iters` &mdash; the maximum number of iterations in altMaximize (default: 50)
+ * `--num_rand_cf` &mdash; the number of random c and f used for pval_base (default: 50)
+ * `--opt_train_fraction` &mdash; in calc_stats mode use this fraction to create training data from contingency table (default: 0.25)
 ### Technical and performance-related:
  * `--bin_path` &mdash; path to a directory where satc, satc_dump, satc_merge, sig_anch, kmc, kmc_tools binaries are (if any not found there nomad will check if installed and use installed) (default: ./)
  * `--tmp_dir` &mdash; path to a directory where temporary files will be stored (default: let nomad decide)
