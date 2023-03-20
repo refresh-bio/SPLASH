@@ -42,17 +42,17 @@ riffle <- function(a, b) {   # this function interleaves the elements of two vec
 ############ input arguments #####################
 args <- commandArgs(trailingOnly = TRUE)
 directory = args[1]  # the output directory used for the NOMAD run
-which_file = args[2]  # flag to decide which anchor file (after correction or all anchors) to use, could be "after_correction" or "all" 
+which_anchors_file = args[2]  # flag to decide which anchor file (after correction or all anchors) to use, could be "after_correction" or "all" 
 effect_size_cutoff = args[3] # the effect size cutoff for significant anchors (default 0.2) 
 num_samples_cutoff = args[4] # the minimum number of sampels for an anchor to be called (default 20)
 STAR_executable = args[5] # path to STAR executable file
 STAR_reference = args[6] # path to STAR index files for the reference genome
-samtools = args[7] # path to samtools executable file
-bedtools = args[8] # path to bedtools executable file
+samtools_executable = args[7] # path to samtools executable file
+bedtools_executable = args[8] # path to bedtools executable file
 annotated_splice_juncs = args[9] # path to the file containing annotated splice junctions
 annotated_exon_boundaries = args[10] #path to the file containing annotated exon boundaries
 bowtie2_executable = args[11] # path to bowtie2 executable file
-univec_bowtie2_index = args[12] #path to the bowtie2 index for univec
+bowtie2_univec_index = args[12] #path to the bowtie2 index for univec
 bowtie2_reference = args[13] # path to the bowtie2 index for the reference genome
 paralogs_file = args[14] # path to the file containing list of paralogous genes from reference genome
 ##################################################
@@ -62,9 +62,9 @@ setwd(directory)
 print(directory)
 
 tic("reading anchors file")
-if (which_file == "all"){
+if (which_anchors_file == "all"){
   anchors_file = paste(directory,"result.after_correction.all_anchors.csv",sep="")
-} else if (which_file=="after_correction"){
+} else if (which_anchors_file=="after_correction"){
   anchors_file = paste(directory,"result.after_correction.scores.csv",sep="")
 }
 
@@ -208,9 +208,9 @@ tic("add gene name")
 ################ adding gene names based on extendor alignments to the genome #########
 ########################################################################################
 anchors[,extendor_gene:=NULL]
-system(paste(samtools, " view -S -b ",directory,"STAR_alignment/T2T_extendorsAligned.out.sam > ",directory,"STAR_alignment/T2T_extendorsAligned.out.bam",sep=""))
-system(paste(bedtools, " bamtobed -split -i ",directory,"STAR_alignment/T2T_extendorsAligned.out.bam | sed '/^chr/!d' | sort -k1,1 -k2,2n > ", directory,"STAR_alignment/T2T_called_exons.bed",sep=""))
-system(paste(bedtools, " intersect -a ",directory,"STAR_alignment/T2T_called_exons.bed -b ", gene_coords, " -wb -loj | cut -f 4,10   | /home/groups/horence/applications/bedtools2/bin/bedtools groupby -g 1 -c 2 -o distinct  > ", directory,"STAR_alignment/T2T_extendor_genes.txt",sep=""))
+system(paste(samtools_executable, " view -S -b ",directory,"STAR_alignment/T2T_extendorsAligned.out.sam > ",directory,"STAR_alignment/T2T_extendorsAligned.out.bam",sep=""))
+system(paste(bedtools_executable, " bamtobed -split -i ",directory,"STAR_alignment/T2T_extendorsAligned.out.bam | sed '/^chr/!d' | sort -k1,1 -k2,2n > ", directory,"STAR_alignment/T2T_called_exons.bed",sep=""))
+system(paste(bedtools_executable, " intersect -a ",directory,"STAR_alignment/T2T_called_exons.bed -b ", gene_coords, " -wb -loj | cut -f 4,10   | ",bedtools_executable, " groupby -g 1 -c 2 -o distinct  > ", directory,"STAR_alignment/T2T_extendor_genes.txt",sep=""))
 extendor_genes = fread(paste(directory,"STAR_alignment/T2T_extendor_genes.txt",sep=""),sep="\t",header=FALSE)
 names(extendor_genes) = c("extendor_index","extendor_gene")
 anchors = merge(anchors,extendor_genes[!duplicated(extendor_index)],all.x=TRUE,all.y=FALSE,by.x="extendor_index",by.y="extendor_index")
@@ -227,12 +227,12 @@ tic("extract and annotate splice junctions")
 alignment_info_extendors = fread(paste(directory,"STAR_alignment/T2T_extendorsAligned.out.sam",sep=""),header=FALSE,skip="NH:")
 alignment_info_extendors = alignment_info_extendors[!duplicated(V1)][V6%like%"N"]
 write.table(alignment_info_extendors,paste(directory,"STAR_alignment/T2T_only_top_splice_alignments.out.sam",sep=""),sep="\t",row.names=FALSE,quote =FALSE,col.names = FALSE)
-system(paste(samtools, " view -H ",directory,"STAR_alignment/T2T_extendorsAligned.out.bam > ", directory, "STAR_alignment/sam_header.txt", sep=""))
+system(paste(samtools_executable, " view -H ",directory,"STAR_alignment/T2T_extendorsAligned.out.bam > ", directory, "STAR_alignment/sam_header.txt", sep=""))
 
 # now I need to concatenate the header to the new sam file and then convert the sam file to a bam file and then run bamtobed split to get the extracted splice junctions
 system(paste("cat ",directory,"STAR_alignment/sam_header.txt ",directory,"STAR_alignment/T2T_only_top_splice_alignments.out.sam > ", directory, "STAR_alignment/T2T_only_top_splice_alignments_with_header.out.sam" ,sep=""))
-system(paste(samtools, " view -S -b ",directory,"STAR_alignment/T2T_only_top_splice_alignments_with_header.out.sam > ",directory,"STAR_alignment/T2T_only_top_splice_alignments_with_header.out.bam",sep=""))
-system(paste(bedtools, " bamtobed -split -i ",directory,"STAR_alignment/T2T_only_top_splice_alignments_with_header.out.bam > ",directory,"STAR_alignment/extracted_splice_junction.bed",sep=""))
+system(paste(samtools_executable, " view -S -b ",directory,"STAR_alignment/T2T_only_top_splice_alignments_with_header.out.sam > ",directory,"STAR_alignment/T2T_only_top_splice_alignments_with_header.out.bam",sep=""))
+system(paste(bedtools_executable, " bamtobed -split -i ",directory,"STAR_alignment/T2T_only_top_splice_alignments_with_header.out.bam > ",directory,"STAR_alignment/extracted_splice_junction.bed",sep=""))
 splice_junctions = fread(paste(directory,"STAR_alignment/extracted_splice_junction.bed",sep=""),header=FALSE) # now I read in the extracted spliec junctions and then by creating a shifted version of them and then appending them to the original data table columnwise I extract spliec junctions as the 2nd coord from the first line and 1st coord from the second line + 1
 splice_junctions_shifted = splice_junctions[, data.table::shift(.SD, 1, NA, "lead", TRUE), .SDcols=1:6]
 splice_junctions = cbind(splice_junctions,splice_junctions_shifted)
@@ -318,14 +318,14 @@ tic("bowtie to univec")
 ######################################################################################################
 ################ Bowtie2 alignment of anchors and targets to univec to remove barcodes ###############
 #####################################################################################################
-system(paste(bowtie2_executable, " -f -x ", univec_bowtie2_index, " -U ", directory,"anchors_fasta.fa -p 4 --quiet | sed '/^@/d' | cut -f1,3 | sort | uniq > ",directory,"Bowtie_alignment/anchor_hits_illumina_adapters.tsv",sep=""))
+system(paste(bowtie2_executable, " -f -x ", bowtie2_univec_index, " -U ", directory,"anchors_fasta.fa -p 4 --quiet | sed '/^@/d' | cut -f1,3 | sort | uniq > ",directory,"Bowtie_alignment/anchor_hits_illumina_adapters.tsv",sep=""))
 Bowtie_alignment_info_anchors = fread(paste(directory,"Bowtie_alignment/anchor_hits_illumina_adapters.tsv",sep=""), header=FALSE, fill=TRUE)
 Bowtie_alignment_info_anchors = Bowtie_alignment_info_anchors[V2!="*"] # finding anchors that have been mapped to a barcode
 anchors = anchors[!anchor_index%in%Bowtie_alignment_info_anchors$V1] # removing anchors that have been mapped to a barcode
 
 targets_fasta = riffle(paste(">",anchors$extendor_index,sep=""),anchors$target)
 write.table(targets_fasta,paste(directory,"targets_fasta.fa",sep = ""),quote = FALSE,row.names = FALSE,col.names = FALSE, sep = "\t")
-system(paste("/home/groups/horence/applications/bowtie2-2.2.1/bowtie2 -f -x ", univec_bowtie2_index, " -U ", directory,"targets_fasta.fa -p 4 --quiet | sed '/^@/d' | cut -f1,3 | sort | uniq > ",directory,"Bowtie_alignment/target_hits_illumina_adapters.tsv",sep=""))
+system(paste(bowtie2_executable, " -f -x ", bowtie2_univec_index, " -U ", directory,"targets_fasta.fa -p 4 --quiet | sed '/^@/d' | cut -f1,3 | sort | uniq > ",directory,"Bowtie_alignment/target_hits_illumina_adapters.tsv",sep=""))
 
 Bowtie_alignment_info_targets = fread(paste(directory,"Bowtie_alignment/target_hits_illumina_adapters.tsv",sep=""), header=FALSE, fill=TRUE)
 Bowtie_alignment_info_targets = Bowtie_alignment_info_targets[V2!="*"] # finding targets that have been mapped to a barcode
@@ -362,7 +362,6 @@ soft_clipped_extendors_for_realignment_fasta = riffle(soft_clipped_extendors_for
 soft_clipped_extendors_for_realignment_fasta = data.table(soft_clipped_extendors_for_realignment_fasta ) # the fasta file containing all extendor sequences
 write.table(soft_clipped_extendors_for_realignment_fasta,paste(directory,"Bowtie_alignment/soft_clipped_extendors_for_realignment_fasta.fa",sep = ""),quote = FALSE,row.names = FALSE,col.names = FALSE, sep = "\t")
 system(paste(bowtie2_executable, " -f -x ", bowtie2_reference, " -U ", directory,"Bowtie_alignment/soft_clipped_extendors_for_realignment_fasta.fa -S " ,directory,"Bowtie_alignment/soft_clipped_extendors_bowtie.sam --no-unal -k 10 --sam-nohead",sep=""))
-#system(paste("/oak/stanford/groups/horence/Roozbeh/software/STAR-2.7.5a/bin/Linux_x86_64/STAR --runThreadN 4 --genomeDir  /oak/stanford/groups/horence/Roozbeh/T2T_human_genome/STAR_index_files --readFilesIn ", directory,"STAR_alignment/soft_clipped_extendors_for_realignment_fasta.fa", " --outFileNamePrefix ", directory,"STAR_alignment/T2T_soft_clipped_realignment"," --twopassMode Basic --alignIntronMax 1000000 --chimJunctionOverhangMin 10 --chimSegmentReadGapMax 0 --chimOutJunctionFormat 1 --chimSegmentMin 12 --chimScoreJunctionNonGTAG -4 --chimNonchimScoreDropMin 10 --outSAMtype SAM --chimOutType SeparateSAMold --outSAMunmapped None --clip3pAdapterSeq AAAAAAAAA --outSAMattributes NH HI AS nM NM ",sep = ""))
 
 alignment_info_extendors = fread(paste(directory,"Bowtie_alignment/soft_clipped_extendors_bowtie.sam",sep=""), header=FALSE, fill=TRUE)
 alignment_info_extendors = alignment_info_extendors[V12%like%"AS:i:0"]
