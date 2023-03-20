@@ -122,7 +122,24 @@ The generated output is 1 file per anchor, each file containing 4 subplots. At b
 The script `c_analysis.ipynb` shows how the saved c vectors can be loaded in for further analysis. `--dump_Cjs` must be enabled for this.
  
 ## Biological interpretation and classification of anchors
-To facilitate downstream analysis of anchors, we provide a postprocessing script `NOMAD_extendor_classification.R`, that can be run on the anchors file generataed from the NOMAD run to classify anchors to biologically meaningful events such as alternative splicing, and base pair changes.  
+To facilitate downstream analysis of anchors, we provide a postprocessing script `NOMAD_extendor_classification.R`, that can be run on the anchors file generataed from the NOMAD run to classify anchors to biologically meaningful events such as alternative splicing, and base pair changes. `NOMAD_extendor_classification.R` needs the following inputs:
+
+- `directory` = args[1]  # the output directory used for the NOMAD run
+- `which_anchors_file` = args[2]  # flag to decide which anchor file (after correction or all anchors) to use, could be "after_correction" or "all" 
+- `effect_size_cutoff` = args[3] # the effect size cutoff for significant anchors (default 0.2) 
+- `num_samples_cutoff` = args[4] # the minimum number of sampels for an anchor to be called (default 20)
+- `STAR_executable` = args[5] # path to STAR executable file
+- `STAR_reference` = args[6] # path to STAR index files for the reference genome
+- `samtools` = args[7] # path to samtools executable file
+- `bedtools` = args[8] # path to bedtools executable file
+- `annotated_splice_juncs` = args[9] # path to the file containing annotated splice junctions
+- `annotated_exon_boundaries` = args[10] #path to the file containing annotated exon boundaries
+- `bowtie2_executable` = args[11] # path to bowtie2 executable file
+- `univec_bowtie2_index` = args[12] #path to the bowtie2 index for univec
+- `bowtie2_reference` = args[13] # path to the bowtie2 index for the reference genome
+- `paralogs_file` = args[14] # path to the file containing list of paralogous genes from reference genome
+
+
 ## Configuration
 There is a lot of parameters allowing to customize the pipeline. They can be grouped into several categories. 
 The parameters will be displayed when running nomad without parameters (or with `--help`).
