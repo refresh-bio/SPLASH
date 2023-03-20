@@ -168,12 +168,11 @@ The parameters will be displayed when running nomad without parameters (or with 
 
 ## References
 
-[Kaitlin Chaung, Tavor Baharav,  Ivan Zheludev, Julia Salzman. A statistical, reference-free algorithm subsumes myriad problems in genome science and enables novel discovery, biorXiv (2022) 2022.06.24.497555](https://doi.org/10.1101/2022.06.24.497555)
+Kaitlin Chaung, Tavor Baharav,  Ivan Zheludev, Julia Salzman. [A statistical, reference-free algorithm subsumes myriad problems in genome science and enables novel discovery](https://doi.org/10.1101/2022.06.24.497555), bioRxiv (2022)
  
-[Tavor Baharav, David Tse, and Julia Salzman. 
-An Interpretable, Finite Sample Valid Alternative to Pearson’s X2 for Scientific Discovery.
-bioRxiv (2023) BIORXIV/2023/533008](https://www.biorxiv.org/content/10.1101/2023.03.16.533008)
+Tavor Baharav, David Tse, and Julia Salzman. 
+[An Interpretable, Finite Sample Valid Alternative to Pearson’s X2 for Scientific Discovery](https://www.biorxiv.org/content/10.1101/2023.03.16.533008), bioRxiv (2023)
  
-[Marek Kokot, Roozbeh Dehghannasiri, Tavor Baharav, Julia Salzman, and Sebastian Deorowicz.
-NOMAD2 provides ultra-efficient, scalable, and unsupervised discovery on raw sequencing reads, 
-bioRxiv (2023) BIORXIV/2023/533189](https://..)
+Marek Kokot, Roozbeh Dehghannasiri, Tavor Baharav, Julia Salzman, and Sebastian Deorowicz.
+[NOMAD2 provides ultra-efficient, scalable, and unsupervised discovery on raw sequencing reads] (https://..) 
+bioRxiv (2023)
