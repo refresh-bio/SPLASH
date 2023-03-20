@@ -121,7 +121,8 @@ The generated output is 1 file per anchor, each file containing 4 subplots. At b
 
 The script `c_analysis.ipynb` shows how the saved c vectors can be loaded in for further analysis. `--dump_Cjs` must be enabled for this.
  
- 
+## Biological interpretation and classification of anchors
+To facilitate downstream analysis of anchors, we provide a postprocessing script `NOMAD_extendor_classification.R`, that can be run on the anchors file generataed from the NOMAD run to classify anchors to biologically meaningful events such as alternative splicing, and base pair changes.  
 ## Configuration
 There is a lot of parameters allowing to customize the pipeline. They can be grouped into several categories. 
 The parameters will be displayed when running nomad without parameters (or with `--help`).
