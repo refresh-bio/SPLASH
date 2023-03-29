@@ -29,7 +29,7 @@ To get the version 2.0.0 and run the example is is sufficient to do:
 ```
 curl -L https://github.com/refresh-bio/NOMAD/releases/download/v2.0.0/nomad-2.0.0.linux.x64.tar.gz | tar xz
 cd example
-./run-exmaple.sh
+./run-example.sh
 ```
 ### Compile from sources
 NOMAD is implemented as a number of applications written in the C++ programming language and a Python wrapper to run the whole pipeline.
