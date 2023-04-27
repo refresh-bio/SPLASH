@@ -141,6 +141,12 @@ To facilitate downstream analysis of anchors, we provide a postprocessing script
  
 The script will generate a file `classified_anchors.tsv` in the same directory used for NOMAD run, containing significant anchors along with their biological classification and alignment information.
 
+## Annotation files for human genome (based on T2T):
+The following three files are needed by the classification script for annotation anchors from human datasets and can be downloaded from the following links:
+- `annotated exon coordinates`: https://drive.google.com/file/d/1R-4-ICDAzmIBgQmlOF22nNrCWoSgrmHi/view?usp=share_link
+- `annotated splice junction`: https://drive.google.com/file/d/1owlOQyP1z4cyFvYcAAA-qQmc-K6jGbs9/view?usp=share_link
+- `gene paralogs`: https://drive.google.com/file/d/1mqGft4tPlx8X3cRYoqQnPeXaonLfSbGa/view?usp=share_link
+
 ## Configuration
 There is a lot of parameters allowing to customize the pipeline. They can be grouped into several categories. 
 The parameters will be displayed when running nomad without parameters (or with `--help`).
