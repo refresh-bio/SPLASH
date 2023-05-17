@@ -42,7 +42,7 @@ cd nomad
 make -j
 sudo make install
 ```
-#### Running the example
+## Running the example
 To verify the installation on small example one may perform:
 ```
 cd example
@@ -54,6 +54,72 @@ The result consists of two TSV files, namely,
  2. `result.after_correction.scores.tsv`
 The first file contain all unfiltered anchors found by the pipeline.
 The second file contains only anchors whose corrected p-value is below 0.05.
+
+## Inputs
+There is a lot of parameters allowing to customize the pipeline. They can be grouped into several categories. 
+The parameters will be displayed when running nomad without parameters (or with `--help`).
+ 
+### Input file parameters:
+* `--input_file` &mdash;
+* `--anchor_list` &mdash; list of accepted anchors, this is path to plain text file with one anchor per line without any header (default accept all achnors)
+* `--anchor_len` &mdash; anchor length (default: 27)
+* `--gap_len` &mdash; gap length, if 'auto' it will be inferred from the data, in the opposite case it must be an int (default: 0)
+* `--target_len` &mdash; target length (default: 27)
+ 
+### Anchor filtering parameters:
+* `--poly_ACGT_len` &mdash; filter out all anchors containing poly(ACGT) of length at least <poly_ACGT_len> (0 means no filtering) (default: 8)
+* `--anchor_unique_targets_threshold` &mdash; filter out all anchors for which the number of unique targets is <= anchor_unique_targets_threshold (default: 1)
+* `--anchor_count_threshold` &mdash; filter out all anchors for which the total count <= anchor_count_threshold (default: 50)
+* `--anchor_samples_threshold` &mdash; filter out all anchors for which the number of unique samples is <= anchor_samples_threshold (default: 1)
+* `--anchor_sample_counts_threshold` &mdash; filter out anchor from sample if its count in this sample is <= anchor_sample_counts_threshold (default: 5)
+ 
+### Statistical significance parameters:
+* `--pvals_correction_col_name` &mdash; for which column correction should be applied (default: pval_opt)
+* `--fdr_threshold` &mdash; keep anchors having corrected p-val below this value (default: 0.05)
+ 
+### Reporting parameters:
+* `--outname_prefix` &mdash; prefix of output file names (default: result)
+* `--n_most_freq_targets_for_stats` &mdash; use at most n_most_freq_targets_for_stats for each contignency table, 0 means use all (default: 0)
+* `--dump_Cjs` &mdash; output Cjs (default: False)
+* `--max_pval_opt_for_Cjs` &mdash; dump only Cjs for anchors that have pval_opt <= max_pval_opt_for_Cjs (default: 0.1)
+* `--n_most_freq_targets` &mdash; number of most frequent tragets printed per each anchor in stats mode (default: 2)
+* `--with_effect_size_cts` &mdash; if set effect_size_cts will be computed (default: False)
+* `--dump_sample_anchor_target_count_txt` &mdash; if set contignency tables will be generated in text format (default: False)
+* `--dump_sample_anchor_target_count_binary` &mdash; if set contignency tables will be generated in binary (SATC) format, to convert to text format later `satc_dump` program may be used, it may take optionally mapping from id to sample_name (--sample_names param) (default: False)
+* `--dont_clean_up` &mdash; if set then intermediate files will not be removed (default: False)                                                                                                     
+ 
+### Directory parameters:
+* `--sample_name_to_id` &mdash; file name with mapping sample name <-> sammpe id (default: sample_name_to_id.mapping.txt)                                                                                  * `--bin_path` &mdash; path to a directory where satc, satc_dump, satc_merge, sig_anch, kmc, kmc_tools binaries are (if any not found there nomad will check if installed and use installed) (default: ./)
+* `--tmp_dir` &mdash; path to a directory where temporary files will be stored (default: let nomad decide)
+* `--logs_dir` &mdash; director where run logs of each thread will be stored (default: logs)          
+ 
+### High Performance Computing parameters:
+* `--n_threads_stage_1` &mdash; number of threads for the first stage, too large value is not recomended because of intensive disk access here, but may be profitable if there is a lot of small size samples in the input (default: 4)
+* `--n_threads_stage_1_internal` &mdash; number of threads per each stage 1 thread (default: 8)
+* `--n_threads_stage_2` &mdash; number of threads for the second stage, high value is recommended if possible, single thread will process single bin (default: 32)
+* `--n_bins` &mdash; the data will be split in a number of bins that will be merged later (default: 128)
+* `--kmc_use_RAM_only_mode` &mdash; if set may increase performance but also RAM-usage (default: False)
+* `--kmc_max_mem_GB` &mdash; maximal amount of memory (in GB) KMC will try to not extend (default: 12)
+ 
+### Optimization parameters:
+* `--opt_num_inits` &mdash; the number of altMaximize random initializations (default: 10)
+* `--opt_num_iters` &mdash; the maximum number of iterations in altMaximize (default: 50)
+* `--num_rand_cf` &mdash; the number of random c and f used for pval_base (default: 50)
+* `--opt_train_fraction` &mdash; in calc_stats mode use this fraction to create training data from contingency table (default: 0.25)
+
+### 10X SC-RNAseq parameters:
+- `run_10X`
+- `cbc_len`
+- `umi_len`
+- `soft_cbc_umi_len_limit`
+- `cbc_filtering_thr`
+- `cell_type_samplesheet`
+ 
+### Supervised testing parameters:
+* `--supervised_test_samplesheet`
+* `--supervised_test_anchor_sample_fraction_cutoff`
+* `--supervised_test_num_anchors`
+
 ## Understanding the output
 There are following columns in the resulting tsv files
 |                 Column            |     Meaning                            |     Notes                                                                              |
@@ -147,57 +213,12 @@ The following three files are needed by the classification script for annotation
 - `Annotated splice junctions`: https://drive.google.com/file/d/1owlOQyP1z4cyFvYcAAA-qQmc-K6jGbs9/view?usp=share_link
 - `Paralogous genes`: https://drive.google.com/file/d/1mqGft4tPlx8X3cRYoqQnPeXaonLfSbGa/view?usp=share_link
 
-## Configuration
-There is a lot of parameters allowing to customize the pipeline. They can be grouped into several categories. 
-The parameters will be displayed when running nomad without parameters (or with `--help`).
- 
- ### Base configuration
- * `--outname_prefix` &mdash; prefix of output file names (default: result)
- * `--anchor_len` &mdash; anchor length (default: 27)
- * `--gap_len` &mdash; gap length, if 'auto' it will be inferred from the data, in the opposite case it must be an int (default: 0)
- * `--target_len` &mdash; target length (default: 27)
- * `--anchor_list` &mdash; list of accepted anchors, this is path to plain text file with one anchor per line without any header (default accept all achnors)
- * `--pvals_correction_col_name` &mdash; for which column correction should be applied (default: pval_opt)
-### Filters and thresholds:
- * `--poly_ACGT_len` &mdash; filter out all anchors containing poly(ACGT) of length at least <poly_ACGT_len> (0 means no filtering) (default: 8)
- * `--anchor_unique_targets_threshold` &mdash; filter out all anchors for which the number of unique targets is <= anchor_unique_targets_threshold (default: 1)
- * `--anchor_count_threshold` &mdash; filter out all anchors for which the total count <= anchor_count_threshold (default: 50)
- * `--anchor_samples_threshold` &mdash; filter out all anchors for which the number of unique samples is <= anchor_samples_threshold (default: 1)
- * `--anchor_sample_counts_threshold` &mdash; filter out anchor from sample if its count in this sample is <= anchor_sample_counts_threshold (default: 5)
- * `--n_most_freq_targets_for_stats` &mdash; use at most n_most_freq_targets_for_stats for each contignency table, 0 means use all (default: 0)
- * `--fdr_threshold` &mdash; keep anchors having corrected p-val below this value (default: 0.05)
-### Additional output configuration:
- * `--dump_Cjs` &mdash; output Cjs (default: False)
- * `--max_pval_opt_for_Cjs` &mdash; dump only Cjs for anchors that have pval_opt <= max_pval_opt_for_Cjs (default: 0.1)
- * `--n_most_freq_targets` &mdash; number of most frequent tragets printed per each anchor in stats mode (default: 2)
- * `--with_effect_size_cts` &mdash; if set effect_size_cts will be computed (default: False)
- * `--sample_name_to_id` &mdash; file name with mapping sample name <-> sammpe id (default: sample_name_to_id.mapping.txt)
- * `--dump_sample_anchor_target_count_txt` &mdash; if set contignency tables will be generated in text format (default: False)
- * `--dump_sample_anchor_target_count_binary` &mdash; if set contignency tables will be generated in binary (SATC) format, to convert to text format later `satc_dump` program may be used, it may take optionally mapping from id to sample_name (--sample_names param) (default: False)
-### Tuning statistics computation:
- * `--opt_num_inits` &mdash; the number of altMaximize random initializations (default: 10)
- * `--opt_num_iters` &mdash; the maximum number of iterations in altMaximize (default: 50)
- * `--num_rand_cf` &mdash; the number of random c and f used for pval_base (default: 50)
- * `--opt_train_fraction` &mdash; in calc_stats mode use this fraction to create training data from contingency table (default: 0.25)
-### Technical and performance-related:
- * `--bin_path` &mdash; path to a directory where satc, satc_dump, satc_merge, sig_anch, kmc, kmc_tools binaries are (if any not found there nomad will check if installed and use installed) (default: ./)
- * `--tmp_dir` &mdash; path to a directory where temporary files will be stored (default: let nomad decide)
- * `--n_threads_stage_1` &mdash; number of threads for the first stage, too large value is not recomended because of intensive disk access here, but may be profitable if there is a lot of small size samples in the input (default: 4)
- * `--n_threads_stage_1_internal` &mdash; number of threads per each stage 1 thread (default: 8)
- * `--n_threads_stage_2` &mdash; number of threads for the second stage, high value is recommended if possible, single thread will process single bin (default: 32)
- * `--n_bins` &mdash; the data will be split in a number of bins that will be merged later (default: 128)
- * `--kmc_use_RAM_only_mode` &mdash; if set may increase performance but also RAM-usage (default: False)
- * `--kmc_max_mem_GB` &mdash; maximal amount of memory (in GB) KMC will try to not extend (default: 12)
- * `--dont_clean_up` &mdash; if set then intermediate files will not be removed (default: False)
- * `--logs_dir` &mdash; director where run logs of each thread will be stored (default: logs)
-
 ## References
-
+Marek Kokot, Roozbeh Dehghannasiri, Tavor Baharav, Julia Salzman, and Sebastian Deorowicz.
+[NOMAD2 provides ultra-efficient, scalable, and unsupervised discovery on raw sequencing reads] (https://..) 
+bioRxiv (2023)
+ 
 Kaitlin Chaung, Tavor Baharav,  Ivan Zheludev, Julia Salzman. [A statistical, reference-free algorithm subsumes myriad problems in genome science and enables novel discovery](https://doi.org/10.1101/2022.06.24.497555), bioRxiv (2022)
  
 Tavor Baharav, David Tse, and Julia Salzman. 
 [An Interpretable, Finite Sample Valid Alternative to Pearson’s X2 for Scientific Discovery](https://www.biorxiv.org/content/10.1101/2023.03.16.533008), bioRxiv (2023)
- 
-Marek Kokot, Roozbeh Dehghannasiri, Tavor Baharav, Julia Salzman, and Sebastian Deorowicz.
-[NOMAD2 provides ultra-efficient, scalable, and unsupervised discovery on raw sequencing reads] (https://..) 
-bioRxiv (2023)
