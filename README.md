@@ -59,7 +59,7 @@ The second file contains only anchors whose corrected p-value is below 0.05.
 There is a lot of parameters allowing to customize the pipeline. They can be grouped into several categories. 
 The parameters will be displayed when running nomad without parameters (or with `--help`).
  
-### Input file parameters:
+### Input reads parameters:
 * `--input_file` &mdash;
 * `--anchor_list` &mdash; list of accepted anchors, this is path to plain text file with one anchor per line without any header (default accept all achnors)
 * `--anchor_len` &mdash; anchor length (default: 27)
