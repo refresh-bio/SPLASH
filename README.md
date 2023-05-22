@@ -145,13 +145,13 @@ Its format is one sample per line. Each line should contain the name of a sample
 
 **Important note:** if relative path is specified it is relative to the current working directory, not the directory of `input.txt`.
 
-## Example applications
+## Example Applications
 ### Human scRNA-Seq
 ### Human bulk RNA-Seq (tumor)
 ### Plants
 ### Microbial
 ### Non-model organisms (incomplete genome)
-### Immune repretiore profiling
+### Immune repertoire profiling
 ### Other
 
 ## Additional output
