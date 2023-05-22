@@ -145,6 +145,15 @@ Its format is one sample per line. Each line should contain the name of a sample
 
 **Important note:** if relative path is specified it is relative to the current working directory, not the directory of `input.txt`.
 
+## Example applications
+### Human scRNA-Seq
+### Human bulk RNA-Seq (tumor)
+### Plants
+### Microbial
+### Non-model organisms (incomplete genome)
+### Immune repretiore profiling
+### Other
+
 ## Additional output
 ### Most frequent targets per each anchor
 By default NOMAD will store 2 most frequent targets per each anchor in the resulting TSV files. This should be sufficient for splicing, but for RNA editing/missmatches 4 may be a better choice. It may be set with `--n_most_freq_targets` switch. If the number of targets for a given anchor is lower than specified value there will be a single `-` for each missing target.
