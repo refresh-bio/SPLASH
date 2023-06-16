@@ -18,7 +18,7 @@ class SmartFormatter(argparse.HelpFormatter):
         # this is the RawTextHelpFormatter._split_lines
         return argparse.HelpFormatter._split_lines(self, text, width)
 
-NOMAD_VERSION="2.0.0"
+NOMAD_VERSION="2.1.4"
 
 parser = argparse.ArgumentParser(
                     prog = "nomad",
@@ -40,18 +40,22 @@ group_base_configuration.add_argument("--pvals_correction_col_name", default="pv
 
 group_filters_and_thresholds = parser.add_argument_group('Filters and thresholds')
 group_filters_and_thresholds.add_argument("--poly_ACGT_len", default=8, type=int, help="filter out all anchors containing poly(ACGT) of length at least <poly_ACGT_len> (0 means no filtering)")
+group_filters_and_thresholds.add_argument("--artifacts", default="", type=str, help="path to artifacts, each anchor containing artifact will be filtered out")
+group_filters_and_thresholds.add_argument("--dont_filter_illumina_adapters", default=False, action='store_true', help="if used anchors containing Illumina adapters will not be filtered out")
 group_filters_and_thresholds.add_argument("--anchor_unique_targets_threshold", default=1, type=int, help="filter out all anchors for which the number of unique targets is <= anchor_unique_targets_threshold")
 group_filters_and_thresholds.add_argument("--anchor_count_threshold", default=50, type=int, help="filter out all anchors for which the total count <= anchor_count_threshold")
 group_filters_and_thresholds.add_argument("--anchor_samples_threshold", default=1, type=int, help="filter out all anchors for which the number of unique samples is <= anchor_samples_threshold")
 group_filters_and_thresholds.add_argument("--anchor_sample_counts_threshold", default=5, type=int, help="filter out anchor from sample if its count in this sample is <= anchor_sample_counts_threshold")
 group_filters_and_thresholds.add_argument("--n_most_freq_targets_for_stats", default=0, type=int, help="use at most n_most_freq_targets_for_stats for each contignency table, 0 means use all")
 group_filters_and_thresholds.add_argument("--fdr_threshold", default=0.05, type=float, help="keep anchors having corrected p-val below this value")
+group_filters_and_thresholds.add_argument("--min_hamming_threshold", default=0, type=int, help="keep only anchors with a pair of targets that differ by >= min_hamming_threshold")
 
 group_additional_out = parser.add_argument_group('Additional output configuration')
 group_additional_out.add_argument("--dump_Cjs", default=False, action='store_true', help="output Cjs")
 group_additional_out.add_argument("--max_pval_opt_for_Cjs", default=0.10, type=float, help="dump only Cjs for anchors that have pval_opt <= max_pval_opt_for_Cjs")
-group_additional_out.add_argument("--n_most_freq_targets", default=2, type=int, help="number of most frequent tragets printed per each anchor in stats mode")
+group_additional_out.add_argument("--n_most_freq_targets", default=2, type=int, help="number of most frequent tragets printed per each anchor")
 group_additional_out.add_argument("--with_effect_size_cts", default=False, action='store_true', help="if set effect_size_cts will be computed")
+group_additional_out.add_argument("--with_pval_asymp_opt", default=False, action='store_true', help="if set pval_asymp_opt will be computed")
 group_additional_out.add_argument("--sample_name_to_id", default="sample_name_to_id.mapping.txt", type=str, help="file name with mapping sample name <-> sammpe id")
 group_additional_out.add_argument("--dump_sample_anchor_target_count_txt", default=False, action='store_true', help="if set contignency tables will be generated in text format")
 group_additional_out.add_argument("--dump_sample_anchor_target_count_binary", default=False, action='store_true', help="if set contignency tables will be generated in binary (satc) format, to convert to text format later satc_dump program may be used, it may take optionally maping from id to sample_name (--sample_names param)")
@@ -60,10 +64,12 @@ group_tuning_stats = parser.add_argument_group('Tuning statistics computation')
 group_tuning_stats.add_argument("--opt_num_inits", default=10, type=int, help="the number of altMaximize runs")
 group_tuning_stats.add_argument("--opt_num_iters", default=50, type=int, help="the number of iteration in altMaximize")
 group_tuning_stats.add_argument("--num_rand_cf", default=50, type=int, help="the number of rand cf")
+group_tuning_stats.add_argument("--num_splits", default=1, type=int, help="the number of contingency table splits")
 group_tuning_stats.add_argument("--opt_train_fraction", default=0.25, type=float, help="in calc_stats mode use this fraction to create train X from contingency table")
+group_tuning_stats.add_argument("--without_alt_max", default=False, action='store_true', help="if set int alt max and related stats will not be computed")
 
 group_technical = parser.add_argument_group('Technical and performance-related')
-group_technical.add_argument("--bin_path", default="./", type=str, help="path to a directory where satc, satc_dump, satc_merge, sig_anch, kmc, kmc_tools binaries are (if any not found there nomad will check if installed and use installed)")
+group_technical.add_argument("--bin_path", default="bin", type=str, help="path to a directory where satc, satc_dump, satc_merge, sig_anch, kmc, kmc_tools binaries are (if any not found there nomad will check if installed and use installed)")
 group_technical.add_argument("--tmp_dir", default="", type=str, help="path to a directory where temporary files will be stored")
 group_technical.add_argument("--n_threads_stage_1", default=4, type=int, help="number of threads for the first stage, too large value is not recomended because of intensive disk access here, but may be profitable if there is a lot of small size samples in the input")
 group_technical.add_argument("--n_threads_stage_1_internal", default=8, type=int, help="number of threads per each stage 1 thread")
@@ -90,6 +96,8 @@ anchor_len = args.anchor_len
 target_len = args.target_len
 gap_len = args.gap_len
 poly_ACGT_len=args.poly_ACGT_len
+artifacts = args.artifacts
+dont_filter_illumina_adapters = args.dont_filter_illumina_adapters
 anchor_unique_targets_threshold = args.anchor_unique_targets_threshold
 anchor_count_threshold = args.anchor_count_threshold
 anchor_samples_threshold = args.anchor_samples_threshold
@@ -99,15 +107,19 @@ n_most_freq_targets_for_stats=args.n_most_freq_targets_for_stats
 opt_num_inits=args.opt_num_inits
 opt_num_iters=args.opt_num_iters
 num_rand_cf=args.num_rand_cf
+num_splits=args.num_splits
 opt_train_fraction=args.opt_train_fraction
 kmc_use_RAM_only_mode = args.kmc_use_RAM_only_mode
 kmc_max_mem_GB = args.kmc_max_mem_GB
+without_alt_max = args.without_alt_max
 with_effect_size_cts = args.with_effect_size_cts
+with_pval_asymp_opt = args.with_pval_asymp_opt
 sample_name_to_id = args.sample_name_to_id
 dump_sample_anchor_target_count_txt = args.dump_sample_anchor_target_count_txt
 dump_sample_anchor_target_count_binary = args.dump_sample_anchor_target_count_binary
 pvals_correction_col_name = args.pvals_correction_col_name
 fdr_threshold = args.fdr_threshold
+min_hamming_threshold = args.min_hamming_threshold
 outname_prefix=args.outname_prefix
 dump_Cjs=args.dump_Cjs
 max_pval_opt_for_Cjs=args.max_pval_opt_for_Cjs
@@ -276,6 +288,8 @@ print("Starting stage 1")
 print("Current time:", get_cur_time(), flush=True)
 
 def stage_1_task(id, input, out, err):
+    _artifacts_param = f"--artifacts {artifacts}" if artifacts != "" else ""
+    _dont_filter_illumina_adapters_param = "--dont_filter_illumina_adapters" if dont_filter_illumina_adapters else ""
     fname = input[0]
     sample_name = input[1]
     
@@ -300,7 +314,17 @@ def stage_1_task(id, input, out, err):
     if clean_up:
         remove_kmc_output(f"{tmp_dir}/{sample_name}")
     
-    cmd = f"{satc} --anchor_len {anchor_len} --target_len {target_len} --n_bins {n_bins} --anchor_sample_counts_threshold {anchor_sample_counts_threshold} --poly_ACGT_len {poly_ACGT_len} {tmp_dir}/{sample_name} {tmp_dir}/{sample_name}.sorted {id}"
+    cmd = f"{satc} \
+        --anchor_len {anchor_len} \
+        --target_len {target_len} \
+        --n_bins {n_bins} \
+        --anchor_sample_counts_threshold {anchor_sample_counts_threshold} \
+        --min_hamming_threshold {min_hamming_threshold} \
+        --poly_ACGT_len {poly_ACGT_len} \
+        {_artifacts_param} \
+        {_dont_filter_illumina_adapters_param} \
+        {tmp_dir}/{sample_name} \
+        {tmp_dir}/{sample_name}.sorted {id}"
     run_cmd(cmd, out, err)
     
     if clean_up:
@@ -367,10 +391,7 @@ else:
 # For each bin merge all samples
 # output: file {n_bins} files, where each have
 # its (sample, anchor, target, count)
-# this stage may be (and is intended to be) used to compute pvals
-# the current state of this may be enabled with --run_mode parameter
-# in the case when --run_mode is set to just_merge_and_dump
-# the format of the dump may be configured with --format parameter
+# this stage may be is used to compute pvals and other stats
 ###############################################################################
 
 print("Stage 1 done")
@@ -396,12 +417,26 @@ def stage_2_task(bin_id, out, err):
         for x in satc_merge_inputs:
             f.write(f"{x}\n")
     
+    _without_alt_max_param = "--without_alt_max" if without_alt_max else ""
     _with_effect_size_cts_param = "--with_effect_size_cts" if with_effect_size_cts else ""
+    _with_pval_asymp_opt_param = "--with_pval_asymp_opt" if with_pval_asymp_opt else ""
 
     _cjs_out_param = f"--cjs_out {Cjs_dir}/bin{bin_id}.cjs" if dump_Cjs else ""
 
+    _dump_sample_anchor_target_count_txt_param = ""
+    if dump_sample_anchor_target_count_txt:
+        dump_dir = f"{outname_prefix}_dumps"
+        _dump_sample_anchor_target_count_txt_param = f"--dump_sample_anchor_target_count_txt {dump_dir}/bin{bin_id}.satc.dump"
+
+    _dump_sample_anchor_target_count_binary_param = ""
+    if dump_sample_anchor_target_count_binary:
+        satc_dir = f"{outname_prefix}_satc"
+        _dump_sample_anchor_target_count_binary_param = f"--dump_sample_anchor_target_count_binary {satc_dir}/bin{bin_id}.satc"
+
     cmd=f"{satc_merge} \
+    {_without_alt_max_param} \
     {_with_effect_size_cts_param} \
+    {_with_pval_asymp_opt_param} \
     {_cjs_out_param} \
     --max_pval_opt_for_Cjs {max_pval_opt_for_Cjs} \
     --anchor_count_threshold {anchor_count_threshold} \
@@ -412,42 +447,15 @@ def stage_2_task(bin_id, out, err):
     --opt_num_inits {opt_num_inits} \
     --opt_num_iters {opt_num_iters} \
     --num_rand_cf {num_rand_cf} \
+    --num_splits {num_splits} \
     --opt_train_fraction {opt_train_fraction} \
-    --run_mode calc_stats \
+    {_dump_sample_anchor_target_count_txt_param} \
+    {_dump_sample_anchor_target_count_binary_param} \
     --sample_names {sample_name_to_id} \
+    --format satc \
     {anchor_list_param} \
     {tmp_dir}/{outname_prefix}.bin{bin_id}.stats.tsv {in_file_name}"
     run_cmd(cmd, out, err)
-
-    if dump_sample_anchor_target_count_txt:
-        dump_dir = f"{outname_prefix}_dumps"
-        if not os.path.exists(dump_dir):
-            os.makedirs(dump_dir)
-
-        cmd=f"{satc_merge} \
-        --anchor_count_threshold {anchor_count_threshold} \
-        --anchor_samples_threshold {anchor_samples_threshold} \
-        --anchor_unique_targets_threshold {anchor_unique_targets_threshold} \
-        --run_mode just_merge_and_dump \
-        --sample_names {sample_name_to_id} \
-        --format satc \
-        {anchor_list_param} \
-        {dump_dir}/bin{bin_id}.satc.dump {in_file_name}"
-        run_cmd(cmd, out, err)
-
-    if dump_sample_anchor_target_count_binary:
-        satc_dir = f"{outname_prefix}_satc"
-        if not os.path.exists(satc_dir):
-            os.makedirs(satc_dir)
-
-        cmd=f"{satc_merge} \
-        --anchor_count_threshold {anchor_count_threshold} \
-        --anchor_samples_threshold {anchor_samples_threshold} \
-        --anchor_unique_targets_threshold {anchor_unique_targets_threshold} \
-        --run_mode just_merge \
-        {anchor_list_param} \
-        {satc_dir}/bin{bin_id}.satc {in_file_name}"
-        run_cmd(cmd, out, err)
 
     if clean_up:
         os.remove(in_file_name)

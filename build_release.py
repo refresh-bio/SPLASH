@@ -24,6 +24,8 @@ def run_cmd(cmd):
     p = subprocess.Popen(cmd, shell=True)
     p.communicate()
 
+run_cmd("git submodule init")
+run_cmd("git submodule update")
 run_cmd("make clean")
 run_cmd("make -j32 release")
 

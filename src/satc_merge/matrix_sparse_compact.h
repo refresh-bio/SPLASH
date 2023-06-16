@@ -123,6 +123,11 @@ public:
 		return *this;
 	}
 
+	bool operator==(const matrix_sparse_compact<I, T, ORDER>& x) const
+	{
+		return n_rows == x.n_rows && n_cols == x.n_cols && data == x.data;
+	}
+
 	~matrix_sparse_compact()
 	{}
 
@@ -351,7 +356,7 @@ public:
 			if (p_src1->first == p_src2->first)
 			{
 				elem.second -= p_src2->second;
-				if(elem.second != (T)0)
+				if (elem.second != (T)0)
 					*p_dest++ = elem;
 				++p_src1;
 				++p_src2;
@@ -383,6 +388,60 @@ public:
 
 			data.insert(data.end(), new_elems.begin(), new_elems.end());
 			
+			// TODO: consider using inplace_merge here
+			std::sort(data.begin(), data.end());
+		}
+
+		return *this;
+	}
+
+	matrix_sparse_compact<I, T, ORDER>& operator+=(matrix_sparse_compact<I, T, ORDER>& x)
+	{
+		data_t new_elems;
+
+		auto p_src1 = data.begin();
+		auto p_src2 = x.data.begin();
+		auto p_dest = data.begin();
+
+		auto p_end1 = data.end();
+		auto p_end2 = x.data.end();
+
+		while (p_src1 != p_end1 && p_src2 != p_end2)
+		{
+			auto elem = *p_src1;
+
+			if (p_src1->first == p_src2->first)
+			{
+				elem.second += p_src2->second;
+				if (elem.second != (T)0)
+					*p_dest++ = elem;
+				++p_src1;
+				++p_src2;
+			}
+			else if (p_src1->first < p_src2->first)
+			{
+				*p_dest++ = elem;
+				++p_src1;
+			}
+			else
+			{
+				new_elems.emplace_back(*p_src2);
+				++p_src2;
+			}
+		}
+
+		if (p_src1 != p_end1)
+			while (p_src1 != p_end1)
+				*p_dest++ = *p_src1++;
+		else
+			new_elems.insert(new_elems.end(), p_src2, p_end2);
+
+		data.erase(p_dest, p_end1);
+
+		if (!new_elems.empty())
+		{
+			data.insert(data.end(), new_elems.begin(), new_elems.end());
+
 			// TODO: consider using inplace_merge here
 			std::sort(data.begin(), data.end());
 		}

@@ -4,11 +4,15 @@
 #include <fstream>
 #include <algorithm>
 #include "../common/version.h"
-#include "kmc_api/kmer_api.h"
-#include "kmc_api/kmc_file.h"
+#include "../common/kmc_api/kmer_api.h"
+#include "../common/kmc_api/kmc_file.h"
 #include "../common/murmur64.h"
 #include "../common/satc_data.h"
 #include "../common/poly_ACGT_filter.h"
+#include "../common/artifacts_filter.h"
+#include "../common/hamming_filter.h"
+#include "../common/illumina_adapters_static.h"
+#include "../common/target_count.h"
 
 struct SampleDesc
 {
@@ -24,6 +28,9 @@ struct Params
 	uint64_t n_bins{};
 	uint64_t anchor_sample_counts_threshold{}; //keep only anchors with counts > anchor_sample_counts_threshold
 	uint64_t poly_ACGT_len{};
+	uint64_t min_hamming_threshold{};
+	std::string artifacts;
+	bool dont_filter_illumina_adapters = false;
 	std::string out_base;
 	void Print(std::ostream& oss) const
 	{
@@ -33,6 +40,9 @@ struct Params
 		oss << "outbase                        : " << out_base << "\n";
 		oss << "anchor_sample_counts_threshold : " << anchor_sample_counts_threshold << "\n";
 		oss << "poly_ACGT_len                  : " << poly_ACGT_len << "\n";
+		oss << "artifacts                      : " << artifacts << "\n";
+		oss << "dont_filter_illumina_adapters  : " << std::boolalpha << dont_filter_illumina_adapters << "\n";
+		oss << "min_hamming_threshold          : " << min_hamming_threshold << "\n";
 		oss << "input sample                   : " << input_sample.input_kmc_db_path << " " << input_sample.sample_id << "\n";
 	}
 	static void Usage(char* prog_name) {
@@ -50,12 +60,17 @@ struct Params
 			<< "    --target_len <int> - target len\n"
 			<< "    --n_bins <int> - number of output bins\n"
 			<< "    --poly_ACGT_len <int> - all anchors containing polyACGT of this length will be filtered out (0 means no filtering)\n"
-			<< "    --anchor_sample_counts_threshold <int> - keep only anchors with counts > anchor_sample_counts_threshold\n";
+			<< "    --artifacts <string> - path to artifacts, each anchor containing artifact will be filtered out\n"
+			<< "    --dont_filter_illumina_adapters - if used anchors containing Illumina adapters will not be filtered out\n"
+			<< "    --anchor_sample_counts_threshold <int> - keep only anchors with counts > anchor_sample_counts_threshold\n"
+			<< "    --min_hamming_threshold <int> - keep only anchors with a pair of targets that differ by >= min_hamming_threshold\n";
 	}
 };
 
 struct Stats {
 	uint64_t tot_poly_filtered_out{};
+	uint64_t tot_artifacts_filtered_out{};
+	uint64_t tot_hamming_distance_filtered_out{};
 	uint64_t tot_cnt_threshold_filtered_out{};
 	uint64_t tot_unique_anchors{};
 	uint64_t tot_out_recs{};
@@ -63,6 +78,8 @@ struct Stats {
 
 	void print(std::ostream& oss) const {
 		oss << "# poly filtered anchors	               : " << tot_poly_filtered_out << "\n";
+		oss << "# artifacts filtered anchors	       : " << tot_artifacts_filtered_out << "\n";
+		oss << "# hamming distance filtered anchors    : " << tot_hamming_distance_filtered_out << "\n";
 		oss << "# filtered cnt threshold anchors       : " << tot_cnt_threshold_filtered_out << "\n";
 		oss << "# unique anchors                       : " << tot_unique_anchors << "\n";
 		oss << "# out recs                             : " << tot_out_recs << "\n";
@@ -105,6 +122,14 @@ Params read_params(int argc, char** argv)
 			std::string tmp = argv[++i];
 			res.poly_ACGT_len = std::stoull(tmp);
 		}
+		else if (param == "--min_hamming_threshold") {
+			std::string tmp = argv[++i];
+			res.min_hamming_threshold = std::stoull(tmp);
+		}
+		else if (param == "--artifacts")
+			res.artifacts = argv[++i];
+		else if (param == "--dont_filter_illumina_adapters")
+			res.dont_filter_illumina_adapters = true;
 	}
 	if (i >= argc) {
 		std::cerr << "Error: outbase missing\n";
@@ -160,17 +185,6 @@ void split(CKmerAPI& to_split, uint64_t& anchor, uint64_t& target, uint8_t ancho
 	target = to_split.subkmer(to_split.get_len() - target_len_symbols, target_len_symbols);
 }
 
-struct TargetCount {
-	uint64_t target;
-	uint32_t count;
-	TargetCount(uint64_t target, uint32_t count) :
-		target(target),
-		count(count)
-	{
-
-	}
-};
-
 void sort_merge_and_store(uint64_t anchor,
 						  std::vector<TargetCount>& targets_in_current_anchor,
 						  const Header& header,
@@ -178,6 +192,8 @@ void sort_merge_and_store(uint64_t anchor,
 						  std::vector<buffered_binary_writer>& bins,
 						  uint64_t anchor_sample_counts_threshold,
 						  const PolyACGTFilter& poly_ACGT_filter,
+						  const ArtifactsFilter& artifacts_filter,
+						  const HammingFilter& hamming_filter,
 						  Stats& stats) {
 	rec.anchor = anchor;
 	if (targets_in_current_anchor.empty())
@@ -192,13 +208,23 @@ void sort_merge_and_store(uint64_t anchor,
 	for (auto& x : targets_in_current_anchor)
 		tot_count += x.count;
 
+	if (tot_count <= anchor_sample_counts_threshold) {
+		++stats.tot_cnt_threshold_filtered_out;
+		return;
+	}
+
 	if (poly_ACGT_filter.IsPolyACGT(anchor, header.anchor_len_symbols)) {
 		++stats.tot_poly_filtered_out;
 		return;
 	}
 
-	if (tot_count <= anchor_sample_counts_threshold) {
-		++stats.tot_cnt_threshold_filtered_out;
+	if (artifacts_filter.ContainsArtifact(anchor, header.anchor_len_symbols)) {
+		++stats.tot_artifacts_filtered_out;
+		return;
+	}
+
+	if (!hamming_filter.ContainsDistantPair(targets_in_current_anchor)) {
+		++stats.tot_hamming_distance_filtered_out;
 		return;
 	}
 
@@ -233,6 +259,8 @@ void process_kmc_db(const std::string& path,
 					std::vector<buffered_binary_writer>& bins,
 					uint64_t anchor_sample_counts_threshold,
 					const PolyACGTFilter& poly_ACGT_filter,
+					const ArtifactsFilter& artifacts_filter,
+					const HammingFilter& hamming_filter,
 					Stats& stats)
 {
 	CKMCFile kmc_db;
@@ -279,7 +307,17 @@ void process_kmc_db(const std::string& path,
 		if (prev_anchor == anchor)
 			targets_in_current_anchor.emplace_back(target, count);
 		else {
-			sort_merge_and_store(prev_anchor, targets_in_current_anchor, header, rec, bins, anchor_sample_counts_threshold, poly_ACGT_filter, stats);
+			sort_merge_and_store(prev_anchor,
+				targets_in_current_anchor,
+				header,
+				rec,
+				bins,
+				anchor_sample_counts_threshold,
+				poly_ACGT_filter,
+				artifacts_filter,
+				hamming_filter,
+				stats);
+
 			targets_in_current_anchor.clear();
 			targets_in_current_anchor.emplace_back(target, count);
 			prev_anchor = anchor;
@@ -291,7 +329,16 @@ void process_kmc_db(const std::string& path,
 	}
 	std::cerr << "\n";
 
-	sort_merge_and_store(prev_anchor, targets_in_current_anchor, header, rec, bins, anchor_sample_counts_threshold, poly_ACGT_filter, stats);
+	sort_merge_and_store(prev_anchor,
+		targets_in_current_anchor,
+		header,
+		rec,
+		bins,
+		anchor_sample_counts_threshold,
+		poly_ACGT_filter,
+		artifacts_filter,
+		hamming_filter,
+		stats);
 	targets_in_current_anchor.clear();
 }
 
@@ -361,8 +408,21 @@ int main(int argc, char** argv)
 	Stats stats;
 
 	PolyACGTFilter poly_ACGT_filter(params.poly_ACGT_len);
+	ArtifactsFilter artifacts_filter(params.artifacts);
+	HammingFilter hamming_filter(params.min_hamming_threshold);
 
-	process_kmc_db(params.input_sample.input_kmc_db_path, params.input_sample.sample_id, header, out_files, params.anchor_sample_counts_threshold, poly_ACGT_filter, stats);
+	if (!params.dont_filter_illumina_adapters)
+		artifacts_filter.Add(12, IlluminaAdaptersStatic::Get12Mers());
+
+	process_kmc_db(params.input_sample.input_kmc_db_path,
+		params.input_sample.sample_id,
+		header,
+		out_files,
+		params.anchor_sample_counts_threshold,
+		poly_ACGT_filter,
+		artifacts_filter,
+		hamming_filter,
+		stats);
 
 	stats.print(std::cerr);
 }

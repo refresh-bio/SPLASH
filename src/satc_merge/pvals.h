@@ -21,7 +21,7 @@ struct AnchorStats {
 	double effect_size_cts;
 	double effect_size_bin;
 	double effect_size_bin_old;
-	double pval_asymp_base;
+	double pval_asymp_opt;
 	double entropy;
 	double avg_no_homopolymer_targets;
 	double avg_hamming_distance_max_target;
@@ -43,7 +43,7 @@ struct AnchorStats {
 	std::vector<uint32_t> cell_types_ids;  //unique ids of cell types for a given Xtrain contignency table
 
 	AnchorStats(double pval_base, double pval_base_old, double pval_opt,
-		double effect_size_cts, double effect_size_bin, double effect_size_bin_old, double pval_asymp_base, double entropy,
+		double effect_size_cts, double effect_size_bin, double effect_size_bin_old, double pval_asymp_opt, double entropy,
 		double avg_no_homopolymer_targets,
 		double avg_hamming_distance_max_target, double avg_hamming_distance_all_pairs,
 		double avg_edit_distance_max_target, double avg_edit_distance_all_pairs
@@ -54,7 +54,7 @@ struct AnchorStats {
 		effect_size_cts(effect_size_cts),
 		effect_size_bin(effect_size_bin),
 		effect_size_bin_old(effect_size_bin_old),
-		pval_asymp_base(pval_asymp_base),
+		pval_asymp_opt(pval_asymp_opt),
 		entropy(entropy),
 		avg_no_homopolymer_targets(avg_no_homopolymer_targets),
 		avg_hamming_distance_max_target(avg_hamming_distance_max_target),
@@ -70,7 +70,7 @@ struct AnchorStats {
 		effect_size_cts(0),
 		effect_size_bin(0),
 		effect_size_bin_old(0),
-		pval_asymp_base(1),
+		pval_asymp_opt(1),
 		entropy(0),
 		avg_no_homopolymer_targets(0),
 		avg_hamming_distance_max_target(0),
@@ -322,12 +322,14 @@ void compute_stats(
 	AnchorStats &anchor_stats,
 	bool without_alt_max,
 	bool with_effect_size_cts,
+	bool with_pval_asymp_opt,
 	bool compute_also_old_base_pvals,
 	uint32_t n_most_freq_targets,
 	double opt_train_fraction,
 	int opt_num_inits,
 	int opt_num_iters,
 	size_t num_rand_cf,
+	size_t num_splits,
 	CjWriter& cj_writer,
 	double max_pval_opt_for_Cjs,
 	CBCToCellType* cbc_to_cell_type,

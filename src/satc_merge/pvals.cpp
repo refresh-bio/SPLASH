@@ -5,6 +5,7 @@
 #include <cmath>
 #include <fstream>
 
+#include "../../libs/refresh/deterministic_random.h"
 #include "pvals.h"
 #include "get_train_mtx.h"
 #include "helmert_decomposition.h"
@@ -203,7 +204,7 @@ double computeAsympNOMAD(const refresh::matrix_sparse_compact<uint32_t, double, 
 
 	// cdf = std::erfc(-x / std::sqrt(2)) / 2;
 
-	double pval = 2 * erfc(abs(normalizedTestStat) / sqrt(2)) / 2;
+	double pval = 2 * erfc(fabs(normalizedTestStat) / sqrt(2)) / 2;
 
 //	cout << pval << endl;
 
@@ -318,12 +319,12 @@ double altMaximize(const refresh::matrix_sparse_compact<uint32_t, double, refres
 //		auto f2 = 1.0 - f1;
 
 		calc_S.set_f(f1);
-		double v1 = abs(calc_S.mult_fT_Xtild_c());
+		double v1 = fabs(calc_S.mult_fT_Xtild_c());
 
 		f1.negate_sign_01();
 //		calc_S.set_f(f2);
 		calc_S.set_f(f1);
-		double v2 = abs(calc_S.mult_fT_Xtild_c());
+		double v2 = fabs(calc_S.mult_fT_Xtild_c());
 
 		if (v1 >= v2)
 		{
@@ -349,10 +350,10 @@ double altMaximize(const refresh::matrix_sparse_compact<uint32_t, double, refres
 		S = calc_S.mult_fT_Xtild_c();
 
 		if (S == Sold)
-			return abs(S);
+			return fabs(S);
 
-		if (i == n_iters - 1 && S != 0 && abs((S - Sold) / S) < 0.001)
-			return abs(S);
+		if (i == n_iters - 1 && S != 0 && fabs((S - Sold) / S) < 0.001)
+			return fabs(S);
 
 		Sold = S;
 	}
@@ -366,8 +367,8 @@ double altMaximize(const refresh::matrix_sparse_compact<uint32_t, double, refres
 //void generate_alt_max_cf(const refresh::matrix_sparse<uint32_t, double, refresh::matrix_col_major>& X_org, refresh::matrix_1d<double>& cOpt, refresh::matrix_1d<double>& fOpt, int no_tries, int opt_num_iters)
 void generate_alt_max_cf(const refresh::matrix_sparse_compact<uint32_t, double, refresh::matrix_col_major>& X_org, refresh::matrix_1d<double>& cOpt, refresh::matrix_1d<double>& fOpt, int no_tries, int opt_num_iters)
 {
-	std::default_random_engine eng;
-	std::uniform_int_distribution<int> dist_0_1(0, 1);
+	std::mt19937_64 eng;
+	det_uniform_int_distribution dist_0_1(0, 1);
 	double minus_1_and_1[] = { -1, 1 };
 
 	std::vector<uint64_t> non_zero_cols;
@@ -422,8 +423,8 @@ void generate_alt_max_cf(const refresh::matrix_sparse_compact<uint32_t, double, 
 
 void generate_f_from_c(const refresh::matrix_sparse_compact<uint32_t, double, refresh::matrix_col_major>& X_org, const refresh::matrix_1d<double>& cOpt, refresh::matrix_1d<double>& fOpt)
 {
-	std::default_random_engine eng;
-	std::uniform_int_distribution<int> dist_0_1(0, 1);
+	std::mt19937_64 eng;
+	det_uniform_int_distribution dist_0_1(0, 1);
 
 	std::vector<uint64_t> non_zero_rows;
 
@@ -449,9 +450,9 @@ void generate_f_from_c(const refresh::matrix_sparse_compact<uint32_t, double, re
 	auto f2 = 1.0 - f1;
 
 	calc_S.set_f(f1);
-	double v1 = abs(calc_S.mult_fT_Xtild_c());
+	double v1 = fabs(calc_S.mult_fT_Xtild_c());
 	calc_S.set_f(f2);
-	double v2 = abs(calc_S.mult_fT_Xtild_c());
+	double v2 = fabs(calc_S.mult_fT_Xtild_c());
 
 	refresh::matrix_1d<double> fMax;
 
@@ -503,10 +504,12 @@ void get_most_freq_targets(
 	}
 }
 
+double calc_pval_base(
+	const refresh::matrix_sparse_compact<uint32_t, double, refresh::matrix_col_major>& sp_anch_contingency_table,
+	size_t num_rand_cf,
+	std::mt19937_64& eng) {
 
-//double calc_pval_base(const refresh::matrix_sparse<uint32_t, double, refresh::matrix_col_major>& sp_anch_contingency_table, size_t num_rand_cf, std::default_random_engine& eng) {
-double calc_pval_base(const refresh::matrix_sparse_compact<uint32_t, double, refresh::matrix_col_major>& sp_anch_contingency_table, size_t num_rand_cf, std::default_random_engine& eng) {
-	std::uniform_int_distribution<int> dist_0_1(0, 1);
+	det_uniform_int_distribution dist_0_1(0, 1);
 	double minus_1_and_1[] = { -1, 1 };
 	double zero_and_1[] = { 0, 1 };
 	double min_pval = std::numeric_limits<double>::max();
@@ -528,11 +531,16 @@ double calc_pval_base(const refresh::matrix_sparse_compact<uint32_t, double, ref
 	return pval_base;
 }
 
-//double calc_pval_base(const refresh::matrix_sparse<uint32_t, double, refresh::matrix_col_major>& sp_anch_contingency_table, size_t num_rand_cf, std::default_random_engine& eng) {
 // Extended version, returning also old_pval_base and fOptR and cOptR
-double calc_pval_base_ext(const refresh::matrix_sparse_compact<uint32_t, double, refresh::matrix_col_major>& sp_anch_contingency_table, size_t num_rand_cf, std::default_random_engine& eng,
-	double &pval_base_old, refresh::matrix_1d<double> &fOptR, refresh::matrix_1d<double> &cOptR) {
-	std::uniform_int_distribution<int> dist_0_1(0, 1);
+double calc_pval_base_ext(
+	const refresh::matrix_sparse_compact<uint32_t, double, refresh::matrix_col_major>& sp_anch_contingency_table,
+	size_t num_rand_cf,
+	std::mt19937_64& eng,
+	double &pval_base_old,
+	refresh::matrix_1d<double> &fOptR,
+	refresh::matrix_1d<double> &cOptR) {
+
+	det_uniform_int_distribution dist_0_1(0, 1);
 	double minus_1_and_1[] = { -1, 1 };
 	double zero_and_1[] = { 0, 1 };
 	double min_pval = std::numeric_limits<double>::max();
@@ -574,12 +582,14 @@ void compute_stats(
 	AnchorStats& anchor_stats,
 	bool without_alt_max,
 	bool with_effect_size_cts,
+	bool with_pval_asymp_opt,
 	bool compute_also_old_base_pvals,
 	uint32_t n_most_freq_targets,
 	double opt_train_fraction,
 	int opt_num_inits,
 	int opt_num_iters,
 	size_t num_rand_cf,
+	size_t num_splits,
 	CjWriter& cj_writer,
 	double max_pval_opt_for_Cjs,
 	CBCToCellType* cbc_to_cell_type,
@@ -596,8 +606,7 @@ void compute_stats(
 //	refresh::matrix_sparse<uint32_t, double, refresh::matrix_col_major> sp_anch_contingency_table(n_uniq_targets, n_unique_samples);
 	refresh::matrix_sparse_compact<uint32_t, double, refresh::matrix_col_major> sp_anch_contingency_table(n_uniq_targets, n_unique_samples);
 
-	std::default_random_engine eng;
-	//std::default_random_engine eng(std::random_device{}()); 
+	std::mt19937_64 eng;
 
 	SampleToColMapper mapper(unique_samples);
 
@@ -614,7 +623,7 @@ void compute_stats(
 
 	sp_anch_contingency_table.reserve(anchor.data.size());
 
-		size_t row_id = 0;
+	size_t row_id = 0;
 	for (const auto& e : anchor.data) {
 		if (target != e.target) { //new target -> new row
 			++row_id;
@@ -674,13 +683,55 @@ void compute_stats(
 
 		anchor_stats.pval_opt = testPval(Xtest, cOpt, fOpt);
 
+		if (with_pval_asymp_opt)
+			anchor_stats.pval_asymp_opt = computeAsympNOMAD(Xtest, cOpt, fOpt);
+
 		anchor_stats.effect_size_bin = effectSize_bin(Xtest, cOpt, fOpt);
 
 		if (with_effect_size_cts)
 			anchor_stats.effect_size_cts = effectSize_cts(Xtest, cOpt, fOpt);
 
-		anchor_stats.pval_asymp_base = computeAsympNOMAD(Xtest, cOpt, fOpt);
+		if (num_splits > 1) {
+			//I create new cOpt because in the cOpt I will have the optimal one, which may be needed to print it
+			refresh::matrix_1d<double> new_cOpt(Xtrain.cols());
 
+			for (size_t split_no = 1; split_no < num_splits; ++split_no)
+			{
+				//reconstruct contingency table
+				sp_anch_contingency_table = std::move(Xtest += Xtrain);
+
+				//make a new split
+				Xtrain = get_train_mtx_2(sp_anch_contingency_table, opt_train_fraction, eng);
+				sp_anch_contingency_table -= Xtrain;
+				auto Xtest = std::move(sp_anch_contingency_table);
+
+				generate_alt_max_cf(Xtrain, new_cOpt, fOpt, opt_num_inits, opt_num_iters);
+
+				if (with_pval_asymp_opt) {
+					auto new_pval_asymp_opt = computeAsympNOMAD(Xtest, new_cOpt, fOpt);
+					if (new_pval_asymp_opt < anchor_stats.pval_asymp_opt)
+						anchor_stats.pval_asymp_opt = new_pval_asymp_opt;
+				}
+
+				auto new_pval_opt = testPval(Xtest, new_cOpt, fOpt);
+				if (new_pval_opt < anchor_stats.pval_opt)
+				{
+					anchor_stats.pval_opt = new_pval_opt;
+					anchor_stats.effect_size_bin = effectSize_bin(Xtest, new_cOpt, fOpt);
+
+					if (with_effect_size_cts)
+						anchor_stats.effect_size_cts = effectSize_cts(Xtest, new_cOpt, fOpt);
+
+					if (cj_writer)
+						cOpt = new_cOpt;
+				}
+			}
+
+			anchor_stats.pval_opt *= num_splits;
+			if (with_pval_asymp_opt) {
+				anchor_stats.pval_asymp_opt *= num_splits;
+			}
+		}
 		if (cj_writer && anchor_stats.pval_opt <= max_pval_opt_for_Cjs)
 		{
 			for (size_t col_id = 0; col_id < cOpt.size(); ++col_id)
