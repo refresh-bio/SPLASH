@@ -117,7 +117,7 @@ struct Params
 
 	static void Usage(char* prog_name) {
 		std::cerr << "satc_merge\n";
-		NOMAD_VER_PRINT(std::cerr);
+		SPLASH_VER_PRINT(std::cerr);
 		std::cerr << "Usage: \n\t" << prog_name << " [options] <path> <outpath> <list_of_bins_to_merge>\n";
 		std::cerr
 			<< "Positional parameters:\n"
@@ -148,7 +148,7 @@ struct Params
 			<< "    --sample_names <path>                             - path for decode sample id, each line should contain <sample_name> <sample_id>\n"
 			<< "    --cell_type_samplesheet <path>                    - path for mapping barcode to cell type, is used Helmert-based supervised mode is turned on\n"
 			<< "    --Cjs_samplesheet <path>                          - path for file with predefined Cjs for non-10X supervised mode\n"
-			<< "    --format <string>                                 - output format when txt dump, available options: satc, nomad (default: satc)\n";
+			<< "    --format <string>                                 - output format when txt dump, available options: satc, splash (default: satc)\n";
 	}
 };
 

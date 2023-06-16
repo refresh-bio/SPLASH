@@ -1,22 +1,22 @@
-# NOMAD 2.0
+# SPLASH 2
 ## Introduction
-NOMAD is an unsupervised and reference-free unifying framework to discover regulated sequence variation through statistical analysis of k-mer composition in both DNA and RNA sequence. 
-NOMAD leverages our observation that detecting sample-regulated sequence variation, such as alternative splicing, RNA editing, gene fusions, V(D)J, transposable element mobilization, allele-specific splicing, genetic variation in a population, and many other regulated events can be unified–in theory and in practice.
-This is achieved with a simple model, NOMAD, that analyzes k-mer composition of raw sequencing reads (Chaung et al. 2022). 
-NOMAD finds constant sequences (anchors) that are followed by a set of sequences (targets) with sample-specific target variation and provides valid p-values. 
-NOMAD is reference-free, sidestepping the computational challenges associated with alignment and making it significantly faster and more efficient than alignment, and enabling discovery and statistical precision not currently available, even from pseudo-alignment.
+SPLASH is an unsupervised and reference-free unifying framework to discover regulated sequence variation through statistical analysis of k-mer composition in both DNA and RNA sequence. 
+SPLASH leverages our observation that detecting sample-regulated sequence variation, such as alternative splicing, RNA editing, gene fusions, V(D)J, transposable element mobilization, allele-specific splicing, genetic variation in a population, and many other regulated events can be unified–in theory and in practice.
+This is achieved with a simple model, SPLASH, that analyzes k-mer composition of raw sequencing reads (Chaung et al. 2022). 
+SPLASH finds constant sequences (anchors) that are followed by a set of sequences (targets) with sample-specific target variation and provides valid p-values. 
+SPLASH is reference-free, sidestepping the computational challenges associated with alignment and making it significantly faster and more efficient than alignment, and enabling discovery and statistical precision not currently available, even from pseudo-alignment.
 
-The first version of [NOMAD](https://github.com/salzman-lab/nomad/) pipeline proved its usefullness.
+The first version of [SPLASH](https://github.com/salzman-lab/splash/) pipeline proved its usefullness.
 It was implemented mainly in Python with the use of NextFlow.
 Here we provide a new and improved implementation based in C++ and Python (Kokot et al. 2023).
 This new version is much more efficient and allows for the analysis of datasets >1TB size in hours on a workstation or even a laptop.
 
 ## How does it work
 
-A key concept of NOMAD is the analysis of composition of pairs of substrings *anchor*&ndash;*target* across many samples.
+A key concept of SPLASH is the analysis of composition of pairs of substrings *anchor*&ndash;*target* across many samples.
 The substrings can be adjacent in reads or can be separated by a *gap*.
 
-The image below presents the NOMAD pipeline on a high-level.
+The image below presents the SPLASH pipeline on a high-level.
 
 ![image](https://user-images.githubusercontent.com/9378882/225988504-70266e4d-37e0-4c85-8c95-e47ad208cda9.png)
 
@@ -24,21 +24,21 @@ The image below presents the NOMAD pipeline on a high-level.
 
 ## Installation
 ### Precompiled binaries
-The easiest way to get nomad is to use [precompiled release](https://github.com/refresh-bio/NOMAD/releases).
-To get the version 2.0.0 and run the example is is sufficient to do:
+The easiest way to get SPLASH is to use [precompiled release](https://github.com/refresh-bio/SPLASH/releases).
+To get the version 2.1.4 and run the example is is sufficient to do:
 ```
-curl -L https://github.com/refresh-bio/NOMAD/releases/download/v2.0.0/nomad-2.0.0.linux.x64.tar.gz | tar xz
+curl -L https://github.com/refresh-bio/SPLASH/releases/download/v2.1.4/splash-2.1.4.linux.x64.tar.gz | tar xz
 cd example
 ./run-example.sh
 ```
 ### Compile from sources
-NOMAD is implemented as a number of applications written in the C++ programming language and a Python wrapper to run the whole pipeline.
+SPLASH is implemented as a number of applications written in the C++ programming language and a Python wrapper to run the whole pipeline.
 Currently the software may be used only under Linux. 
 A compiler supporting C++17 is needed to compile the code.
-Use following snippet to install NOMAD.
+Use following snippet to install SPLASH.
 ```
-git clone https://github.com/refresh-bio/nomad
-cd nomad
+git clone https://github.com/refresh-bio/splash
+cd splash
 make -j
 sudo make install
 ```
@@ -47,7 +47,7 @@ To verify the installation on small example one may perform:
 ```
 cd example
 ./download.py #download examplary data
-nomad input.txt #run the pipeline with default parameters
+splash input.txt #run the pipeline with default parameters
 ```
 The result consists of two TSV files, namely,
  1. `result.after_correction.all_anchors.tsv` 
@@ -57,7 +57,7 @@ The second file contains only anchors whose corrected p-value is below 0.05.
 
 ## Inputs
 There is a lot of parameters allowing to customize the pipeline. They can be grouped into several categories. 
-The parameters will be displayed when running nomad without parameters (or with `--help`).
+The parameters will be displayed when running splash without parameters (or with `--help`).
  
 ### Input reads parameters:
 * `--input_file` &mdash;
@@ -89,8 +89,9 @@ The parameters will be displayed when running nomad without parameters (or with 
 * `--dont_clean_up` &mdash; if set then intermediate files will not be removed (default: False)                                                                                                     
  
 ### Directory parameters:
-* `--sample_name_to_id` &mdash; file name with mapping sample name <-> sammpe id (default: sample_name_to_id.mapping.txt)                                                                                  * `--bin_path` &mdash; path to a directory where satc, satc_dump, satc_merge, sig_anch, kmc, kmc_tools binaries are (if any not found there nomad will check if installed and use installed) (default: ./)
-* `--tmp_dir` &mdash; path to a directory where temporary files will be stored (default: let nomad decide)
+* `--sample_name_to_id` &mdash; file name with mapping sample name <-> sammpe id (default: sample_name_to_id.mapping.txt)                                                                                 
+* `--bin_path` &mdash; path to a directory where satc, satc_dump, satc_merge, sig_anch, kmc, kmc_tools binaries are (if any not found there splash will check if installed and use installed) (default: ./)
+* `--tmp_dir` &mdash; path to a directory where temporary files will be stored (default: let splash decide)
 * `--logs_dir` &mdash; director where run logs of each thread will be stored (default: logs)          
  
 ### High Performance Computing parameters:
@@ -156,16 +157,16 @@ Its format is one sample per line. Each line should contain the name of a sample
 
 ## Additional output
 ### Most frequent targets per each anchor
-By default NOMAD will store 2 most frequent targets per each anchor in the resulting TSV files. This should be sufficient for splicing, but for RNA editing/missmatches 4 may be a better choice. It may be set with `--n_most_freq_targets` switch. If the number of targets for a given anchor is lower than specified value there will be a single `-` for each missing target.
+By default SPLASH will store 2 most frequent targets per each anchor in the resulting TSV files. This should be sufficient for splicing, but for RNA editing/missmatches 4 may be a better choice. It may be set with `--n_most_freq_targets` switch. If the number of targets for a given anchor is lower than specified value there will be a single `-` for each missing target.
 ### SATC format
-NOMAD stores intermediate and optional output files in SATC format (**S**ample **A**nchor **T**arget **C**ount).
+SPLASH stores intermediate and optional output files in SATC format (**S**ample **A**nchor **T**arget **C**ount).
 ### Sample representation
-The unique id is assigned to each sample. The ids are consecutive numbers starting with 0. The first sample from the input file gets id 0, the second one gets 1, and so on. By default NOMAD will store the mapping in `sample_name_to_id.mapping.txt` file, but this may be redefined with `--sample_name_to_id` parameter. This mapping file may be useful to access the data stored in SATC format.
+The unique id is assigned to each sample. The ids are consecutive numbers starting with 0. The first sample from the input file gets id 0, the second one gets 1, and so on. By default SPLASH will store the mapping in `sample_name_to_id.mapping.txt` file, but this may be redefined with `--sample_name_to_id` parameter. This mapping file may be useful to access the data stored in SATC format.
 ### Output sample, anchor, target, count
 #### Textual
 When `--dump_sample_anchor_target_count_txt` switch is used there will be an additional output directory (named `result_dump` by default, but the `results` part may be redefined with `--outname_prefix` switch). This directory will contain a number of files (equal to the number of bins, default 128, may be redefined with `--n_bins` switch). The extension of these files is `.satc.dump`. Each line of these files is a tab-separated list of <sample_name> <anchor> <target> <count>. This is the easiest way to be able to reproduce contingency tables used during computation. Each file contains some number of anchors, but it is assured that a specific anchor is present in a single file. Since these text files could be large, it may be proficient to use binary (SATC) files instead.
 #### Binary
-When `--dump_sample_anchor_target_count_binary` switch is used there will be an additional output directory (named `result_satc` by default, but the `results` part may be redefined with `--outname_prefix` switch). This directory will contain a number of files (equal to the number of bins, default 128, may be redefined with `--n_bins` switch). The extension of these files is `.satc`. These are binary files in SATC format. Their content may be converted to textual representation with `satc_dump` program (part of the NOMAD package). Each file contains some number of anchors, but it is assured that a specific anchor is present in a single file. Since these text files could be large, it may be proficient to use binary (SATC) files instead, especially if one wants to investigate only some of all anchors.
+When `--dump_sample_anchor_target_count_binary` switch is used there will be an additional output directory (named `result_satc` by default, but the `results` part may be redefined with `--outname_prefix` switch). This directory will contain a number of files (equal to the number of bins, default 128, may be redefined with `--n_bins` switch). The extension of these files is `.satc`. These are binary files in SATC format. Their content may be converted to textual representation with `satc_dump` program (part of the SPLASH package). Each file contains some number of anchors, but it is assured that a specific anchor is present in a single file. Since these text files could be large, it may be proficient to use binary (SATC) files instead, especially if one wants to investigate only some of all anchors.
 ### satc_dump
 To convert SATC files into textual representation one may use `satc_dump` program. The simples usage is
 ```
@@ -177,10 +178,10 @@ There are also additional parameters that may be useful, namely:
  * `--n_bins <int>` &mdash; if set to value different than 0 the input is interpreted as a list of bins (each bin in separate line, first list is bin_0, second line is bin_1, etc. (in case of ill-formed input results will be incorrect)
  * `--separately` &mdash; if set with n_bins != 0 output param will be treated as suffix name and there will be output for each bin
  
- If `--sample_names` is not used in the output there will be sample ids instead of its names. NOMAD by default write mapping to `sample_name_to_id.mapping.txt` file (may be redefined with `--sample_name_to_id` switch of NOMAD.
+ If `--sample_names` is not used in the output there will be sample ids instead of its names. SPLASH by default write mapping to `sample_name_to_id.mapping.txt` file (may be redefined with `--sample_name_to_id` switch of SPLASH.
  
  ### Interpreting results
- `plotGeneration.py` provides basic functionality to visualize contingency tables. To use, run NOMAD with the --dump_sample_anchor_target_count_binary flag. Then, `plotGeneration.py` can be run with inputs:
+ `plotGeneration.py` provides basic functionality to visualize contingency tables. To use, run SPLASH with the --dump_sample_anchor_target_count_binary flag. Then, `plotGeneration.py` can be run with inputs:
 - `--dsName` &mdash; dataset name to be used in title of plots
 - `outFolder` &mdash; path to save files to
 - `metadataPath` &mdash; path to .tsv file containing two columns titled `sampleName` and `metadata`
@@ -188,7 +189,7 @@ There are also additional parameters that may be useful, namely:
 - `pvDfPath` &mdash; path to p-value .tsv file (result.after_correction.scores.tsv)
 - `sampleMappingTxt` &mdash; path to sample_name_to_id.mapping.txt file
 - `anchorFile` &mdash; file of anchors to be plotted, one anchor per line
-- `satc_dump_file` &mdash; path to satc_dump utility file, within NOMAD /bin folder
+- `satc_dump_file` &mdash; path to satc_dump utility file, within SPLASH /bin folder
 - `skipSATC` &mdash; optional flag, if .satc files have already been dumped for this set of anchors into the output folder, and the desire is to regenerate plots.
 
 The generated output is 1 file per anchor, each file containing 4 subplots. At bottom left is the raw I x J contingency table, where each column is a sample, and each row represents a target (low abundance targets not shown). Each sample’s target counts are normalized by $n_j$ and plotted. At bottom right, the targets for the contingency table are displayed in a I x k table (corresponding to the rows of the contingency table, visually aligned). Each target of length k is shown, with basepairs colored as in the below colorbar. The target sequence for each row is displayed on the right. At top left,  the sample metadata is shown in a 1 x J table. Each entry corresponds to the column in the contingency table directly below it. The sample metadata is shown in a colorbar below. At top right, the column counts ($n_j$) are shown in a 1 x J table, where the colorbar below provides the scale. Again, columns are sorted as the contingency table.
@@ -197,9 +198,9 @@ The generated output is 1 file per anchor, each file containing 4 subplots. At b
 The script `c_analysis.ipynb` shows how the saved c vectors can be loaded in for further analysis. `--dump_Cjs` must be enabled for this.
  
 ## Biological interpretation and classification of anchors
-To facilitate downstream analysis of anchors, we provide a postprocessing script `NOMAD_extendor_classification.R`, that can be run on the anchors file generataed from the NOMAD run to classify anchors to biologically meaningful events such as alternative splicing, and base pair changes. `NOMAD_extendor_classification.R` needs the following inputs:
+To facilitate downstream analysis of anchors, we provide a postprocessing script `SPLASH_extendor_classification.R`, that can be run on the anchors file generataed from the SPLASH run to classify anchors to biologically meaningful events such as alternative splicing, and base pair changes. `SPLASH_extendor_classification.R` needs the following inputs:
 
-- `directory` &mdash; the output directory used for the NOMAD run
+- `directory` &mdash; the output directory used for the SPLASH run
 - `which_anchors_file` &mdash; flag to decide which anchor file (after correction or all anchors) to use, could be "after_correction" or "all" 
 - `effect_size_cutoff` &mdash; the effect size cutoff for significant anchors (default 0.2) 
 - `num_samples_cutoff` &mdash; the minimum number of sampels for an anchor to be called (default 20)
@@ -214,7 +215,7 @@ To facilitate downstream analysis of anchors, we provide a postprocessing script
 - `bowtie2_reference` &mdash; path to bowtie2 index for the reference genome
 - `paralogs_file` &mdash; path to file containing list of paralogous genes from reference genome
  
-The script will generate a file `classified_anchors.tsv` in the same directory used for NOMAD run, containing significant anchors along with their biological classification and alignment information.
+The script will generate a file `classified_anchors.tsv` in the same directory used for SPLASH run, containing significant anchors along with their biological classification and alignment information.
 
 ## Annotation files for human genome (based on T2T):
 The following three files are needed by the classification script for annotation anchors from human datasets and can be downloaded from the following links:
@@ -224,7 +225,7 @@ The following three files are needed by the classification script for annotation
 
 ## References
 Marek Kokot, Roozbeh Dehghannasiri, Tavor Baharav, Julia Salzman, and Sebastian Deorowicz.
-[NOMAD2 provides ultra-efficient, scalable, and unsupervised discovery on raw sequencing reads] (https://..) 
+[SPLASH2 provides ultra-efficient, scalable, and unsupervised discovery on raw sequencing reads] (https://..) 
 bioRxiv (2023)
  
 Kaitlin Chaung, Tavor Baharav,  Ivan Zheludev, Julia Salzman. [A statistical, reference-free algorithm subsumes myriad problems in genome science and enables novel discovery](https://doi.org/10.1101/2022.06.24.497555), bioRxiv (2022)

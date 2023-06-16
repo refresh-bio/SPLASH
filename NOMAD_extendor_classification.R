@@ -41,7 +41,7 @@ riffle <- function(a, b) {   # this function interleaves the elements of two vec
 ##################################################
 ############ input arguments #####################
 args <- commandArgs(trailingOnly = TRUE)
-directory = args[1]  # the output directory used for the NOMAD run
+directory = args[1]  # the output directory used for the SPLASH run
 which_anchors_file = args[2]  # flag to decide which anchor file (after correction or all anchors) to use, could be "after_correction" or "all" 
 effect_size_cutoff = args[3] # the effect size cutoff for significant anchors (default 0.2) 
 num_samples_cutoff = args[4] # the minimum number of sampels for an anchor to be called (default 20)

@@ -118,9 +118,6 @@ void normalize_vec_0_1(refresh::matrix_1d<double>& vec)
 		vec(i) = (vec(i) - _min) / dif;
 }
 
-// --is_10X --n_most_freq_targets 10 --anchor_count_threshold 50 --anchor_unique_targets_threshold 1 --anchor_samples_threshold 1 stats/bin_1.txt_new out/S10_cnts_1 out/S11_cnts_1 out/S12_cnts_1 out/S13_cnts_1
-// --is_10X  --n_most_freq_targets 10 --anchor_count_threshold 50 --anchor_unique_targets_threshold 1 --anchor_samples_threshold 1 stats/bin_1.txt_new c:/linux/nomad-pp-dev/example/S10_cnts_1.zst c:/linux/nomad-pp-dev/example/S11_cnts_1.zst c:/linux/nomad-pp-dev/example/S12_cnts_1.zst c:/linux/nomad-pp-dev/example/S13_cnts_1.zst
-//double effectSize_cts(const refresh::matrix_sparse<uint32_t, double, refresh::matrix_col_major>& X, const refresh::matrix_1d<double>& cOpt, const refresh::matrix_1d<double>& fOpt) {
 double effectSize_cts(const refresh::matrix_sparse_compact<uint32_t, double, refresh::matrix_col_major>& X, const refresh::matrix_1d<double>& cOpt, const refresh::matrix_1d<double>& fOpt) {
 	auto f_abs_sum = (X * abs(cOpt)).sum();
 
@@ -160,7 +157,7 @@ double effectSize_bin(const refresh::matrix_sparse_compact<uint32_t, double, ref
 	return fabs(refresh::dot_product(fOpt * X, cPos) / (X * cPos).sum() - refresh::dot_product(fOpt * X, cNeg) / (X * cNeg).sum());
 }
 
-double computeAsympNOMAD(const refresh::matrix_sparse_compact<uint32_t, double, refresh::matrix_col_major>& X, const refresh::matrix_1d<double>& cOpt, const refresh::matrix_1d<double>& fOpt)
+double computeAsympSPLASH(const refresh::matrix_sparse_compact<uint32_t, double, refresh::matrix_col_major>& X, const refresh::matrix_1d<double>& cOpt, const refresh::matrix_1d<double>& fOpt)
 {
 	if (cOpt.all_items_same())
 		return 1.0;
@@ -684,7 +681,7 @@ void compute_stats(
 		anchor_stats.pval_opt = testPval(Xtest, cOpt, fOpt);
 
 		if (with_pval_asymp_opt)
-			anchor_stats.pval_asymp_opt = computeAsympNOMAD(Xtest, cOpt, fOpt);
+			anchor_stats.pval_asymp_opt = computeAsympSPLASH(Xtest, cOpt, fOpt);
 
 		anchor_stats.effect_size_bin = effectSize_bin(Xtest, cOpt, fOpt);
 
@@ -708,7 +705,7 @@ void compute_stats(
 				generate_alt_max_cf(Xtrain, new_cOpt, fOpt, opt_num_inits, opt_num_iters);
 
 				if (with_pval_asymp_opt) {
-					auto new_pval_asymp_opt = computeAsympNOMAD(Xtest, new_cOpt, fOpt);
+					auto new_pval_asymp_opt = computeAsympSPLASH(Xtest, new_cOpt, fOpt);
 					if (new_pval_asymp_opt < anchor_stats.pval_asymp_opt)
 						anchor_stats.pval_asymp_opt = new_pval_asymp_opt;
 				}

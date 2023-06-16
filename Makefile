@@ -1,6 +1,6 @@
-all: satc satc_dump satc_merge sig_anch download_kmc nomad
+all: satc satc_dump satc_merge sig_anch download_kmc splash
 
-NOMAD_LIBS_DIR = libs
+SPLASH_LIBS_DIR = libs
 LIBS_DIR = . #/usr/local/lib
 INCLUDE_DIR= libs
 MIMALLOC_INLUCDE_DIR = libs/mimalloc/include
@@ -64,7 +64,7 @@ $(OUT_BIN_DIR)/satc: $(SATC_MAIN_DIR)/satc.o \
 	$(COMMON_DIR)/illumina_adapters_static.o
 	-mkdir -p $(OUT_BIN_DIR)
 	$(CC) -o $@ $^ \
-	$(NOMAD_LIBS_DIR)/$(LIB_ZSTD) \
+	$(SPLASH_LIBS_DIR)/$(LIB_ZSTD) \
 	$(CLINK)
 
 satc_merge: $(OUT_BIN_DIR)/satc_merge
@@ -75,7 +75,7 @@ $(OUT_BIN_DIR)/satc_merge: $(SATC_MERGE_MAIN_DIR)/satc_merge.o \
 	$(SATC_MERGE_MAIN_DIR)/extra_stats.o
 	-mkdir -p $(OUT_BIN_DIR)
 	$(CC) -o $@ $^ \
-	$(NOMAD_LIBS_DIR)/$(LIB_ZSTD) \
+	$(SPLASH_LIBS_DIR)/$(LIB_ZSTD) \
 	$(CLINK)
 
 satc_dump: $(OUT_BIN_DIR)/satc_dump
@@ -83,7 +83,7 @@ satc_dump: $(OUT_BIN_DIR)/satc_dump
 $(OUT_BIN_DIR)/satc_dump: $(SATC_DUMP_MAIN_DIR)/satc_dump.o
 	-mkdir -p $(OUT_BIN_DIR)
 	$(CC) -o $@ $^ \
-	$(NOMAD_LIBS_DIR)/$(LIB_ZSTD) \
+	$(SPLASH_LIBS_DIR)/$(LIB_ZSTD) \
 	$(CLINK)
 
 sig_anch: $(OUT_BIN_DIR)/sig_anch
@@ -98,8 +98,8 @@ download_kmc:
 	-mkdir -p $(OUT_BIN_DIR)
 	./download_kmc.sh $(OUT_BIN_DIR)
 
-nomad:
-	cp src/nomad.py bin/nomad
+splash:
+	cp src/splash.py bin/splash
 
 install: all
 	install bin/* /usr/local/bin
@@ -109,7 +109,7 @@ uninstall:
 	-rm /usr/local/bin/satc_dump
 	-rm /usr/local/bin/satc_merge
 	-rm /usr/local/bin/sig_anch
-	-rm /usr/local/bin/nomad
+	-rm /usr/local/bin/splash
 	-rm /usr/local/bin/kmc
 	-rm /usr/local/bin/kmc_tools
 

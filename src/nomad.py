@@ -18,11 +18,11 @@ class SmartFormatter(argparse.HelpFormatter):
         # this is the RawTextHelpFormatter._split_lines
         return argparse.HelpFormatter._split_lines(self, text, width)
 
-NOMAD_VERSION="2.1.4"
+SPLASH_VERSION="2.1.4"
 
 parser = argparse.ArgumentParser(
-                    prog = "nomad",
-                    description = "Welcome to NOMAD\nVersion: " + NOMAD_VERSION,
+                    prog = "splash",
+                    description = "Welcome to SPLASH\nVersion: " + SPLASH_VERSION,
                     #epilog = 'Text at the bottom of help',
                     #formatter_class=SmartFormatter
                     formatter_class=argparse.ArgumentDefaultsHelpFormatter
@@ -69,7 +69,7 @@ group_tuning_stats.add_argument("--opt_train_fraction", default=0.25, type=float
 group_tuning_stats.add_argument("--without_alt_max", default=False, action='store_true', help="if set int alt max and related stats will not be computed")
 
 group_technical = parser.add_argument_group('Technical and performance-related')
-group_technical.add_argument("--bin_path", default="bin", type=str, help="path to a directory where satc, satc_dump, satc_merge, sig_anch, kmc, kmc_tools binaries are (if any not found there nomad will check if installed and use installed)")
+group_technical.add_argument("--bin_path", default="bin", type=str, help="path to a directory where satc, satc_dump, satc_merge, sig_anch, kmc, kmc_tools binaries are (if any not found there splash will check if installed and use installed)")
 group_technical.add_argument("--tmp_dir", default="", type=str, help="path to a directory where temporary files will be stored")
 group_technical.add_argument("--n_threads_stage_1", default=4, type=int, help="number of threads for the first stage, too large value is not recomended because of intensive disk access here, but may be profitable if there is a lot of small size samples in the input")
 group_technical.add_argument("--n_threads_stage_1_internal", default=8, type=int, help="number of threads per each stage 1 thread")
@@ -129,14 +129,14 @@ input_file=args.input_file
 tmp_dir=args.tmp_dir
 
 if tmp_dir == "":
-    tmp_dir="nomad-tmp-"+uuid.uuid4().hex
+    tmp_dir="splash-tmp-"+uuid.uuid4().hex
 
 
 def get_cur_time():    
     return strftime("%Y-%m-%d %H:%M:%S", localtime())
 
-print("Welcome to NOMAD")
-print("Version: ", NOMAD_VERSION)
+print("Welcome to SPLASH")
+print("Version: ", SPLASH_VERSION)
 print("Current time:", get_cur_time(), flush=True)
 
 
@@ -247,8 +247,8 @@ for executable_path in [satc, satc_dump, satc_merge, sig_anch]:
     for line in out.split('\n'):
         if line.startswith("Version:"):
             ver = line.split()[-1]
-            if ver != NOMAD_VERSION:
-                print(f"Error: {executable_path} version is {ver} while this script is {NOMAD_VERSION}. Please use the same version.")
+            if ver != SPLASH_VERSION:
+                print(f"Error: {executable_path} version is {ver} while this script is {SPLASH_VERSION}. Please use the same version.")
                 sys.exit(1)
             else:
                 version_is_OK=True
@@ -260,7 +260,7 @@ for executable_path in [satc, satc_dump, satc_merge, sig_anch]:
 if not os.path.exists(logs_dir):
     os.makedirs(logs_dir)
 
-with open(f"{logs_dir}/nomad-cmd.log", "w") as f:
+with open(f"{logs_dir}/splash-cmd.log", "w") as f:
     f.writelines(" ".join(sys.argv))
 
 inputs = []
@@ -533,5 +533,5 @@ if clean_up:
     os.rmdir(tmp_dir)
 check_and_handle_error()
 print("Stage 3 done")
-print("NOMAD finished!")
+print("SPLASH finished!")
 print("Current time:", get_cur_time(), flush=True)

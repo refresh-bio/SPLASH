@@ -11,13 +11,13 @@ def replace_in_file(file_path, search_text, new_text):
             new_line = line.replace(search_text, new_text)
             print(new_line, end='')
 
-def get_ver(nomad_path):
-    with open(nomad_path) as f:
+def get_ver(splash_path):
+    with open(splash_path) as f:
         for line in f.readlines():
             line = line.strip()
-            if "NOMAD_VERSION" in line:
+            if "SPLASH_VERSION" in line:
                 return line.split("=")[-1].strip().split("\"")[1]
-    print("Error: cannot read NOMAD_VERSION")
+    print("Error: cannot read SPLASH_VERSION")
     sys.exit(1)
 
 def run_cmd(cmd):    
@@ -39,12 +39,12 @@ run_cmd("cp example/input.txt bin/example")
 with open("bin/example/run-example.sh", "w") as f:
     f.write("#!/bin/bash\n")
     f.write("./download.py\n")
-    f.write("../nomad --bin_path .. input.txt\n")
+    f.write("../splash --bin_path .. input.txt\n")
 
 os.chmod("bin/example/run-example.sh", os.stat("bin/example/run-example.sh").st_mode | stat.S_IEXEC)
 
 
-ver = get_ver("bin/nomad")
+ver = get_ver("bin/splash")
 
-run_cmd(f"cd bin; tar -c * | pigz > ../nomad-{ver}.linux.x64.tar.gz; cd ..;")
+run_cmd(f"cd bin; tar -c * | pigz > ../splash-{ver}.linux.x64.tar.gz; cd ..;")
 run_cmd("rm -rf bin")

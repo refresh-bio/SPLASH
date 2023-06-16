@@ -382,14 +382,14 @@ struct Header {
 	}
 };
 
-enum class RecFmt { SATC, NOMAD };
+enum class RecFmt { SATC, SPLASH };
 struct RecFmtConv {
 
 	inline static RecFmt from_string(const std::string& str) {
 		if (str == "satc")
 			return RecFmt::SATC;
-		else if (str == "nomad")
-			return RecFmt::NOMAD;
+		else if (str == "splash")
+			return RecFmt::SPLASH;
 		else {
 			std::cerr << "Error: cannot convert \"" << str << "\" to RecordPrintFormat\n";
 			exit(1);
@@ -400,8 +400,8 @@ struct RecFmtConv {
 		{
 		case RecFmt::SATC:
 			return "satc";
-		case RecFmt::NOMAD:
-			return "nomad";
+		case RecFmt::SPLASH:
+			return "splash";
 		default:
 			std::cerr << "Error: unsupported, swich in RecordPrintFormat should be extended";
 			exit(1);
@@ -540,7 +540,7 @@ public:
 			oss << kmer_to_string(target, header.target_len_symbols) << "\t";
 			oss << count << "\n";
 		}
-		else if (format == RecFmt::NOMAD) {
+		else if (format == RecFmt::SPLASH) {
 			oss << count << " ";
 			oss << kmer_to_string(anchor, header.anchor_len_symbols);
 			oss << kmer_to_string(target, header.target_len_symbols) << " ";

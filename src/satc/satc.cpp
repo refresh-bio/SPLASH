@@ -47,7 +47,7 @@ struct Params
 	}
 	static void Usage(char* prog_name) {
 		std::cerr << "satc (sample anchor target count)\n";
-		NOMAD_VER_PRINT(std::cerr);
+		SPLASH_VER_PRINT(std::cerr);
 		std::cerr << "Usage: \n\t" << prog_name << " [options] <outbase> <input_path> <input_id>\n";
 		std::cerr
 			<< "Positional parameters:\n"
