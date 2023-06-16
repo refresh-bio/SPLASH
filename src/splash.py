@@ -59,6 +59,9 @@ group_additional_out.add_argument("--with_pval_asymp_opt", default=False, action
 group_additional_out.add_argument("--sample_name_to_id", default="sample_name_to_id.mapping.txt", type=str, help="file name with mapping sample name <-> sammpe id")
 group_additional_out.add_argument("--dump_sample_anchor_target_count_txt", default=False, action='store_true', help="if set contignency tables will be generated in text format")
 group_additional_out.add_argument("--dump_sample_anchor_target_count_binary", default=False, action='store_true', help="if set contignency tables will be generated in binary (satc) format, to convert to text format later satc_dump program may be used, it may take optionally maping from id to sample_name (--sample_names param)")
+group_additional_out.add_argument("--supervised_test_samplesheet", default="", help="if used script for finding/visualizing anchors with metadata-dependent variation will be run (forces --dump_sample_anchor_target_count_binary)")
+group_additional_out.add_argument("--supervised_test_anchor_sample_fraction_cutoff", default=0.4, type=float, help="the cutoff for the minimum fraction of samples for each anchor")
+group_additional_out.add_argument("--supervised_test_num_anchors", default=20000, type=int, help="maximum number of anchors to be tested example")
 
 group_tuning_stats = parser.add_argument_group('Tuning statistics computation')
 group_tuning_stats.add_argument("--opt_num_inits", default=10, type=int, help="the number of altMaximize runs")
@@ -120,6 +123,9 @@ dump_sample_anchor_target_count_binary = args.dump_sample_anchor_target_count_bi
 pvals_correction_col_name = args.pvals_correction_col_name
 fdr_threshold = args.fdr_threshold
 min_hamming_threshold = args.min_hamming_threshold
+supervised_test_samplesheet = args.supervised_test_samplesheet
+supervised_test_anchor_sample_fraction_cutoff = args.supervised_test_anchor_sample_fraction_cutoff
+supervised_test_num_anchors = args.supervised_test_num_anchors
 outname_prefix=args.outname_prefix
 dump_Cjs=args.dump_Cjs
 max_pval_opt_for_Cjs=args.max_pval_opt_for_Cjs
@@ -127,6 +133,21 @@ clean_up=not args.dont_clean_up
 logs_dir=args.logs_dir
 input_file=args.input_file
 tmp_dir=args.tmp_dir
+
+if supervised_test_samplesheet != "":
+    if run_10X:
+        print("Error: --supervised_test_samplesheet cannot be used with --run_10X in the current release")
+        sys.exit(1)
+    if dump_sample_anchor_target_count_binary == False:
+        print("Warning: --supervised_test_samplesheet forces --dump_sample_anchor_target_count_binary")
+        dump_sample_anchor_target_count_binary = True
+    if shutil.which("Rscript") is None:
+        print("Error: Rscript must be installed to run splash with --supervised_test_samplesheet")
+        sys.exit(1)
+
+    if n_most_freq_targets < 2:
+        print("Warning: --supervised_test_samplesheet requires at least 2 n_most_freq_targets, setting --n_most_freq_targets 2")
+        n_most_freq_targets = 2
 
 if tmp_dir == "":
     tmp_dir="splash-tmp-"+uuid.uuid4().hex
@@ -205,6 +226,8 @@ satc_merge=get_prog_or_fail("satc_merge")
 sig_anch=get_prog_or_fail("sig_anch")
 kmc=get_prog_or_fail("kmc")
 kmc_tools=get_prog_or_fail("kmc_tools")
+if supervised_test_samplesheet != "":
+    supervised_test = get_prog_or_fail("supervised_test.R")
 
 was_error = False
 
@@ -533,5 +556,26 @@ if clean_up:
     os.rmdir(tmp_dir)
 check_and_handle_error()
 print("Stage 3 done")
+
+if supervised_test_samplesheet != "":
+    print("Starting supervised_test")
+    print("Current time:", get_cur_time(), flush=True)
+    cmd = f"Rscript {supervised_test} \
+        {n_bins} \
+        {sample_name_to_id} \
+        {satc_dump} \
+        {outname_prefix}_satc \
+        {outname_prefix}.after_correction.scores.tsv \
+        . \
+        {supervised_test_samplesheet} \
+        supervised_test \
+        {supervised_test_anchor_sample_fraction_cutoff} \
+        {supervised_test_num_anchors}"
+
+    stdoutfile = open(f"{logs_dir}/supervised_test.log", "w")
+    run_cmd(cmd, stdoutfile, stdoutfile)
+    stdoutfile.close()
+    print("supervised_test done")
+
 print("SPLASH finished!")
 print("Current time:", get_cur_time(), flush=True)

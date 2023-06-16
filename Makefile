@@ -1,4 +1,4 @@
-all: satc satc_dump satc_merge sig_anch download_kmc splash
+all: satc satc_dump satc_merge sig_anch download_kmc splash supervised_test
 
 SPLASH_LIBS_DIR = libs
 LIBS_DIR = . #/usr/local/lib
@@ -100,6 +100,8 @@ download_kmc:
 
 splash:
 	cp src/splash.py bin/splash
+supervised_test:
+	cp src/supervised_test/supervised_test.R bin
 
 install: all
 	install bin/* /usr/local/bin
