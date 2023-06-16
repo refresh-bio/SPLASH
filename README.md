@@ -17,8 +17,9 @@ A key concept of SPLASH is the analysis of composition of pairs of substrings *a
 The substrings can be adjacent in reads or can be separated by a *gap*.
 
 The image below presents the SPLASH pipeline on a high-level.
+![image](https://github.com/refresh-bio/SPLASH/assets/9378882/8210fee0-c877-4374-9938-e3c01ea69e76)
 
-![image](https://user-images.githubusercontent.com/9378882/225988504-70266e4d-37e0-4c85-8c95-e47ad208cda9.png)
+<!-- ![image](https://user-images.githubusercontent.com/9378882/225988504-70266e4d-37e0-4c85-8c95-e47ad208cda9.png) -->
 
 <!-- ![image](https://user-images.githubusercontent.com/9378882/224449978-309a4708-0fa1-4cb8-8483-a32e36ec2d58.png) -->
 
