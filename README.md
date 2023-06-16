@@ -69,10 +69,14 @@ The parameters will be displayed when running splash without parameters (or with
  
 ### Anchor filtering parameters:
 * `--poly_ACGT_len` &mdash; filter out all anchors containing poly(ACGT) of length at least <poly_ACGT_len> (0 means no filtering) (default: 8)
+* `--artifacts` &mdash; path to artifacts, each anchor containing artifact will be filtered out (default: )
+* `--dont_filter_illumina_adapters` &mdash; if used anchors containing Illumina adapters will not be filtered out (default: False)
 * `--anchor_unique_targets_threshold` &mdash; filter out all anchors for which the number of unique targets is <= anchor_unique_targets_threshold (default: 1)
 * `--anchor_count_threshold` &mdash; filter out all anchors for which the total count <= anchor_count_threshold (default: 50)
 * `--anchor_samples_threshold` &mdash; filter out all anchors for which the number of unique samples is <= anchor_samples_threshold (default: 1)
 * `--anchor_sample_counts_threshold` &mdash; filter out anchor from sample if its count in this sample is <= anchor_sample_counts_threshold (default: 5)
+* `--n_most_freq_targets_for_stats` &mdash; use at most n_most_freq_targets_for_stats for each contignency table, 0 means use all (default: 0)
+* `--min_hamming_threshold` &mdash; keep only anchors with a pair of targets that differ by >= min_hamming_threshold (default: 0)
  
 ### Statistical significance parameters:
 * `--pvals_correction_col_name` &mdash; for which column correction should be applied (default: pval_opt)
@@ -80,14 +84,16 @@ The parameters will be displayed when running splash without parameters (or with
  
 ### Reporting parameters:
 * `--outname_prefix` &mdash; prefix of output file names (default: result)
-* `--n_most_freq_targets_for_stats` &mdash; use at most n_most_freq_targets_for_stats for each contignency table, 0 means use all (default: 0)
 * `--dump_Cjs` &mdash; output Cjs (default: False)
 * `--max_pval_opt_for_Cjs` &mdash; dump only Cjs for anchors that have pval_opt <= max_pval_opt_for_Cjs (default: 0.1)
 * `--n_most_freq_targets` &mdash; number of most frequent tragets printed per each anchor in stats mode (default: 2)
 * `--with_effect_size_cts` &mdash; if set effect_size_cts will be computed (default: False)
+* `--with_pval_asymp_opt` &mdash; if set pval_asymp_opt will be computed (default: False)
 * `--dump_sample_anchor_target_count_txt` &mdash; if set contignency tables will be generated in text format (default: False)
 * `--dump_sample_anchor_target_count_binary` &mdash; if set contignency tables will be generated in binary (SATC) format, to convert to text format later `satc_dump` program may be used, it may take optionally mapping from id to sample_name (--sample_names param) (default: False)
-* `--dont_clean_up` &mdash; if set then intermediate files will not be removed (default: False)                                                                                                     
+* `--dump_sample_anchor_target_count_txt` &mdash; if set contignency tables will be generated in text format (default: False)
+* `dump_sample_anchor_target_count_binary` &mdash; if set contignency tables will be generated in binary (satc) format, to convert to text format later satc_dump program may be used, it may take optionally mapping from id to sample_name (--sample_names param) (default: False)
+* `--dont_clean_up` &mdash; if set then intermediate files will not be removed (default: False)
  
 ### Directory parameters:
 * `--sample_name_to_id` &mdash; file name with mapping sample name <-> sammpe id (default: sample_name_to_id.mapping.txt)                                                                                 
@@ -107,7 +113,9 @@ The parameters will be displayed when running splash without parameters (or with
 * `--opt_num_inits` &mdash; the number of altMaximize random initializations (default: 10)
 * `--opt_num_iters` &mdash; the maximum number of iterations in altMaximize (default: 50)
 * `--num_rand_cf` &mdash; the number of random c and f used for pval_base (default: 50)
+* `--num_splits` &mdash; the number of contingency table splits (default: 1)
 * `--opt_train_fraction` &mdash; in calc_stats mode use this fraction to create training data from contingency table (default: 0.25)
+* `--without_alt_max` &mdash; if set int alt max and related stats will not be computed (default: False)
 
 ### 10X SC-RNAseq parameters:
 - `run_10X`
