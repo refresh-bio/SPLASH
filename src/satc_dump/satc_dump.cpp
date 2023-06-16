@@ -30,7 +30,7 @@ struct Params {
 
 	static void Usage(char* prog_name) {
 		std::cerr << "satc_dump\n";
-		NOMAD_VER_PRINT(std::cerr);
+		SPLASH_VER_PRINT(std::cerr);
 		std::cerr << "Usage: \n\t" << prog_name << " [options] <input> <output>\n";
 		std::cerr << "or\n";
 		std::cerr << "\t" << prog_name << " --which-bin --n_bins <int> <anchor>\n";
@@ -42,7 +42,7 @@ struct Params {
 			<< "Options:\n"
 			<< "    --anchor_list <path>  - path to text file containing anchors separated by whitespaces, only anchors from this file will be dumped\n"
 			<< "    --sample_names <path> - path for decode sample id, each line should contain <sample_name> <sample_id>\n"
-			<< "    --format <string>     - output format, available options: satc, nomad (default: satc)\n"
+			<< "    --format <string>     - output format, available options: satc, splash (default: satc)\n"
 			<< "    --n_bins <int>        - if set to value different than 0 the input is interpreted as a list of bins (each bin in separate line, first list is bin_0, second line is bin_1, etc. (in case of ill-formed input results will be incorrect)\n"
 			<< "    --separately          - if set with n_bins != 0 output param will be treated as suffix name and there will be output for each bin\n";
 	}

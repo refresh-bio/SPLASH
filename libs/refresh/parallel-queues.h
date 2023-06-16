@@ -187,6 +187,11 @@ namespace refresh {
 			}
 		}
 
+		bool check_completed() {
+			std::lock_guard<std::mutex> lck(mtx);
+			return is_completed;
+		}
+		
 		void cancel()
 		{
 			std::lock_guard<std::mutex> lck(mtx);

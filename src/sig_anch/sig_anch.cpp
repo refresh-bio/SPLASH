@@ -129,7 +129,7 @@ void correct_pvals_stream();
 bool usage()
 {
 	cerr << "sig_anch\n";
-	NOMAD_VER_PRINT(cerr);
+	SPLASH_VER_PRINT(cerr);
 	cerr << "Usage: sig_anch [options]" << endl
 		<< "Options:" << endl
 		<< "  --fdr_threshold <value>" << endl

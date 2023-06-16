@@ -1,6 +1,6 @@
-all: satc satc_dump satc_merge sig_anch download_kmc nomad
+all: satc satc_dump satc_merge sig_anch download_kmc splash supervised_test
 
-NOMAD_LIBS_DIR = libs
+SPLASH_LIBS_DIR = libs
 LIBS_DIR = . #/usr/local/lib
 INCLUDE_DIR= libs
 MIMALLOC_INLUCDE_DIR = libs/mimalloc/include
@@ -14,14 +14,16 @@ COMMON_DIR=src/common
 OUT_BIN_DIR=bin
 
 CC 	= g++
-CFLAGS	= -fPIC -Wall -O3 -m64 -std=c++17 -mavx -pthread -I $(INCLUDE_DIR) -I $(MIMALLOC_INLUCDE_DIR) -fpermissive
-CLINK	= -lm -std=c++17 -lpthread -static-libstdc++ -lgfortran
+CFLAGS	= -fPIC -Wall -O3 -m64 -std=c++17 -pthread -I $(INCLUDE_DIR) -I $(MIMALLOC_INLUCDE_DIR) -fpermissive
+CLINK	= -lm -std=c++17 -lpthread -static-libstdc++
 
-release: CLINK	= -lm -std=c++17 -static -lgfortran -lquadmath -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
-release: CFLAGS	= -fPIC -Wall -O3 -DNDEBUG -m64 -std=c++17 -mavx -pthread -I $(INCLUDE_DIR) -I $(MIMALLOC_INLUCDE_DIR) -fpermissive
+MIMALLOC_OBJ=libs/mimalloc/mimalloc.o
+
+release: CLINK	= -lm -std=c++17 -static -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
+release: CFLAGS	= -fPIC -Wall -O3 -DNDEBUG -m64 -std=c++17 -pthread -I $(INCLUDE_DIR) -I $(MIMALLOC_INLUCDE_DIR) -fpermissive
 release: all
 
-debug: CFLAGS	= -fPIC -Wall -O0 -g -m64 -std=c++17 -mavx -pthread -I $(INCLUDE_DIR) -I $(MIMALLOC_INLUCDE_DIR) -fpermissive
+debug: CFLAGS	= -fPIC -Wall -O0 -g -m64 -std=c++17 -pthread -I $(INCLUDE_DIR) -I $(MIMALLOC_INLUCDE_DIR) -fpermissive
 debug: all
 
 ifdef MSVC     # Avoid the MingW/Cygwin sections
@@ -47,18 +49,22 @@ prefix      = /usr/local
 # optional install location
 exec_prefix = $(prefix)
 
+$(MIMALLOC_OBJ):
+	$(CC) -DMI_MALLOC_OVERRIDE -O3 -DNDEBUG -fPIC -Wall -Wextra -Wno-unknown-pragmas -fvisibility=hidden -ftls-model=initial-exec -fno-builtin-malloc -c -I libs/mimalloc/include libs/mimalloc/src/static.c -o $(MIMALLOC_OBJ)
+
 %.o: %.cpp
 	$(CC) $(CFLAGS) -c $< -o $@
 
 satc: $(OUT_BIN_DIR)/satc
 
 $(OUT_BIN_DIR)/satc: $(SATC_MAIN_DIR)/satc.o \
-	$(SATC_MAIN_DIR)/kmc_api/kmc_file.o \
-	$(SATC_MAIN_DIR)/kmc_api/mmer.o \
-	$(SATC_MAIN_DIR)/kmc_api/kmer_api.o
+	$(COMMON_DIR)/kmc_api/kmc_file.o \
+	$(COMMON_DIR)/kmc_api/mmer.o \
+	$(COMMON_DIR)/kmc_api/kmer_api.o \
+	$(COMMON_DIR)/illumina_adapters_static.o
 	-mkdir -p $(OUT_BIN_DIR)
 	$(CC) -o $@ $^ \
-	$(NOMAD_LIBS_DIR)/$(LIB_ZSTD) \
+	$(SPLASH_LIBS_DIR)/$(LIB_ZSTD) \
 	$(CLINK)
 
 satc_merge: $(OUT_BIN_DIR)/satc_merge
@@ -69,7 +75,7 @@ $(OUT_BIN_DIR)/satc_merge: $(SATC_MERGE_MAIN_DIR)/satc_merge.o \
 	$(SATC_MERGE_MAIN_DIR)/extra_stats.o
 	-mkdir -p $(OUT_BIN_DIR)
 	$(CC) -o $@ $^ \
-	$(NOMAD_LIBS_DIR)/$(LIB_ZSTD) \
+	$(SPLASH_LIBS_DIR)/$(LIB_ZSTD) \
 	$(CLINK)
 
 satc_dump: $(OUT_BIN_DIR)/satc_dump
@@ -77,7 +83,7 @@ satc_dump: $(OUT_BIN_DIR)/satc_dump
 $(OUT_BIN_DIR)/satc_dump: $(SATC_DUMP_MAIN_DIR)/satc_dump.o
 	-mkdir -p $(OUT_BIN_DIR)
 	$(CC) -o $@ $^ \
-	$(NOMAD_LIBS_DIR)/$(LIB_ZSTD) \
+	$(SPLASH_LIBS_DIR)/$(LIB_ZSTD) \
 	$(CLINK)
 
 sig_anch: $(OUT_BIN_DIR)/sig_anch
@@ -92,24 +98,26 @@ download_kmc:
 	-mkdir -p $(OUT_BIN_DIR)
 	./download_kmc.sh $(OUT_BIN_DIR)
 
-nomad:
-	cp src/nomad.py bin/nomad
+splash:
+	cp src/splash.py bin/splash
+supervised_test:
+	cp src/supervised_test/supervised_test.R bin
 
 install: all
 	install bin/* /usr/local/bin
 
 uninstall:
-	-rm /usr/local/bin/satc 
+	-rm /usr/local/bin/satc
 	-rm /usr/local/bin/satc_dump
 	-rm /usr/local/bin/satc_merge
-	-rm /usr/local/bin/sig_anch 
-	-rm /usr/local/bin/nomad
+	-rm /usr/local/bin/sig_anch
+	-rm /usr/local/bin/splash
 	-rm /usr/local/bin/kmc
 	-rm /usr/local/bin/kmc_tools
 
-clean:	
+clean:
 	-rm $(SATC_MAIN_DIR)/*.o
-	-rm $(SATC_MAIN_DIR)/kmc_api/*.o	
+	-rm $(COMMON_DIR)/kmc_api/*.o
 	-rm $(SATC_MERGE_MAIN_DIR)/*.o
 	-rm $(SATC_DUMP_MAIN_DIR)/*.o
 	-rm $(COMMON_DIR)/*.o

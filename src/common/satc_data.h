@@ -9,6 +9,12 @@
 
 #include "../../libs/refresh/zstd_file.h"
 
+#ifdef _WIN32
+#define _bswap64(x) _byteswap_uint64(x)
+#else
+#define _bswap64(x) __builtin_bswap64(x)
+#endif
+
 #define USE_ZSTD_FOR_TEMPS
 
 template<typename T>
@@ -271,6 +277,31 @@ bool LoadBigEndian(std::vector<uint8_t>::iterator& p, T& data, uint8_t data_size
 	return true;
 }
 
+inline uint32_t get_rev_compl_shift(uint32_t len)
+{
+	return (len + 31) / 32 * 32 - len;
+}
+
+//instead of x >> 2*p there is (x>>p) >> p, because
+//for p=32 we would have x >> 64 which is UB
+inline uint64_t shr_2p(uint64_t x, uint64_t p) {
+	return (x >> p) >> p;
+}
+
+inline uint64_t get_rev_compl(const uint64_t kmer, const uint32_t shift) {
+	uint64_t res;
+
+	const uint64_t mask4 = 0b0000111100001111000011110000111100001111000011110000111100001111ull;
+	const uint64_t mask2 = 0b0011001100110011001100110011001100110011001100110011001100110011ull;
+
+	uint64_t sf4 = ((kmer & mask4) << 4) + ((kmer >> 4) & mask4);
+	uint64_t sf2 = ((sf4 & mask2) << 2) + ((sf4 >> 2) & mask2);
+
+	res = shr_2p((~_bswap64(sf2)), shift);
+
+	return res;
+}
+
 inline uint64_t str_kmer_to_uint64_t(const std::string& kmer) {
 	uint64_t res{};
 	static auto mapping = []() {
@@ -351,14 +382,14 @@ struct Header {
 	}
 };
 
-enum class RecFmt { SATC, NOMAD };
+enum class RecFmt { SATC, SPLASH };
 struct RecFmtConv {
 
 	inline static RecFmt from_string(const std::string& str) {
 		if (str == "satc")
 			return RecFmt::SATC;
-		else if (str == "nomad")
-			return RecFmt::NOMAD;
+		else if (str == "splash")
+			return RecFmt::SPLASH;
 		else {
 			std::cerr << "Error: cannot convert \"" << str << "\" to RecordPrintFormat\n";
 			exit(1);
@@ -369,8 +400,8 @@ struct RecFmtConv {
 		{
 		case RecFmt::SATC:
 			return "satc";
-		case RecFmt::NOMAD:
-			return "nomad";
+		case RecFmt::SPLASH:
+			return "splash";
 		default:
 			std::cerr << "Error: unsupported, swich in RecordPrintFormat should be extended";
 			exit(1);
@@ -509,7 +540,7 @@ public:
 			oss << kmer_to_string(target, header.target_len_symbols) << "\t";
 			oss << count << "\n";
 		}
-		else if (format == RecFmt::NOMAD) {
+		else if (format == RecFmt::SPLASH) {
 			oss << count << " ";
 			oss << kmer_to_string(anchor, header.anchor_len_symbols);
 			oss << kmer_to_string(target, header.target_len_symbols) << " ";

@@ -1,4 +1,5 @@
 #include "extra_stats.h"
+#include "../../libs/refresh/deterministic_random.h"
 #include <array>
 #include <random>
 #include <algorithm>
@@ -109,8 +110,8 @@ void CExtraStats::determine_monte_carlo_trials(size_t no_trials)
 	auto tot_count = cum_counts.back();
 
 	std::mt19937_64 mt;
-	std::uniform_int_distribution<> dist1(0, tot_count - 1);
-	std::uniform_int_distribution<> dist2(0, tot_count - 2);
+	det_uniform_int_distribution<> dist1(0, tot_count - 1);
+	det_uniform_int_distribution<> dist2(0, tot_count - 2);
 
 //	std::multiset<std::pair<uint64_t, uint64_t>> unq_s;		// !!! TODO: zmienic na unordered_multiset, albo od razu wyniki wpisywac do monte_carlo_trials
 

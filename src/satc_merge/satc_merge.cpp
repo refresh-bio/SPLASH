@@ -33,37 +33,6 @@ public:
 	}
 };
 
-//merge all samples from single bin
-enum class RunMode { CalcStats, JustMerge, JustMergeAndDump };
-std::string to_string(RunMode run_mode) {
-	switch (run_mode)
-	{
-	case RunMode::CalcStats:
-		return "calc_stats";
-	case RunMode::JustMerge:
-		return "just_merge";
-	case RunMode::JustMergeAndDump:
-		return "just_merge_and_dump";
-	default:
-		std::cerr << "Error: unsupported RunMode\n";
-		exit(1);
-		break;
-	}
-}
-
-RunMode run_mode_from_string(const std::string& run_mode) {
-	if (run_mode == "calc_stats")
-		return RunMode::CalcStats;
-	else if (run_mode == "just_merge")
-		return RunMode::JustMerge;
-	else if (run_mode == "just_merge_and_dump")
-		return RunMode::JustMergeAndDump;
-	else {
-		std::cerr << "Error: unknown run mode " << run_mode << "\n";
-		exit(1);
-	}
-}
-
 struct Params
 {
 	uint64_t anchor_count_threshold{}; //remove all anchors for which the sum of counters across all samples and targets is <= anchor_count_threshold
@@ -84,9 +53,13 @@ struct Params
 
 	size_t num_rand_cf = 50;
 
+	size_t num_splits = 1;
+
 	bool without_alt_max = false;
 
 	bool with_effect_size_cts = false;
+
+	bool with_pval_asymp_opt = false;
 
 	bool compute_also_old_base_pvals = false;
 
@@ -102,7 +75,9 @@ struct Params
 
 	std::vector<std::string> bins;
 
-	RunMode run_mode = RunMode::CalcStats;
+	std::string dump_sample_anchor_target_count_txt;
+	std::string dump_sample_anchor_target_count_binary;
+
 	RecFmt format = RecFmt::SATC; //only for JustMergeAndDump
 
 	std::string cell_type_samplesheet;
@@ -110,30 +85,31 @@ struct Params
 
 	void print(std::ostream& oss) {
 		oss << "Parameters:\n";
-		oss << "\tanchor_count_threshold             : " << anchor_count_threshold << "\n";
-		oss << "\tanchor_unique_targets_threshold    : " << anchor_unique_targets_threshold << "\n";
-		oss << "\tanchor_samples_threshold           : " << anchor_samples_threshold << "\n";
-		oss << "\tis_10X                             : " << std::boolalpha << is_10X << "\n";
-		oss << "\twithout_alt_max                    : " << std::boolalpha << without_alt_max << "\n";
-		oss << "\twith_effect_size_cts               : " << std::boolalpha << with_effect_size_cts << "\n";
-		oss << "\tcompute_also_old_base_pvals        : " << std::boolalpha << compute_also_old_base_pvals << "\n";
-		oss << "\toutpath                            : " << outpath << "\n";
-		oss << "\tanchor_list                        : " << anchor_list << "\n";
-		oss << "\tcjs_out                            : " << cjs_out << "\n";
-		oss << "\tmax_pval_opt_for_Cjs               : " << max_pval_opt_for_Cjs << "\n";
-		oss << "\tsample_names	                     : " << sample_names << "\n";
-		oss << "\tn_most_freq_targets                : " << n_most_freq_targets << "\n";
-		oss << "\tn_most_freq_targets_for_stats      : " << n_most_freq_targets_for_stats << "\n";
-		oss << "\topt_train_fraction                 : " << opt_train_fraction << "\n";
-		oss << "\topt_num_inits                      : " << opt_num_inits << "\n";
-		oss << "\topt_num_iters                      : " << opt_num_iters << "\n";
-		oss << "\tnum_rand_cf                        : " << num_rand_cf << "\n";
-		oss << "\tcell_type_samplesheet              : " << cell_type_samplesheet << "\n";
-		oss << "\tCjs_samplesheet                    : " << Cjs_samplesheet << "\n";
-
-		oss << "\trun_mode                           : " << to_string(run_mode) << "\n";
-		if (run_mode == RunMode::JustMergeAndDump)
-			oss << "\t\t format					       : " << RecFmtConv::to_string(format) << "\n";
+		oss << "\tanchor_count_threshold                  : " << anchor_count_threshold << "\n";
+		oss << "\tanchor_unique_targets_threshold         : " << anchor_unique_targets_threshold << "\n";
+		oss << "\tanchor_samples_threshold                : " << anchor_samples_threshold << "\n";
+		oss << "\tis_10X                                  : " << std::boolalpha << is_10X << "\n";
+		oss << "\twithout_alt_max                         : " << std::boolalpha << without_alt_max << "\n";
+		oss << "\twith_effect_size_cts                    : " << std::boolalpha << with_effect_size_cts << "\n";
+		oss << "\twith_pval_asymp_opt                     : " << std::boolalpha << with_pval_asymp_opt << "\n";
+		oss << "\tcompute_also_old_base_pvals             : " << std::boolalpha << compute_also_old_base_pvals << "\n";
+		oss << "\toutpath                                 : " << outpath << "\n";
+		oss << "\tanchor_list                             : " << anchor_list << "\n";
+		oss << "\tcjs_out                                 : " << cjs_out << "\n";
+		oss << "\tmax_pval_opt_for_Cjs                    : " << max_pval_opt_for_Cjs << "\n";
+		oss << "\tsample_names	                          : " << sample_names << "\n";
+		oss << "\tn_most_freq_targets                     : " << n_most_freq_targets << "\n";
+		oss << "\tn_most_freq_targets_for_stats           : " << n_most_freq_targets_for_stats << "\n";
+		oss << "\topt_train_fraction                      : " << opt_train_fraction << "\n";
+		oss << "\topt_num_inits                           : " << opt_num_inits << "\n";
+		oss << "\topt_num_iters                           : " << opt_num_iters << "\n";
+		oss << "\tnum_rand_cf                             : " << num_rand_cf << "\n";
+		oss << "\tnum_splits                              : " << num_splits << "\n";
+		oss << "\tcell_type_samplesheet                   : " << cell_type_samplesheet << "\n";
+		oss << "\tCjs_samplesheet                         : " << Cjs_samplesheet << "\n";
+		oss << "\t dump_sample_anchor_target_count_txt    : " << dump_sample_anchor_target_count_txt << "\n";
+		oss << "\t dump_sample_anchor_target_count_binary : " << dump_sample_anchor_target_count_binary << "\n";
+		oss << "\t format                                 : " << RecFmtConv::to_string(format) << "\n";
 		oss << "\tinput bins:\n";
 		for (const auto& bin : bins)
 			oss << "\t\t" << bin << "\n";
@@ -141,7 +117,7 @@ struct Params
 
 	static void Usage(char* prog_name) {
 		std::cerr << "satc_merge\n";
-		NOMAD_VER_PRINT(std::cerr);
+		SPLASH_VER_PRINT(std::cerr);
 		std::cerr << "Usage: \n\t" << prog_name << " [options] <path> <outpath> <list_of_bins_to_merge>\n";
 		std::cerr
 			<< "Positional parameters:\n"
@@ -149,27 +125,30 @@ struct Params
 			<< "    <file_with_list_of_bins_to_merge>   - file with list of paths of bins to be processed\n";
 		std::cerr
 			<< "Options:\n"
-			<< "    --is_10X                                      - if used input treat as 10X data\n"// text file containing anchors separated by whitespaces, only anchors from this file will be dumped\n";
-			<< "    --anchor_count_threshold <int>                - filter out all anchors for which the total count <= anchor_count_threshold\n"
-			<< "    --anchor_unique_targets_threshold <int>       - filter out all anchors for which the number of unique targets is <= anchor_unique_targets_threshold\n"
-			<< "    --n_most_freq_targets <int>                   - in calc_stats mode output also n_most_freq_targets most frequent targets and their counts (default: 0)\n"
-			<< "    --n_most_freq_targets_for_stats <int>         - in calc_stats mode use at most n_most_freq_targets_for_stats for each contignency table, 0 means use all (default: 0)\n"
-			<< "    --opt_train_fraction <double> (0.0;1.0)       - in calc_stats mode use this fraction to create train X from contingency table\n"
-			<< "    --opt_num_inits <int>                         - in calc_stats mode the number of altMaximize runs (default: 10)\n"
-			<< "    --opt_num_iters <int>                         - in calc_stats mode the number of iteration in altMaximize (default: 50)\n"
-			<< "    --num_rand_cf <int>                           - in calc_stats mode the number of rand cf (default: 50)\n"
-			<< "    --anchor_samples_threshold <int>              - filter out all anchors for which the number of unique samples is <= anchor_samples_threshold\n"
-			<< "    --anchor_list <string>                        - path to text file containing anchors separated by whitespaces, only anchors from this file will be processed\n"
-			<< "    --cjs_out <string>                            - path to output text file where Cjs will be stored\n"
-			<< "    --max_pval_opt_for_Cjs <double>               - dump only Cjs for anchors that have pval_opt <= max_pval_opt_for_Cjs\n"
-			<< "    --run_mode <string>                           - what to do with merged anchors, available options: calc_stats, just_merge, just_merge_and_dump (default: calc_stats)\n"
-			<< "    --without_alt_max                             - disable alt max computation\n"
-			<< "    --with_effect_size_cts                        - compute effect_size_cts\n"
-			<< "    --compute_also_old_base_pvals                 - compute old base pvals\n"
-			<< "    --sample_names <path>                         - path for decode sample id, each line should contain <sample_name> <sample_id>\n"
-			<< "    --cell_type_samplesheet <path>                - path for mapping barcode to cell type, is used Helmert-based supervised mode is turned on\n"
-			<< "    --Cjs_samplesheet <path>                      - path for file with predefined Cjs for non-10X supervised mode\n"
-			<< "    --format <string>                             - output format when 'just_merge_and_dump' is used as run_mode, available options: satc, nomad (default: satc)\n";
+			<< "    --is_10X                                          - if used input treat as 10X data\n"// text file containing anchors separated by whitespaces, only anchors from this file will be dumped\n";
+			<< "    --anchor_count_threshold <int>                    - filter out all anchors for which the total count <= anchor_count_threshold\n"
+			<< "    --anchor_unique_targets_threshold <int>           - filter out all anchors for which the number of unique targets is <= anchor_unique_targets_threshold\n"
+			<< "    --n_most_freq_targets <int>                       - output also n_most_freq_targets most frequent targets and their counts (default: 0)\n"
+			<< "    --n_most_freq_targets_for_stats <int>             - use at most n_most_freq_targets_for_stats for each contingency table, 0 means use all (default: 0)\n"
+			<< "    --opt_train_fraction <double> (0.0;1.0)           - use this fraction to create train X from contingency table\n"
+			<< "    --opt_num_inits <int>                             - the number of altMaximize runs (default: 10)\n"
+			<< "    --opt_num_iters <int>                             - the number of iteration in altMaximize (default: 50)\n"
+			<< "    --num_rand_cf <int>                               - the number of rand cf (default: 50)\n"
+			<< "    --num_splits <int>                                - the number of contingency table splits (default: 1)\n"
+			<< "    --anchor_samples_threshold <int>                  - filter out all anchors for which the number of unique samples is <= anchor_samples_threshold\n"
+			<< "    --anchor_list <string>                            - path to text file containing anchors separated by whitespaces, only anchors from this file will be processed\n"
+			<< "    --cjs_out <string>                                - path to output text file where Cjs will be stored\n"
+			<< "    --max_pval_opt_for_Cjs <double>                   - dump only Cjs for anchors that have pval_opt <= max_pval_opt_for_Cjs\n"
+			<< "    --dump_sample_anchor_target_count_txt <string>    - dump merged anchors in textual representation\n"
+			<< "    --dump_sample_anchor_target_count_binary <string> - dump merged anchors in textual satc format\n"
+			<< "    --without_alt_max                                 - disable alt max computation\n"
+			<< "    --with_effect_size_cts                            - compute effect_size_cts\n"
+			<< "    --with_pval_asymp_opt                             - compute pval_asymp_opt\n"
+			<< "    --compute_also_old_base_pvals                     - compute old base pvals\n"
+			<< "    --sample_names <path>                             - path for decode sample id, each line should contain <sample_name> <sample_id>\n"
+			<< "    --cell_type_samplesheet <path>                    - path for mapping barcode to cell type, is used Helmert-based supervised mode is turned on\n"
+			<< "    --Cjs_samplesheet <path>                          - path for file with predefined Cjs for non-10X supervised mode\n"
+			<< "    --format <string>                                 - output format when txt dump, available options: satc, splash (default: satc)\n";
 	}
 };
 
@@ -246,11 +225,18 @@ Params read_params(int argc, char** argv)
 			std::string tmp = argv[++i];
 			res.num_rand_cf = std::stoull(tmp);
 		}
+		if (param == "--num_splits") {
+			std::string tmp = argv[++i];
+			res.num_splits = std::stoull(tmp);
+		}
 		if (param == "--without_alt_max") {
 			res.without_alt_max = true;
 		}
 		if (param == "--with_effect_size_cts") {
 			res.with_effect_size_cts = true;
+		}
+		if (param == "--with_pval_asymp_opt") {
+			res.with_pval_asymp_opt = true;
 		}
 		if (param == "--compute_also_old_base_pvals") {
 			res.compute_also_old_base_pvals = true;
@@ -277,9 +263,13 @@ Params read_params(int argc, char** argv)
 		if (param == "--is_10X") {
 			res.is_10X = true;
 		}
-		if (param == "--run_mode") {
-			res.run_mode = run_mode_from_string(argv[++i]);
+		if (param == "--dump_sample_anchor_target_count_txt") {
+			res.dump_sample_anchor_target_count_txt = argv[++i];
 		}
+		if (param == "--dump_sample_anchor_target_count_binary") {
+			res.dump_sample_anchor_target_count_binary = argv[++i];
+		}
+
 		if (param == "--format")
 			res.format = RecFmtConv::from_string(argv[++i]);
 	}
@@ -426,7 +416,7 @@ public:
 };
 
 
-void write_out_header(std::ofstream& out, bool without_alt_max, bool with_effect_size_cts, bool compute_also_old_base_pvals, bool is_removing_least_freq_targets_enabled, uint32_t n_most_freq_targets, CBCToCellType* cbc_to_cell_type, Non10XSupervised* non_10X_supervised) {
+void write_out_header(std::ofstream& out, bool without_alt_max, bool with_effect_size_cts, bool with_pval_asymp_opt, bool compute_also_old_base_pvals, bool is_removing_least_freq_targets_enabled, uint32_t n_most_freq_targets, CBCToCellType* cbc_to_cell_type, Non10XSupervised* non_10X_supervised) {
 	//mkokot_TODO: czy doimplementowac zakomentowane?
 	out
 		<< "anchor" << "\t";
@@ -463,8 +453,10 @@ void write_out_header(std::ofstream& out, bool without_alt_max, bool with_effect
 	}
 	if (!without_alt_max) {
 		out
-			<< "effect_size_bin" << "\t"
-			<< "pval_asymp_base" << "\t";
+			<< "effect_size_bin" << "\t";
+
+		if (with_pval_asymp_opt)
+			out << "pval_asymp_opt" << "\t";
 	}
 	out
 		//<< "effect_size_cts_SVD" << "\t"					// TODO: ?
@@ -512,6 +504,7 @@ void write_out_rec(
 	uint64_t n_unique_samples,
 	bool without_alt_max,
 	bool with_effect_size_cts,
+	bool with_pval_asymp_opt,
 	bool compute_also_old_base_pvals,
 	bool is_removing_least_freq_targets_enabled,
 	uint32_t n_most_freq_targets,
@@ -595,9 +588,9 @@ void write_out_rec(
 		out << anchor_stats.Cjs_num_rest << "\t";
 	}
 	if (!without_alt_max) {
-		out
-			<< anchor_stats.effect_size_bin << "\t"
-			<< anchor_stats.pval_asymp_base << "\t";
+		out << anchor_stats.effect_size_bin << "\t";
+		if (with_pval_asymp_opt)
+			out << anchor_stats.pval_asymp_opt << "\t";
 	}
 	out
 		//<< "effect_size_cts_SVD" << "\t"					// TODO: ?
@@ -662,6 +655,7 @@ class StatsWriter : public IAnchorProcessor {
 	std::ofstream out;
 	bool without_alt_max;
 	bool with_effect_size_cts;
+	bool with_pval_asymp_opt;
 	bool compute_also_old_base_pvals;
 	bool is_removing_least_freq_targets_enabled;
 	uint32_t n_most_freq_targets;
@@ -669,6 +663,7 @@ class StatsWriter : public IAnchorProcessor {
 	int opt_num_inits;
 	int opt_num_iters;
 	size_t num_rand_cf;
+	size_t num_splits;
 	CExtraStats extra_stats;
 	AnchorStats anchor_stats;
 	CjWriter cj_writer;
@@ -684,6 +679,7 @@ public:
 		const std::string& outpath,
 		bool without_alt_max,
 		bool with_effect_size_cts,
+		bool with_pval_asymp_opt,
 		bool compute_also_old_base_pvals,
 		bool is_removing_least_freq_targets_enabled,
 		uint32_t n_most_freq_targets,
@@ -691,6 +687,7 @@ public:
 		int opt_num_inits,
 		int opt_num_iters,
 		size_t num_rand_cf,
+		size_t num_splits,
 		const std::string& cjs_out,
 		bool is_10X,
 		size_t anchor_len_symbols,
@@ -703,6 +700,7 @@ public:
 //		out(outpath),
 		without_alt_max(without_alt_max),
 		with_effect_size_cts(with_effect_size_cts),
+		with_pval_asymp_opt(with_pval_asymp_opt),
 		compute_also_old_base_pvals(compute_also_old_base_pvals),
 		is_removing_least_freq_targets_enabled(is_removing_least_freq_targets_enabled),
 		n_most_freq_targets(n_most_freq_targets),
@@ -710,6 +708,7 @@ public:
 		opt_num_inits(opt_num_inits),
 		opt_num_iters(opt_num_iters),
 		num_rand_cf(num_rand_cf),
+		num_splits(num_splits),
 		cj_writer(cjs_out, is_10X, anchor_len_symbols, barcode_len_symbols, sample_names),
 		max_pval_opt_for_Cjs(max_pval_opt_for_Cjs),
 		cbc_to_cell_type(cbc_to_cell_type),
@@ -726,6 +725,7 @@ public:
 			out,
 			without_alt_max,
 			with_effect_size_cts,
+			with_pval_asymp_opt,
 			compute_also_old_base_pvals,
 			is_removing_least_freq_targets_enabled,
 			n_most_freq_targets,
@@ -764,12 +764,14 @@ public:
 					anchor_stats,
 					without_alt_max,
 					with_effect_size_cts,
+					with_pval_asymp_opt,
 					compute_also_old_base_pvals,
 					n_most_freq_targets,
 					opt_train_fraction,
 					opt_num_inits,
 					opt_num_iters,
 					num_rand_cf,
+					num_splits,
 					cj_writer,
 					max_pval_opt_for_Cjs,
 					cbc_to_cell_type,
@@ -788,6 +790,7 @@ public:
 			unique_samples.size(),
 			without_alt_max,
 			with_effect_size_cts,
+			with_pval_asymp_opt,
 			compute_also_old_base_pvals,
 			is_removing_least_freq_targets_enabled,
 			n_most_freq_targets,
@@ -830,17 +833,7 @@ public:
 		out_header.serialize(out);
 	}
 
-	void ProcessAnchor(
-		Anchor&& anchor,
-		bool is_10X,
-		size_t anchor_len_symbols,
-		size_t target_len_symbols,
-		size_t n_uniqe_targets,
-		size_t tot_cnt,
-		size_t n_uniqe_targets_before_filter,
-		size_t tot_cnt_before_filter,
-		const std::unordered_set<uint64_t>& unique_samples
-	)  override {
+	void ProcessAnchor(const Anchor& anchor) {
 		Record rec;
 		rec.anchor = anchor.anchor;
 
@@ -852,6 +845,20 @@ public:
 
 			rec.serialize(out, out_header);
 		}
+	}
+
+	void ProcessAnchor(
+		Anchor&& anchor,
+		bool is_10X,
+		size_t anchor_len_symbols,
+		size_t target_len_symbols,
+		size_t n_uniqe_targets,
+		size_t tot_cnt,
+		size_t n_uniqe_targets_before_filter,
+		size_t tot_cnt_before_filter,
+		const std::unordered_set<uint64_t>& unique_samples
+	)  override {
+		ProcessAnchor(anchor);
 
 		anchor.data.clear();
 		anchor.data.shrink_to_fit();
@@ -895,17 +902,9 @@ public:
 		header.target_len_symbols = target_len_symbols;
 		header.gap_len_symbols = gap_len_symbols;
 	}
-	void ProcessAnchor(
-		Anchor&& anchor,
-		bool is_10X,
-		size_t anchor_len_symbols,
-		size_t target_len_symbols,
-		size_t n_uniqe_targets,
-		size_t tot_cnt,
-		size_t n_uniqe_targets_before_filter,
-		size_t tot_cnt_before_filter,
-		const std::unordered_set<uint64_t>& unique_samples
-	) override {
+
+	void ProcessAnchor(const Anchor& anchor)
+	{
 		Record rec;
 		rec.anchor = anchor.anchor;
 
@@ -917,9 +916,72 @@ public:
 
 			rec.print(out, header, format, sample_name_decoder);
 		}
+	}
+
+	void ProcessAnchor(
+		Anchor&& anchor,
+		bool is_10X,
+		size_t anchor_len_symbols,
+		size_t target_len_symbols,
+		size_t n_uniqe_targets,
+		size_t tot_cnt,
+		size_t n_uniqe_targets_before_filter,
+		size_t tot_cnt_before_filter,
+		const std::unordered_set<uint64_t>& unique_samples
+	) override {
+		ProcessAnchor(anchor);
 
 		anchor.data.clear();
 		anchor.data.shrink_to_fit();
+	}
+};
+
+class CombinedAnchorWriter : public IAnchorProcessor {
+	std::unique_ptr<SatcDumpWriter> satc_dump_writer;
+	std::unique_ptr<SatcWriter> satc_writer;
+	std::unique_ptr<StatsWriter> stats_writer;
+
+public:
+	CombinedAnchorWriter(
+		std::unique_ptr<SatcDumpWriter>&& satc_dump_writer,
+		std::unique_ptr<SatcWriter>&& satc_writer,
+		std::unique_ptr<StatsWriter>&& stats_writer)
+		:
+		satc_dump_writer(std::move(satc_dump_writer)),
+		satc_writer(std::move(satc_writer)),
+		stats_writer(std::move(stats_writer))
+	{
+
+	}
+
+	void ProcessAnchor(
+		Anchor&& anchor,
+		bool is_10X,
+		size_t anchor_len_symbols,
+		size_t target_len_symbols,
+		size_t n_uniqe_targets,
+		size_t tot_cnt,
+		size_t n_uniqe_targets_before_filter,
+		size_t tot_cnt_before_filter,
+		const std::unordered_set<uint64_t>& unique_samples
+	)  override {
+		if (satc_dump_writer)
+			satc_dump_writer->ProcessAnchor(anchor);
+		if (satc_writer)
+			satc_writer->ProcessAnchor(anchor);
+
+		//must be last because it destroys anchor content
+		if (stats_writer)
+			stats_writer->ProcessAnchor(std::move(anchor),
+				is_10X,
+				anchor_len_symbols,
+				target_len_symbols,
+				n_uniqe_targets,
+				tot_cnt,
+				n_uniqe_targets_before_filter,
+				tot_cnt_before_filter,
+				unique_samples
+			);
 	}
 };
 
@@ -954,8 +1016,9 @@ bool get_top_anchors(std::vector<std::unique_ptr<Bin>>& bins, AcceptedAnchors& a
 }
 
 std::unique_ptr<IAnchorProcessor> get_anchor_processor(
-	RunMode run_mode,
 	const std::string& outpath,
+	const std::string& dump_sample_anchor_target_count_txt,
+	const std::string dump_sample_anchor_target_count_binary,
 	RecFmt format,
 	uint8_t sample_id_size_bytes,
 	uint8_t barcode_size_bytes,
@@ -969,6 +1032,7 @@ std::unique_ptr<IAnchorProcessor> get_anchor_processor(
 	const std::string& sample_names,
 	bool without_alt_max,
 	bool with_effect_size_cts,
+	bool with_pval_asymp_opt,
 	bool compute_also_old_base_pvals,
 	bool is_removing_least_freq_targets_enabled,
 	uint32_t n_most_freq_targets,
@@ -976,29 +1040,18 @@ std::unique_ptr<IAnchorProcessor> get_anchor_processor(
 	int opt_num_inits,
 	int opt_num_iters,
 	size_t num_rand_cf,
+	size_t num_splits,
 	const std::string& cjs_out,
 	bool is_10X,
 	double max_pval_opt_for_Cjs,
 	CBCToCellType* cbc_to_cell_type,
 	Non10XSupervised* non_10X_supervised) {
-	switch (run_mode)
-	{
-	case RunMode::JustMerge:
-		return std::make_unique<SatcWriter>(
-			outpath,
-			sample_id_size_bytes,
-			barcode_size_bytes,
-			anchor_size_bytes,
-			target_size_bytes,
-			counter_size_bytes,
-			barcode_len_symbols,
-			anchor_len_symbols,
-			target_len_symbols,
-			gap_len_symbols
-			);
-	case RunMode::JustMergeAndDump:
-		return std::make_unique<SatcDumpWriter>(
-			outpath,
+
+	std::unique_ptr<SatcDumpWriter> satc_dump_writer;
+
+	if (dump_sample_anchor_target_count_txt != "") {
+		satc_dump_writer = std::make_unique<SatcDumpWriter>(
+			dump_sample_anchor_target_count_txt,
 			format,
 			sample_id_size_bytes,
 			barcode_size_bytes,
@@ -1011,31 +1064,51 @@ std::unique_ptr<IAnchorProcessor> get_anchor_processor(
 			gap_len_symbols,
 			sample_names
 			);
-	case RunMode::CalcStats:
-		return std::make_unique<StatsWriter>(
-			outpath,
-			without_alt_max,
-			with_effect_size_cts,
-			compute_also_old_base_pvals,
-			is_removing_least_freq_targets_enabled,
-			n_most_freq_targets,
-			opt_train_fraction,
-			opt_num_inits,
-			opt_num_iters,
-			num_rand_cf,
-			cjs_out,
-			is_10X,
-			anchor_len_symbols,
-			barcode_len_symbols,
-			sample_names,
-			max_pval_opt_for_Cjs,
-			cbc_to_cell_type,
-			non_10X_supervised);
-		break;
-	default:
-		std::cerr << "Error: this is not supported, mode " << to_string(run_mode) << "\n";
-		exit(1);
 	}
+
+	std::unique_ptr<SatcWriter> satc_writer;
+
+	if (dump_sample_anchor_target_count_binary != "") {
+		satc_writer = std::make_unique<SatcWriter>(
+			dump_sample_anchor_target_count_binary,
+			sample_id_size_bytes,
+			barcode_size_bytes,
+			anchor_size_bytes,
+			target_size_bytes,
+			counter_size_bytes,
+			barcode_len_symbols,
+			anchor_len_symbols,
+			target_len_symbols,
+			gap_len_symbols
+			);
+	}
+
+	std::unique_ptr<StatsWriter> stats_writer = std::make_unique<StatsWriter>(
+		outpath,
+		without_alt_max,
+		with_effect_size_cts,
+		with_pval_asymp_opt,
+		compute_also_old_base_pvals,
+		is_removing_least_freq_targets_enabled,
+		n_most_freq_targets,
+		opt_train_fraction,
+		opt_num_inits,
+		opt_num_iters,
+		num_rand_cf,
+		num_splits,
+		cjs_out,
+		is_10X,
+		anchor_len_symbols,
+		barcode_len_symbols,
+		sample_names,
+		max_pval_opt_for_Cjs,
+		cbc_to_cell_type,
+		non_10X_supervised);
+
+	return std::make_unique<CombinedAnchorWriter>(
+		std::move(satc_dump_writer),
+		std::move(satc_writer),
+		std::move(stats_writer));
 }
 
 void run_non_10X(const Params& params) {
@@ -1080,8 +1153,10 @@ void run_non_10X(const Params& params) {
 			max_sample_id_size_bytes = bin_i_header.sample_id_size_bytes;
 	}
 
-	std::unique_ptr<IAnchorProcessor> anchor_processor = get_anchor_processor(params.run_mode,
+	std::unique_ptr<IAnchorProcessor> anchor_processor = get_anchor_processor(
 		params.outpath,
+		params.dump_sample_anchor_target_count_txt,
+		params.dump_sample_anchor_target_count_binary,
 		params.format,
 		max_sample_id_size_bytes,
 		bin0_header.barcode_size_bytes,
@@ -1095,6 +1170,7 @@ void run_non_10X(const Params& params) {
 		params.sample_names,
 		params.without_alt_max,
 		params.with_effect_size_cts,
+		params.with_pval_asymp_opt,
 		params.compute_also_old_base_pvals,
 		params.n_most_freq_targets_for_stats != 0,
 		params.n_most_freq_targets,
@@ -1102,6 +1178,7 @@ void run_non_10X(const Params& params) {
 		params.opt_num_inits,
 		params.opt_num_iters,
 		params.num_rand_cf,
+		params.num_splits,
 		params.cjs_out,
 		false,
 		params.max_pval_opt_for_Cjs,
@@ -1248,8 +1325,9 @@ void run_10X(const Params& params) {
 	timer.Start();
 
 	std::unique_ptr<IAnchorProcessor> anchor_processor = get_anchor_processor(
-		params.run_mode,
 		params.outpath,
+		params.dump_sample_anchor_target_count_txt,
+		params.dump_sample_anchor_target_count_binary,
 		params.format,
 		max_sample_id_size_bytes,
 		header.barcode_size_bytes,
@@ -1263,6 +1341,7 @@ void run_10X(const Params& params) {
 		params.sample_names,
 		params.without_alt_max,
 		params.with_effect_size_cts,
+		params.with_pval_asymp_opt,
 		params.compute_also_old_base_pvals,
 		false, //mkokot_TODO: add support to remove least freq targets from contignency table for 10X
 		params.n_most_freq_targets,
@@ -1270,6 +1349,7 @@ void run_10X(const Params& params) {
 		params.opt_num_inits,
 		params.opt_num_iters,
 		params.num_rand_cf,
+		params.num_splits,
 		params.cjs_out,
 		true,
 		params.max_pval_opt_for_Cjs,

@@ -66,7 +66,7 @@ def get_args():
     parser.add_argument(
         "--satc_dump_file",
         type=str,
-        help='Path to satc_dump utility file (within NOMAD2, /bin/satc_dump)'
+        help='Path to satc_dump utility file (within SPLASH2, /bin/satc_dump)'
     )
     
     args = parser.parse_args()
