@@ -150,23 +150,19 @@ There are following columns in the resulting tsv files
 | pval_opt_corrected  | Benjamini-Yekutieli corrected pval_opt       |   only present in `*.scores.tsv` file                                                             |
 
 ## Input format
-In the example the `input.txt` file was used. This file defines the set of input samples for the algorithm.
+In the example, the `input.txt` file was used. This file defines the set of input samples for the algorithm.
 Its format is one sample per line. Each line should contain the name of a sample and (after space) path to the input sample.
 
-**Important note:** if relative path is specified it is relative to the current working directory, not the directory of `input.txt`.
+**Important note:** if a relative path is specified it is relative to the current working directory, not the directory of `input.txt`.
 
 ## Example Applications
-### Human scRNA-Seq
-### Human bulk RNA-Seq (tumor)
-### Plants
-### Microbial
-### Non-model organisms (incomplete genome)
-### Immune repertoire profiling
-### Other
+Given the broad applications of SPLASH, in analysis_notebooks folder, we provide the analysis downstream of SPLASH on how to interpret the results for a few major applications in which SPLASH has been applied so far. We should note that SPLASH is quite general and continues to be applied in new genomics problems.  
+#### Splicing analysis for RNA-Seq
+The notebook (`analysis_notebooks/SPLASH_splicing_analysis_notebook.Rmd`) provides detailed step-by-step instructions on how SPLASH results can be interpreted for an alternative splicing analysis. The reference genome in this example is human but it could be replaced with any other organism with any quality of transcriptome annotation. 
 
 ## Additional output
 ### Most frequent targets per each anchor
-By default SPLASH will store 2 most frequent targets per each anchor in the resulting TSV files. This should be sufficient for splicing, but for RNA editing/missmatches 4 may be a better choice. It may be set with `--n_most_freq_targets` switch. If the number of targets for a given anchor is lower than specified value there will be a single `-` for each missing target.
+By default SPLASH will store 2 most frequent targets per each anchor in the resulting TSV files. This should be sufficient for splicing, but for RNA editing/mismatches 4 may be a better choice. It may be set with `--n_most_freq_targets` switch. If the number of targets for a given anchor is lower than specified value there will be a single `-` for each missing target.
 ### SATC format
 SPLASH stores intermediate and optional output files in SATC format (**S**ample **A**nchor **T**arget **C**ount).
 ### Sample representation
@@ -201,13 +197,13 @@ There are also additional parameters that may be useful, namely:
 - `satc_dump_file` &mdash; path to satc_dump utility file, within SPLASH /bin folder
 - `skipSATC` &mdash; optional flag, if .satc files have already been dumped for this set of anchors into the output folder, and the desire is to regenerate plots.
 
-The generated output is 1 file per anchor, each file containing 4 subplots. At bottom left is the raw I x J contingency table, where each column is a sample, and each row represents a target (low abundance targets not shown). Each sample’s target counts are normalized by $n_j$ and plotted. At bottom right, the targets for the contingency table are displayed in a I x k table (corresponding to the rows of the contingency table, visually aligned). Each target of length k is shown, with basepairs colored as in the below colorbar. The target sequence for each row is displayed on the right. At top left,  the sample metadata is shown in a 1 x J table. Each entry corresponds to the column in the contingency table directly below it. The sample metadata is shown in a colorbar below. At top right, the column counts ($n_j$) are shown in a 1 x J table, where the colorbar below provides the scale. Again, columns are sorted as the contingency table.
+The generated output is 1 file per anchor, each file containing 4 subplots. At bottom left is the raw I x J contingency table, where each column is a sample, and each row represents a target (low abundance targets not shown). Each sample’s target counts are normalized by $n_j$ and plotted. At bottom right, the targets for the contingency table are displayed in a I x k table (corresponding to the rows of the contingency table, visually aligned). Each target of length k is shown, with base pairs colored as in the below colorbar. The target sequence for each row is displayed on the right. At top left,  the sample metadata is shown in a 1 x J table. Each entry corresponds to the column in the contingency table directly below it. The sample metadata is shown in a color bar below. At top right, the column counts ($n_j$) are shown in a 1 x J table, where the colorbar below provides the scale. Again, columns are sorted as the contingency table.
 
 
 The script `c_analysis.ipynb` shows how the saved c vectors can be loaded in for further analysis. `--dump_Cjs` must be enabled for this.
  
 ## Biological interpretation and classification of anchors
-To facilitate downstream analysis of anchors, we provide a postprocessing script `SPLASH_extendor_classification.R`, that can be run on the anchors file generataed from the SPLASH run to classify anchors to biologically meaningful events such as alternative splicing, and base pair changes. `SPLASH_extendor_classification.R` needs the following inputs:
+To facilitate downstream analysis of anchors, we provide a postprocessing script `SPLASH_extendor_classification.R`, that can be run on the anchors file generated from the SPLASH run to classify anchors to biologically meaningful events such as alternative splicing, and base pair changes. `SPLASH_extendor_classification.R` needs the following inputs:
 
 - `directory` &mdash; the output directory used for the SPLASH run
 - `which_anchors_file` &mdash; flag to decide which anchor file (after correction or all anchors) to use, could be "after_correction" or "all" 
