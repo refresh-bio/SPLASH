@@ -1,0 +1,224 @@
+---
+title: "SPLASH2 splicing analysis"
+output: html_notebook
+---
+
+
+## load the required packages
+```{r}
+if (!require("stringdist")) {
+  install.packages("stringdist", dependencies = TRUE)
+  library(stringdist)
+}
+
+if (!require("Biostrings")) {
+  if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+  BiocManager::install("Biostrings")
+  library(Biostrings)
+}
+
+if (!require("stringr")) {
+  install.packages("stringr", dependencies = TRUE)
+  library(stringr)
+}
+
+if (!require("GenomicAlignments")) {
+  if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+  BiocManager::install("GenomicAlignments")
+  library(GenomicAlignments)
+}
+
+if (!require("data.table")) {
+  install.packages("data.table", dependencies = TRUE)
+  library(data.table)
+}
+
+if (!require("reshape")) {
+  install.packages("reshape", dependencies = TRUE)
+  library(reshape)
+}
+
+```
+
+# required paths to the SPLASH output file and also other annotation and index files needed for alignment/annotation
+```{r}
+###### SPLASH output file ############
+splash_file = "/hpc/scratch/group.data.science/Roozbeh_temp/NOMAD_10x/runs/TSP11/BoneMarrow/result.after_correction.scores.tsv"  # path to the SPLASH's output file
+####################################
+
+##### STAR index files /annotation files ##########################
+STAR_index_path = "/oak/stanford/groups/horence/Roozbeh/T2T_human_genome/STAR_index_files"  # path to the folder containing STAR index files
+known_splice_sites_file = "/oak/stanford/groups/horence/Roozbeh/T2T_human_genome/T2T_chm13.draft_v2.0_known_splice_sites.txt" # the file containing known splice sites extracted from the reference gtf file
+known_exon_boundaries_file = "/oak/stanford/groups/horence/Roozbeh/T2T_human_genome/T2T_CAT_CHM13v2_exon_coordinates.bed" # path to the file containing the known exon coordinates
+gene_coordinates_file = "/oak/stanford/groups/horence/Roozbeh/T2T_human_genome/T2T_genes_cleaned.bed" # path to the file file containing gene coordinates
+###################################################################
+
+
+########## path to the executable files needed for this analysis  ######################
+STAR_executable_file = "/oak/stanford/groups/horence/Roozbeh/software/STAR-2.7.5a/bin/Linux_x86_64/STAR"
+samtools_executable_file = "/home/groups/horence/applications/samtools-0.1.19/samtools"
+bedtools_executable_file = "/home/groups/horence/applications/bedtools2/bin/bedtools"
+########################################################################################
+```
+
+
+# read in SPLASH file
+```{r}
+anchors = fread(splash_file, sep = "\t", select = c("anchor", "pval_opt", "effect_size_bin", "M", "anch_uniqTargs", "number_nonzero_samples", "target_entropy", 	"avg_hamming_distance_max_target",	"avg_hamming_distance_all_pairs",	"avg_edit_distance_max_target",	"avg_edit_distance_all_pairs", "most_freq_target_1", "cnt_most_freq_target_1", "most_freq_target_2", "cnt_most_freq_target_2", "most_freq_target_3", "cnt_most_freq_target_3", "most_freq_target_4", "cnt_most_freq_target_4", "pval_opt_corrected"))
+setnames(anchors, c("M"), c("anchor_count"))
+```
+
+# we first reshape the SPLASH output file so that each row in the file corresponds to a pair of anchor/target 
+# we then concatenate the sequences for each pair of anchor and target to obtain extendor sequences (i.e., extendor sequences are used for alignment and annotation) 
+```{r}
+## reshape the anchors data table so that each row corresponds to a pair of anchor target ##################
+anchor_target_dt = anchors[,list(anchor, most_freq_target_1, most_freq_target_2, most_freq_target_3, most_freq_target_4)] # this contains anchor and target sequences
+anchor_target_count_dt = anchors[,list(anchor, cnt_most_freq_target_1,cnt_most_freq_target_2,cnt_most_freq_target_3,cnt_most_freq_target_4)] # this contains anchors and its target counts
+anchor_target_dt = data.table(melt(anchor_target_dt, id.vars=c("anchor"))) # convert to long format
+anchor_target_count_dt = data.table(melt(anchor_target_count_dt, id.vars=c("anchor"))) # convert to long format
+anchor_target_count_dt[,variable:=gsub("cnt_","",variable),by=variable] 
+anchor_target_dt = merge(anchor_target_dt,anchor_target_count_dt,all.x=TRUE,all.y=FALSE,by.x=c("anchor","variable"),by.y=c("anchor","variable")) # merge to get a data table with both target counts and sequences
+setnames(anchor_target_dt, c("value.x","value.y"), c("target","target_count"))
+anchor_target_dt[,variable:=NULL]
+anchors = merge(anchor_target_dt,anchors[,list(anchor, pval_opt, effect_size_bin, anchor_count, anch_uniqTargs, number_nonzero_samples, target_entropy, avg_hamming_distance_max_target,	avg_hamming_distance_all_pairs,	avg_edit_distance_max_target,	avg_edit_distance_all_pairs, pval_opt_corrected)],all.x=TRUE,all.y=FALSE,by.x="anchor",by.y="anchor")
+anchors = anchors[target!="-"]
+anchors[,target_fraction:=target_count/anchor_count,by=1:nrow(anchors)]
+#################################################################################################
+
+anchors  = setorder(anchors, -number_nonzero_samples, anchor,-target_count) # I first based on number of nonzero samples, then based on anchors and then based on proportion of each extendor so that those anchors with more samples and extendors with higher fraction within each anchors  rank higher
+anchors[,num_targets_per_anchor:=length(unique(target)),by=anchor]
+anchors$extendor=paste(anchors$anchor,anchors$target,sep="")
+anchors[,extendor_order:= 1:num_targets_per_anchor, by = anchor]
+anchor_rank_dt = data.table(unique(anchors$anchor),1:length(unique(anchors$anchor)))
+names(anchor_rank_dt) = c("anchor","anchor_index")
+anchors = merge(anchors,anchor_rank_dt,all.x=TRUE,all.y=FALSE,by.x="anchor",by.y="anchor")
+
+```
+
+
+# below we perform STAR alignment on the extendors to obtain the splice junctions for the extendors
+```{r}
+anchors$extendor_index = paste(">",anchors$anchor_index,"_",anchors$extendor_order,sep="")
+
+riffle <- function(a, b) {   # this function interleaves the elements of two vectors into a vector
+  seqmlab <- seq(length=length(a))
+  c(rbind(a[seqmlab], b[seqmlab]), a[-seqmlab], b[-seqmlab])
+}
+
+extendors_fasta = riffle(anchors$extendor_index,anchors$extendor)
+extendors_fasta  = data.table(extendors_fasta) # the fasta file containing all extendor sequences
+
+write.table(extendors_fasta,paste(directory,"extendors_fasta.fa",sep = ""), quote = FALSE, row.names = FALSE, col.names = FALSE, sep = "\t")
+system(paste(STAR_executable_file, " --runThreadN 4 --genomeDir  ",STAR_index_path, " --readFilesIn ", directory,"extendors_fasta.fa", " --outFileNamePrefix ", directory,"STAR_alignment/extendors"," --twopassMode Basic --alignIntronMax 1000000 --limitOutSJcollapsed 3000000 --chimJunctionOverhangMin 10 --chimSegmentReadGapMax 0 --chimOutJunctionFormat 1 --chimSegmentMin 12 --chimScoreJunctionNonGTAG -4 --chimNonchimScoreDropMin 10 --outSAMtype SAM --chimOutType SeparateSAMold --outSAMunmapped None --clip3pAdapterSeq AAAAAAAAA --outSAMattributes NH HI AS nM NM ",sep = ""))
+
+alignment_info_extendors = fread(paste(directory,"STAR_alignment/extendorsAligned.out.sam",sep=""),header=FALSE,skip="NH:",select = c("V1","V2","V3","V4","V6","V16")) ## now grabbing alignment information for extendor sequences after running STAR
+alignment_info_extendors$V1=paste(">",alignment_info_extendors$V1,sep="")
+alignment_info_extendors[,num_alignments:=.N,by=V1]
+alignment_info_extendors[,STAR_num_mismatches:=as.numeric(strsplit(V16,split=":")[[1]][3]),by=V16]
+
+anchors[,c("STAR_flag","STAR_chr","STAR_coord","STAR_CIGAR","STAR_num_alignments","STAR_num_mismatches"):=NULL]
+anchors = merge(anchors,alignment_info_extendors[!duplicated(V1),list(V1,V2,V3,V4,V6,num_alignments,STAR_num_mismatches)],all.x=TRUE,all.y=FALSE,by.x="extendor_index",by.y="V1")
+setnames(anchors,c("V2","V3","V4","V6","num_alignments"),c("STAR_flag","STAR_chr","STAR_coord","STAR_CIGAR","STAR_num_alignments"))
+
+### below I add the flags for the STAR alignment status of each extendor
+anchors[,extendor_index:=gsub(">","",extendor_index),by=extendor_index]
+anchors[,is.aligned_STAR:=0]   # whether extendor has been mapped by STAR
+anchors[,is.STAR_chimeric:=0]  # whether STAR reports a chimeric alignment for the extendor
+anchors[,is.STAR_SJ:=0]        # whether STAR reports a gapped alignment (splice junction for the extendor)
+anchors[,is.aligned_Bowtie:=0] 
+
+num_chimeric_alignments = data.table()
+num_chimeric_alignments = fread(paste(directory,"STAR_alignment/extendorsLog.final.out",sep=""),sep="|",skip=35)
+num_chimeric_alignments[,V2:=gsub("\t","",V2),by=V2]
+if (num_chimeric_alignments$V2[1]!=0){
+  chimeric_alignment_info_extendors = fread(paste(directory,"STAR_alignment/extendorsChimeric.out.sam",sep=""),header=FALSE,skip="NH:")
+  anchors[extendor_index%in%chimeric_alignment_info_extendors$V1,is.STAR_chimeric:=1]
+}
+anchors[STAR_CIGAR%like%"N", is.STAR_SJ:=1]    
+anchors[!is.na(STAR_chr), is.aligned_STAR:=1]  # the extendors with non-NA STAR alignment are flagged as mapped by STAR
+```
+
+
+# now that we have aligned extendors we can use their alignment information to get the gene name for each extendor
+```{r}
+anchors[,extendor_gene:=NULL]
+system(paste(samtools_executable_file, " view -S -b ",directory,"STAR_alignment/extendorsAligned.out.sam > ",directory,"STAR_alignment/extendorsAligned.out.bam",sep=""))
+system(paste(bedtools_executable_file, " bamtobed -split -i ",directory,"STAR_alignment/extendorsAligned.out.bam | sort -k1,1 -k2,2n > ", directory,"STAR_alignment/called_exons.bed",sep=""))
+system(paste(bedtools_executable_file, " intersect -a ",directory,"STAR_alignment/called_exons.bed -b ", gene_coordinates_file, " -wb -loj | cut -f 4,10   | ", bedtools_executable_file, " groupby -g 1 -c 2 -o distinct  > ", directory,"STAR_alignment/extendor_genes.txt",sep=""))
+extendor_genes = fread(paste(directory,"STAR_alignment/extendor_genes.txt",sep=""),sep="\t",header=FALSE)
+names(extendor_genes) = c("extendor_index","extendor_gene")
+anchors = merge(anchors,extendor_genes[!duplicated(extendor_index)],all.x=TRUE,all.y=FALSE,by.x="extendor_index",by.y="extendor_index")
+anchors[extendor_gene==".",extendor_gene:=NA]
+anchors[,num_extendor_gene_anchor:=length(unique(extendor_gene)),by=anchor]  #number of unique extendor gene names for each anchor (is useful for distinguishing TE-like events in which different extendors might map to multiple genes)
+```
+
+## below we extract the splice junctions from STAR alignments
+```{r}
+##################################################################################################################################
+############################ extracting splice junctions for those with reported STAR splice alignment ###########################
+##################################################################################################################################
+# I first write a sam file that has only the best splice alignment for each extendor
+alignment_info_extendors = fread(paste(directory,"STAR_alignment/extendorsAligned.out.sam",sep=""),header=FALSE,skip="NH:")
+alignment_info_extendors = alignment_info_extendors[!duplicated(V1)][V6%like%"N"]
+write.table(alignment_info_extendors,paste(directory,"STAR_alignment/only_top_splice_alignments.out.sam",sep=""),sep="\t",row.names=FALSE,quote =FALSE,col.names = FALSE)
+system(paste(samtools_executable_file, " view -H ",directory,"STAR_alignment/extendorsAligned.out.bam > ", directory, "STAR_alignment/sam_header.txt", sep=""))
+
+# now I need to concatenate the header to the new sam file and then convert the sam file to a bam file and then run bamtobed split to get the extracted splice junctions
+system(paste("cat ",directory,"STAR_alignment/sam_header.txt ",directory,"STAR_alignment/only_top_splice_alignments.out.sam > ", directory, "STAR_alignment/only_top_splice_alignments_with_header.out.sam" ,sep=""))
+system(paste(samtools_executable_file, " view -S -b ",directory,"STAR_alignment/only_top_splice_alignments_with_header.out.sam > ",directory,"STAR_alignment/only_top_splice_alignments_with_header.out.bam",sep=""))
+system(paste(bedtools_executable_file, " bamtobed -split -i ",directory,"STAR_alignment/only_top_splice_alignments_with_header.out.bam > ",directory,"STAR_alignment/extracted_splice_junction.bed",sep=""))
+```
+
+## now below we annotate splice junctions to determine whether each junction corresponds to an annotated alternative splicing and annoatted exon boundary or not
+```{r}
+splice_junctions = fread(paste(directory,"STAR_alignment/extracted_splice_junction.bed",sep=""),header=FALSE) # now I read in the extracted splice junctions and then by creating a shifted version of them and then appending them to the original data table columnwise I extract spliec junctions as the 2nd coord from the first line and 1st coord from the second line + 1
+splice_junctions_shifted = splice_junctions[, data.table::shift(.SD, 1, NA, "lead", TRUE), .SDcols=1:6]
+splice_junctions = cbind(splice_junctions,splice_junctions_shifted)
+splice_junctions = splice_junctions[V4==V4_lead_1] # to subset to only those with the same extendor_index
+splice_junctions$splice_junc=paste(splice_junctions$V1,":",splice_junctions$V3,":",splice_junctions$V2_lead_1+1,sep="")
+splice_junctions[,all_splice_juncs:=paste(splice_junc,collapse = "--"),by=V4]
+
+remove(alignment_info_extendors)
+
+##### annotating AS splice sites ######
+known_splice_sites = fread(known_splice_sites_file)
+
+# now we want to do the same analysis by looking at the splice sites that are involved in at least two distinct junctions
+known_splice_sites$chr_V2=paste(known_splice_sites$V1,known_splice_sites$V2,sep=":")
+known_splice_sites$chr_V3=paste(known_splice_sites$V1,known_splice_sites$V3,sep=":")
+known_splice_sites[,num_uniq_V2_for_V3:=length(unique(chr_V2)),by = chr_V3] # number of partner splice cites for each V2
+known_splice_sites[,num_uniq_V3_for_V2:=length(unique(chr_V3)),by = chr_V2] # number of partner splice cites for each V3
+alt_v2 = known_splice_sites[num_uniq_V3_for_V2>1]$V2 # the V2 coordinates that have more than one splice site partner
+alt_v3 = known_splice_sites[num_uniq_V2_for_V3>1]$V3 # the V3 coordinates that have more than one splice site partner
+total = c(alt_v2, alt_v3, alt_v2-1, alt_v3-1, alt_v2+1, alt_v3+1) # I concatenate all coordinates with their +-1 counterparts
+splice_junctions[,SSA_AS_annot:=0]
+splice_junctions[,SSB_AS_annot:=0]
+splice_junctions[V3%in%total,SSA_AS_annot:=1]
+splice_junctions[V2_lead_1%in%total,SSB_AS_annot:=1]
+splice_junctions$SS_AS_annot=paste(splice_junctions$SSA_AS_annot,":",splice_junctions$SSB_AS_annot,sep="") # the flag that shows whether the 5' and 3' SS of each splice alignment is annotated as being involved in AS
+splice_junctions[,all_SS_AS_annot:=paste(SS_AS_annot,collapse = "--"),by=V4]
+#########################################
+#
+### now check to see if splice site is an annotated exon boundary ############
+known_exon_boundaries = fread(known_exon_boundaries_file,header=TRUE,sep="\t")
+known_exon_boundaries = known_exon_boundaries[!duplicated(paste(V1,V2,V3))]
+total = c(known_exon_boundaries$chr_V2,known_exon_boundaries$chr_V2_1,known_exon_boundaries$chr_V2_2,known_exon_boundaries$chr_V3,known_exon_boundaries$chr_V3_1,known_exon_boundaries$chr_V3_2)
+splice_junctions[,SSA_annot:=0]
+splice_junctions[,SSB_annot:=0]
+splice_junctions[paste(V1,V3,sep="")%in%total,SSA_annot:=1]
+splice_junctions[paste(V1,V2_lead_1,sep="")%in%total,SSB_annot:=1]
+splice_junctions$SS_annot=paste(splice_junctions$SSA_annot,":",splice_junctions$SSB_annot,sep="") # the flag that shows whether the 5' and 3' SS of each splice alignment is annotated as an exon boundary
+splice_junctions[,all_SS_annot:=paste(SS_annot,collapse = "--"),by=V4]
+##############################################################################
+
+anchors[,c("all_splice_juncs","all_SS_AS_annot","all_SS_annot"):=NULL]
+splice_junctions = splice_junctions[!duplicated(V4)]
+anchors = merge(anchors,splice_junctions[,list(V4,all_splice_juncs,all_SS_AS_annot,all_SS_annot)],all.x=TRUE,all.y=FALSE,by.x="extendor_index",by.y="V4")
+
+##################################################################################################################################
+splicing_anchors = anchors[!is.na()]
+```
+
+### splicing_anchors is the data table containig only anchors with splicing junctions that can be used for further downstream analysis
