@@ -6,7 +6,7 @@ This is achieved with a simple model, SPLASH, that analyzes k-mer composition of
 SPLASH finds constant sequences (anchors) that are followed by a set of sequences (targets) with sample-specific target variation and provides valid p-values. 
 SPLASH is reference-free, sidestepping the computational challenges associated with alignment and making it significantly faster and more efficient than alignment, and enabling discovery and statistical precision not currently available, even from pseudo-alignment.
 
-The first version of [SPLASH](https://github.com/salzman-lab/splash/) pipeline proved its usefullness.
+The first version of [SPLASH](https://github.com/salzman-lab/nomad/) pipeline proved its usefulness.
 It was implemented mainly in Python with the use of NextFlow.
 Here we provide a new and improved implementation based in C++ and Python (Kokot et al. 2023).
 This new version is much more efficient and allows for the analysis of datasets >1TB size in hours on a workstation or even a laptop.
