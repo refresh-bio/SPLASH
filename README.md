@@ -223,7 +223,7 @@ To facilitate downstream analysis of anchors, we provide a postprocessing script
 The script will generate a file `classified_anchors.tsv` in the same directory used for SPLASH run, containing significant anchors along with their biological classification and alignment information.
 
 ## Annotation files for human and mouse genomes:
-Three annotation files (for annotated exon boundaries, annotated splice sites, and gene paralogs) are needed for running the classification script. The files for human (T2T) and mouse (mm39) can be downloaded from the following links:
+Three annotation files (for annotated exon boundaries, annotated splice sites, and gene paralogs) are needed for running the classification script. The human files were built based on the [T2T assembly](https://www.ncbi.nlm.nih.gov/datasets/genome/GCF_009914755.1/) and the mouse files were built based on the [mm39 assembly](https://www.ncbi.nlm.nih.gov/assembly/GCF_000001635.27/). The annotation files can be downloaded using the following links:
 - **Human (T2T)**:
    - `Annotated exon coordinates`: https://drive.google.com/file/d/1R-4-ICDAzmIBgQmlOF22nNrCWoSgrmHi/view?usp=share_link
    - `Annotated splice junctions`: https://drive.google.com/file/d/1owlOQyP1z4cyFvYcAAA-qQmc-K6jGbs9/view?usp=share_link
@@ -232,6 +232,7 @@ Three annotation files (for annotated exon boundaries, annotated splice sites, a
    - `Annotated exon coordinates`: https://drive.google.com/file/d/1npE0rkxhsDtJk3FeMdfuZwc5Elfuk4bq/view?usp=sharing
    - `Annotated splice junctions`: https://drive.google.com/file/d/1iJhf421nMRDC0uCo_0jh7Nkns8NAieTE/view?usp=sharing
    - `Paralogous genes`: https://drive.google.com/file/d/1Uf28bE2XF9Y2w57ARlUGfO5agiFFXx2S/view?usp=sharing
+
 
 ## References
 Marek Kokot, Roozbeh Dehghannasiri, Tavor Baharav, Julia Salzman, and Sebastian Deorowicz.
