@@ -222,7 +222,7 @@ To facilitate downstream analysis of anchors, we provide a postprocessing script
  
 The script will generate a file `classified_anchors.tsv` in the same directory used for SPLASH run, containing significant anchors along with their biological classification and alignment information.
 
-## Annotation files for human genome (based on T2T):
+## Annotation files for human and mouse genomes:
 Three annotation files (for annotated exon boundaries, annotated splice sites, and gene paralogs) are needed for running the classification script. The files for human (T2T) and mouse (mm39) can be downloaded from the following links:
 - **Human (T2T)**:
    - `Annotated exon coordinates`: https://drive.google.com/file/d/1R-4-ICDAzmIBgQmlOF22nNrCWoSgrmHi/view?usp=share_link
