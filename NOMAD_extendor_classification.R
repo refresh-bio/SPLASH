@@ -41,7 +41,7 @@ riffle <- function(a, b) {   # this function interleaves the elements of two vec
 ##################################################
 ############ input arguments #####################
 args <- commandArgs(trailingOnly = TRUE)
-directory = args[1]  # the output directory used for the SPLASH run
+directory = args[1]  # the output directory used for the NOMAD run
 which_anchors_file = args[2]  # flag to decide which anchor file (after correction or all anchors) to use, could be "after_correction" or "all" 
 effect_size_cutoff = args[3] # the effect size cutoff for significant anchors (default 0.2) 
 num_samples_cutoff = args[4] # the minimum number of sampels for an anchor to be called (default 20)
@@ -54,7 +54,9 @@ annotated_exon_boundaries = args[10] #path to the file containing annotated exon
 bowtie2_executable = args[11] # path to bowtie2 executable file
 bowtie2_univec_index = args[12] #path to the bowtie2 index for univec
 bowtie2_reference = args[13] # path to the bowtie2 index for the reference genome
-paralogs_file = args[14] # path to the file containing list of paralogous genes from reference genome
+if (length(args) == 14){
+  paralogs_file = args[14] # path to the file containing list of paralogous genes from reference genome
+}
 ##################################################
 ##################################################
 
@@ -392,55 +394,57 @@ anchors[!is.na(soft_clipped_bases) & STAR_T2T_num_alignments==1 & Bowtie_T2T_sof
 toc()
 
 
-tic("paralog")
-#############################################################################
-############ finding extendors involving paralogs ##########################
-#############################################################################
-paralog_genes = fread(paralogs_file,select=c("gene_name","paralog_gene_name"))
-paralog_genes[,num_paralog:=.N,by=gene_name]
-paralog_genes = unique(paralog_genes)
-paralog_genes = paralog_genes[num_paralog<100]
-paralog_genes[,all_paralogs:=paste(paralog_gene_name,collapse = "--"), by=gene_name]
-
-anchors_high_rank = anchors[extendor_order<3 ]
-anchors_high_rank[ ,is.paralog:=0]
-## below I only want to look at the paralog alignments that are uniquely and perfectly mapped
-anchors_high_rank[,multimapping:=0]
-anchors_high_rank[STAR_T2T_num_alignments>1,multimapping:=1] # a flag that shows us it is a multimapping
-anchors_high_rank[,multimapping:=sum(multimapping),by=anchor]
-anchors_high_rank = anchors_high_rank[multimapping==0]
-anchors_high_rank[,total_mismatches:=sum(STAR_T2T_num_mismatches),by=anchor] # a flag that shows us it is a multimapping
-anchors_high_rank = anchors_high_rank[total_mismatches==0]
-
-#removing those alignments from candidate paralogs that have either I or D
-anchors_high_rank[,is.indel:=0]
-anchors_high_rank[STAR_T2T_CIGAR%like%"D" | STAR_T2T_CIGAR%like%"I",is.indel:=1]
-anchors_high_rank[,is.indel:=sum(is.indel),by=anchor]
-anchors_high_rank = anchors_high_rank[is.indel==0]
-
-anchors_high_rank = anchors_high_rank[!is.na(extendor_gene)] # I do not want to look at those extendors with no gene name
-anchors_high_rank[ ,num_genes:=length(unique(extendor_gene)),by = anchor]
-anchors_high_rank = anchors_high_rank[num_genes>1]
-
-anchors_high_rank_second_extendor = anchors_high_rank[extendor_order==2]
-anchors_high_rank = anchors_high_rank[extendor_order==1]
-anchors_high_rank = merge(anchors_high_rank ,anchors_high_rank_second_extendor[,list(anchor,extendor_gene)],all.x=TRUE,all.y=FALSE,by.x="anchor",by.y="anchor" )
-setnames(anchors_high_rank,c("extendor_gene.x","extendor_gene.y"),c("gene1","gene2"))
-
-#below I add paralogs for gene1 and gene2
-anchors_high_rank = merge(anchors_high_rank,paralog_genes[!duplicated(gene_name),list(gene_name,all_paralogs)],all.x=TRUE,all.y=FALSE,by.x="gene1",by.y="gene_name")
-anchors_high_rank = merge(anchors_high_rank,paralog_genes[!duplicated(gene_name),list(gene_name,all_paralogs)],all.x=TRUE,all.y=FALSE,by.x="gene2",by.y="gene_name")
-setnames(anchors_high_rank,c("all_paralogs.x","all_paralogs.y"),c("all_paralogs_for_gene1","all_paralogs_for_gene2"))
-anchors_high_rank = anchors_high_rank[!(is.na(all_paralogs_for_gene1) | is.na(all_paralogs_for_gene2))] # if one of the gene1 or gene2 does not have paralog the other one also does not have
-
-anchors_high_rank[mapply(grepl,gene2,all_paralogs_for_gene1),is.paralog:=1] # if either gene2 is among the paralogs of gene1 or gene1 is among paralogs of gene2 is.paralog:=1
-anchors_high_rank[mapply(grepl,gene1,all_paralogs_for_gene2),is.paralog:=1]
-
-anchors = merge(anchors,anchors_high_rank[!duplicated(anchor),list(anchor,is.paralog)],all.x=TRUE,all.y=FALSE,by.x="anchor",by.y="anchor")
-###############################################################################
-###############################################################################
-###############################################################################
-toc()
+if (length(args) == 14){
+  tic("paralog")
+  #############################################################################
+  ############ finding extendors involving paralogs ##########################
+  #############################################################################
+  paralog_genes = fread(paralogs_file,select=c("gene_name","paralog_gene_name"))
+  paralog_genes[,num_paralog:=.N,by=gene_name]
+  paralog_genes = unique(paralog_genes)
+  paralog_genes = paralog_genes[num_paralog<100]
+  paralog_genes[,all_paralogs:=paste(paralog_gene_name,collapse = "--"), by=gene_name]
+  
+  anchors_high_rank = anchors[extendor_order<3 ]
+  anchors_high_rank[ ,is.paralog:=0]
+  ## below I only want to look at the paralog alignments that are uniquely and perfectly mapped
+  anchors_high_rank[,multimapping:=0]
+  anchors_high_rank[STAR_T2T_num_alignments>1,multimapping:=1] # a flag that shows us it is a multimapping
+  anchors_high_rank[,multimapping:=sum(multimapping),by=anchor]
+  anchors_high_rank = anchors_high_rank[multimapping==0]
+  anchors_high_rank[,total_mismatches:=sum(STAR_T2T_num_mismatches),by=anchor] # a flag that shows us it is a multimapping
+  anchors_high_rank = anchors_high_rank[total_mismatches==0]
+  
+  #removing those alignments from candidate paralogs that have either I or D
+  anchors_high_rank[,is.indel:=0]
+  anchors_high_rank[STAR_T2T_CIGAR%like%"D" | STAR_T2T_CIGAR%like%"I",is.indel:=1]
+  anchors_high_rank[,is.indel:=sum(is.indel),by=anchor]
+  anchors_high_rank = anchors_high_rank[is.indel==0]
+  
+  anchors_high_rank = anchors_high_rank[!is.na(extendor_gene)] # I do not want to look at those extendors with no gene name
+  anchors_high_rank[ ,num_genes:=length(unique(extendor_gene)),by = anchor]
+  anchors_high_rank = anchors_high_rank[num_genes>1]
+  
+  anchors_high_rank_second_extendor = anchors_high_rank[extendor_order==2]
+  anchors_high_rank = anchors_high_rank[extendor_order==1]
+  anchors_high_rank = merge(anchors_high_rank ,anchors_high_rank_second_extendor[,list(anchor,extendor_gene)],all.x=TRUE,all.y=FALSE,by.x="anchor",by.y="anchor" )
+  setnames(anchors_high_rank,c("extendor_gene.x","extendor_gene.y"),c("gene1","gene2"))
+  
+  #below I add paralogs for gene1 and gene2
+  anchors_high_rank = merge(anchors_high_rank,paralog_genes[!duplicated(gene_name),list(gene_name,all_paralogs)],all.x=TRUE,all.y=FALSE,by.x="gene1",by.y="gene_name")
+  anchors_high_rank = merge(anchors_high_rank,paralog_genes[!duplicated(gene_name),list(gene_name,all_paralogs)],all.x=TRUE,all.y=FALSE,by.x="gene2",by.y="gene_name")
+  setnames(anchors_high_rank,c("all_paralogs.x","all_paralogs.y"),c("all_paralogs_for_gene1","all_paralogs_for_gene2"))
+  anchors_high_rank = anchors_high_rank[!(is.na(all_paralogs_for_gene1) | is.na(all_paralogs_for_gene2))] # if one of the gene1 or gene2 does not have paralog the other one also does not have
+  
+  anchors_high_rank[mapply(grepl,gene2,all_paralogs_for_gene1),is.paralog:=1] # if either gene2 is among the paralogs of gene1 or gene1 is among paralogs of gene2 is.paralog:=1
+  anchors_high_rank[mapply(grepl,gene1,all_paralogs_for_gene2),is.paralog:=1]
+  
+  anchors = merge(anchors,anchors_high_rank[!duplicated(anchor),list(anchor,is.paralog)],all.x=TRUE,all.y=FALSE,by.x="anchor",by.y="anchor")
+  ###############################################################################
+  ###############################################################################
+  ###############################################################################
+  toc()
+}
 
 tic("assigning classes")
 ##############################################################################################################################################################
