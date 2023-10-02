@@ -85,7 +85,7 @@ anchors = rbind(anchors,anchors_target_2)
 
 setnames(anchors,c("M","anch_uniqTargs"),c("anchor_count","num_extendor_per_anchor"))
 anchors = anchors[num_extendor_per_anchor > 1]  
-anchors$extendor1=paste(anchors$anchor,anchors$target,sep="")
+anchors$extendor=paste(anchors$anchor,anchors$target,sep="")
 toc()
 
 anchors = setorder(anchors, -number_nonzero_samples, anchor,-target_count)
