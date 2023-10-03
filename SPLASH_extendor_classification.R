@@ -66,9 +66,9 @@ print(SPLASH_directory)
 
 tic("reading anchors file")
 if (which_anchors_file == "all"){
-  anchors_file = paste(SPLASH_directory,"result.after_correction.all_anchors.csv",sep="")
+  anchors_file = paste(SPLASH_directory,"result.after_correction.all_anchors.tsv",sep="")
 } else if (which_anchors_file=="after_correction"){
-  anchors_file = paste(SPLASH_directory,"result.after_correction.scores.csv",sep="")
+  anchors_file = paste(SPLASH_directory,"result.after_correction.scores.tsv",sep="")
 }
 
 anchors = fread(anchors_file, sep = "\t")
