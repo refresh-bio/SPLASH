@@ -260,7 +260,7 @@ splice_junctions[,SSA_AS_annot:=0]
 splice_junctions[,SSB_AS_annot:=0]
 splice_junctions[V3%in%total,SSA_AS_annot:=1]
 splice_junctions[V2_lead_1%in%total,SSB_AS_annot:=1]
-splice_junctions$SS_AS_annot=paste(known_splice_sites$SSA_AS_annot,":",known_splice_sites$SSB_AS_annot,sep="") # the flag that shows whether the 5' and 3' SS of each splice alignment is annotated as being involved in AS
+splice_junctions$SS_AS_annot=paste(splice_junctions$SSA_AS_annot,":",splice_junctions$SSB_AS_annot,sep="") # the flag that shows whether the 5' and 3' SS of each splice alignment is annotated as being involved in AS
 splice_junctions[,all_SS_AS_annot:=paste(SS_AS_annot,collapse = "--"),by=V4]
 #######################################
 #######################################
@@ -274,7 +274,7 @@ splice_junctions[,SSA_annot:=0]
 splice_junctions[,SSB_annot:=0]
 splice_junctions[paste(V1,V3,sep="")%in%total,SSA_annot:=1]
 splice_junctions[paste(V1,V2_lead_1,sep="")%in%total,SSB_annot:=1]
-splice_junctions$SS_annot:=paste(splice_junctions$SSA_annot,":",splice_junctions$SSB_annot,sep="") # the flag that shows whether the 5' and 3' SS of each splice alignment is annotated as an exon boundary
+splice_junctions$SS_annot=paste(splice_junctions$SSA_annot,":",splice_junctions$SSB_annot,sep="") # the flag that shows whether the 5' and 3' SS of each splice alignment is annotated as an exon boundary
 splice_junctions[,all_SS_annot:=paste(SS_annot,collapse = "--"),by=V4]
 ###############################################################################
 ##############################################################################
@@ -395,7 +395,7 @@ anchors[!is.na(soft_clipped_bases) & STAR_T2T_num_alignments==1 & Bowtie_T2T_sof
 toc()
 
 
-if (length(args) == 14){
+if (length(args) == 15){
   tic("paralog")
   #############################################################################
   ############ finding extendors involving paralogs ##########################
