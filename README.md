@@ -208,17 +208,18 @@ To facilitate downstream analysis of anchors, we provide a postprocessing script
 - `directory` &mdash; the output directory used for the SPLASH run
 - `which_anchors_file` &mdash; flag to decide which anchor file (after correction or all anchors) to use, could be "after_correction" or "all" 
 - `effect_size_cutoff` &mdash; the effect size cutoff for significant anchors (default 0.2) 
-- `num_samples_cutoff` &mdash; the minimum number of sampels for an anchor to be called (default 20)
+- `num_samples_cutoff` &mdash; the minimum number of samples for an anchor to be called (default 20)
 - `STAR_executable` &mdash; path to STAR executable file
-- `STAR_reference` &mdash; path to STAR index files for the reference genome
 - `samtools_executable` &mdash; path to samtools executable file
 - `bedtools_executable` &mdash; path to bedtools executable file
-- `annotated_splice_juncs` &mdash; path to the file containing annotated splice junctions from reference genome
-- `annotated_exon_boundaries` &mdash; path to the file containing annotated exon boundaries from reference genome
 - `bowtie2_executable` &mdash; path to bowtie2 executable file
-- `bowtie2_univec_index` &mdash; path to bowtie2 index for univec
+- `STAR_reference` &mdash; path to STAR index files for the reference genome
 - `bowtie2_reference` &mdash; path to bowtie2 index for the reference genome
-- `paralogs_file` &mdash; path to file containing list of paralogous genes from reference genome
+- `bowtie2_univec_index` &mdash; path to bowtie2 index for univec
+- `annotated_splice_juncs` &mdash; path to the file containing annotated splice junctions from the reference genome
+- `annotated_exon_boundaries` &mdash; path to the file containing annotated exon boundaries from the reference genome
+- `gene_coords_file` &mdash; path to the file containing gene coordinates from the reference genome
+- `paralogs_file` &mdash; (optional) path to file containing list of paralogous genes from the reference genome
  
 The script will generate a file `classified_anchors.tsv` in the same directory used for SPLASH run, containing significant anchors along with their biological classification and alignment information.
 
