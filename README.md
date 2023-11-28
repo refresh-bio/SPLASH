@@ -250,7 +250,7 @@ If the script is run successfully, it will generate 3 output annotation files in
 
 ## References
 Marek Kokot, Roozbeh Dehghannasiri, Tavor Baharav, Julia Salzman, and Sebastian Deorowicz.
-[SPLASH2 provides ultra-efficient, scalable, and unsupervised discovery on raw sequencing reads] (https://..) 
+[SPLASH2 provides ultra-efficient, scalable, and unsupervised discovery on raw sequencing reads](https://www.biorxiv.org/content/10.1101/2023.03.17.533189v2) 
 bioRxiv (2023)
  
 Kaitlin Chaung, Tavor Baharav,  Ivan Zheludev, Julia Salzman. [A statistical, reference-free algorithm subsumes myriad problems in genome science and enables novel discovery](https://doi.org/10.1101/2022.06.24.497555), bioRxiv (2022)
