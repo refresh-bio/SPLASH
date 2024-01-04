@@ -1,0 +1,10 @@
+/**
+!/src/**/*.h
+!/src/**/*.cpp
+!/src/**/*.R
+!/src/**/*.py
+!/src/splash.py
+!/libs
+!Makefile
+!download_kmc.py
+!hash.git

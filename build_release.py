@@ -24,6 +24,10 @@ def run_cmd(cmd):
     p = subprocess.Popen(cmd, shell=True)
     p.communicate()
 
+def run_cmd_get_stdout(cmd):
+    p = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE)
+    return p.stdout.decode('utf-8')
+
 run_cmd("git submodule init")
 run_cmd("git submodule update")
 run_cmd("make clean")
