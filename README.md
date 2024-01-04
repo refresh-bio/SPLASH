@@ -63,7 +63,6 @@ or
 export PREFIX=~/splash
 make install
 ```
-The above will install splash in `$(PREFIX)/bin`.
 
 #### Uninstall splash
 To uninstall splash one may run:
