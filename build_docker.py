@@ -4,7 +4,7 @@ import os
 
 if __name__ == "__main__":
     # https://stackoverflow.com/questions/15715825/how-do-you-get-the-git-repositorys-name-in-some-git-repository
-    repo = build_release.run_cmd_get_stdout("basename -s .git `git config --get remote.origin.url`").strip()
+    repo = build_release.run_cmd_get_stdout("basename -s .git `git config --get remote.origin.url`").strip().lower()
     with open("hash.git", "w") as f:
         f.write(build_release.run_cmd_get_stdout("git rev-parse HEAD"))
     

@@ -6,5 +6,5 @@
 !/src/splash.py
 !/libs
 !Makefile
-!download_kmc.py
+!download_kmc.sh
 !hash.git
