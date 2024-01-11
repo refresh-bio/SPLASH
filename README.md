@@ -32,8 +32,42 @@ curl -L https://github.com/refresh-bio/SPLASH/releases/download/v2.1.4/splash-2.
 cd example
 ./run-example.sh
 ```
+
+### Docker container
+It is possible to run splash using the docker container available through GitHub packages (https://github.com/orgs/refresh-bio/packages/container/package/splash).
+
+To pull the image run:
+```
+sudo docker pull ghcr.io/refresh-bio/splash:2.1.4 # replace version number if needed
+```
+Example of how to run splash with docker.
+Prerequisites:
+ * There is `input.txt` in the current directory
+ * All input splash files defined in the `input.txt` are in the same or child directory
+```
+sudo docker run -v `pwd`:/home/ubuntu ghcr.io/refresh-bio/splash:2.1.4 splash input.txt
+```
+
+### Singularity container
+Sometimes, `sudo` is unavailable (for example, on HPC).
+In such a case docker container may be transformed into a singularity container (https://docs.sylabs.io/guides/latest/user-guide/).
+
+To pull the singularity version of splash use:
+```
+singularity pull docker://ghcr.io/refresh-bio/splash:2.1.4 # replace version as needed
+```
+This will result in a `splash_2.1.4.sif` file created in the current directory.
+To execute splash using this file run:
+```
+./splash_2.1.4.sif splash input.txt
+```
+It is also possible to run without pulling first:
+```
+singularity run docker://ghcr.io/refresh-bio/splash:2.1.4 splash input.txt
+```
+
 ### Compile from sources
-SPLASH is implemented as a number of applications written in the C++ programming language and a Python wrapper to run the whole pipeline.
+SPLASH is implemented as several applications written in the C++ programming language and a Python wrapper to run the whole pipeline.
 Currently, the software may be used only under Linux. 
 A compiler supporting C++17 is needed to compile the code.
 You can use the following snippet to compile SPLASH.
@@ -44,7 +78,7 @@ make -j
 ```
 After this splash may be run as follows:
 ```
-bin/splash # this will just print help
+bin/splash # this will print help
 ```
 
 #### Install the compiled splash
@@ -53,8 +87,8 @@ The simplest way of installing splash after compilation is to run:
 sudo make install
 ```
 If the `PREFIX` environment variable is not defined the above will install splash in `/usr/local/bin` which requires `sudo`.
-It is possible to override the install location such that `sudo` is not required.
-For example to install in the user's home directory one may run:
+It is possible to override the install location so that `sudo` is not required.
+For example, to install in the user's home directory, one may run:
 ```
 make install PREFIX=~/splash
 ```
