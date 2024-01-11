@@ -45,7 +45,7 @@ Prerequisites:
  * There is `input.txt` in the current directory
  * All input splash files defined in the `input.txt` are in the same or child directory
 ```
-sudo docker run ghcr.io/refresh-bio/splash:2.1.4 splash input.txt
+sudo docker run -v `pwd`:/home/ubuntu ghcr.io/refresh-bio/splash:2.1.4 splash input.txt
 ```
 ### Compile from sources
 SPLASH is implemented as several applications written in the C++ programming language and a Python wrapper to run the whole pipeline.
