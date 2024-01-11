@@ -51,6 +51,7 @@ sudo docker run -v `pwd`:/home/ubuntu ghcr.io/refresh-bio/splash:2.1.4 splash in
 ### Singularity container
 Sometimes, `sudo` is unavailable (for example, on HPC).
 In such a case docker container may be transformed into a singularity container (https://docs.sylabs.io/guides/latest/user-guide/).
+
 To pull the singularity version of splash use:
 ```
 singularity pull docker://ghcr.io/refresh-bio/splash:2.1.4 # replace version as needed
