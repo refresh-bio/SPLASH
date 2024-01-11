@@ -33,7 +33,7 @@ cd example
 ./run-example.sh
 ```
 
-### Using docker
+### Docker container
 It is possible to run splash using the docker container available through GitHub packages (https://github.com/orgs/refresh-bio/packages/container/package/splash).
 
 To pull the image run:
@@ -47,6 +47,24 @@ Prerequisites:
 ```
 sudo docker run -v `pwd`:/home/ubuntu ghcr.io/refresh-bio/splash:2.1.4 splash input.txt
 ```
+
+### Singularity container
+Sometimes, `sudo` is unavailable (for example, on HPC).
+In such a case docker container may be transformed into a singularity container (https://docs.sylabs.io/guides/latest/user-guide/).
+To pull the singularity version of splash use:
+```
+singularity pull docker://ghcr.io/refresh-bio/splash:2.1.4 # replace version as needed
+```
+This will result in a `splash_2.1.4.sif` file created in the current directory.
+To execute splash using this file run:
+```
+./splash_2.1.4.sif splash input.txt
+```
+It is also possible to run without pulling first:
+```
+singularity run docker://ghcr.io/refresh-bio/splash:2.1.4 splash input.txt
+```
+
 ### Compile from sources
 SPLASH is implemented as several applications written in the C++ programming language and a Python wrapper to run the whole pipeline.
 Currently, the software may be used only under Linux. 
