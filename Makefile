@@ -99,7 +99,9 @@ download_kmc:
 	./download_kmc.sh $(OUT_BIN_DIR)
 
 splash:
+-mkdir -p $(OUT_BIN_DIR)
 	cp src/splash.py bin/splash
+	
 supervised_test:
 	cp src/supervised_test/supervised_test.R bin
 
