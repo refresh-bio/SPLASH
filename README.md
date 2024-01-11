@@ -35,6 +35,7 @@ cd example
 
 ### Using docker
 It is possible to run splash using the docker container available through GitHub packages (https://github.com/orgs/refresh-bio/packages/container/package/splash).
+
 To pull the image run:
 ```
 sudo docker pull ghcr.io/refresh-bio/splash:2.1.4 # replace version number if needed
