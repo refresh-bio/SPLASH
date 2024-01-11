@@ -24,27 +24,32 @@ def run_cmd(cmd):
     p = subprocess.Popen(cmd, shell=True)
     p.communicate()
 
-run_cmd("git submodule init")
-run_cmd("git submodule update")
-run_cmd("make clean")
-run_cmd("make -j32 release")
+def run_cmd_get_stdout(cmd):
+    p = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE)
+    return p.stdout.decode('utf-8')
 
-run_cmd("mkdir -p bin/example")
+if __name__ == "__main__":
+    run_cmd("git submodule init")
+    run_cmd("git submodule update")
+    run_cmd("make clean")
+    run_cmd("make -j32 release")
 
-run_cmd("cp example/download.py bin/example/download.py")
+    run_cmd("mkdir -p bin/example")
 
-run_cmd("cp example/input.txt bin/example")
+    run_cmd("cp example/download.py bin/example/download.py")
 
-
-with open("bin/example/run-example.sh", "w") as f:
-    f.write("#!/bin/bash\n")
-    f.write("./download.py\n")
-    f.write("../splash --bin_path .. input.txt\n")
-
-os.chmod("bin/example/run-example.sh", os.stat("bin/example/run-example.sh").st_mode | stat.S_IEXEC)
+    run_cmd("cp example/input.txt bin/example")
 
 
-ver = get_ver("bin/splash")
+    with open("bin/example/run-example.sh", "w") as f:
+        f.write("#!/bin/bash\n")
+        f.write("./download.py\n")
+        f.write("../splash --bin_path .. input.txt\n")
 
-run_cmd(f"cd bin; tar -c * | pigz > ../splash-{ver}.linux.x64.tar.gz; cd ..;")
-run_cmd("rm -rf bin")
+    os.chmod("bin/example/run-example.sh", os.stat("bin/example/run-example.sh").st_mode | stat.S_IEXEC)
+
+
+    ver = get_ver("bin/splash")
+
+    run_cmd(f"cd bin; tar -c * | pigz > ../splash-{ver}.linux.x64.tar.gz; cd ..;")
+    run_cmd("rm -rf bin")

@@ -44,10 +44,10 @@ ifeq ($(uname_S),Darwin)
 endif
 
 # default install location (binary placed in the /bin folder)
-prefix      = /usr/local
 
-# optional install location
-exec_prefix = $(prefix)
+ifeq ($(PREFIX),)
+	PREFIX ?= /usr/local
+endif
 
 $(MIMALLOC_OBJ):
 	$(CC) -DMI_MALLOC_OVERRIDE -O3 -DNDEBUG -fPIC -Wall -Wextra -Wno-unknown-pragmas -fvisibility=hidden -ftls-model=initial-exec -fno-builtin-malloc -c -I libs/mimalloc/include libs/mimalloc/src/static.c -o $(MIMALLOC_OBJ)
@@ -99,21 +99,25 @@ download_kmc:
 	./download_kmc.sh $(OUT_BIN_DIR)
 
 splash:
+	-mkdir -p $(OUT_BIN_DIR)
 	cp src/splash.py bin/splash
+
 supervised_test:
 	cp src/supervised_test/supervised_test.R bin
 
 install: all
-	install bin/* /usr/local/bin
+	install -d $(PREFIX)/bin
+	install bin/* $(PREFIX)/bin
 
 uninstall:
-	-rm /usr/local/bin/satc
-	-rm /usr/local/bin/satc_dump
-	-rm /usr/local/bin/satc_merge
-	-rm /usr/local/bin/sig_anch
-	-rm /usr/local/bin/splash
-	-rm /usr/local/bin/kmc
-	-rm /usr/local/bin/kmc_tools
+	-rm $(PREFIX)/bin/satc
+	-rm $(PREFIX)/bin/satc_dump
+	-rm $(PREFIX)/bin/satc_merge
+	-rm $(PREFIX)/bin/sig_anch
+	-rm $(PREFIX)/bin/splash
+	-rm $(PREFIX)/bin/kmc
+	-rm $(PREFIX)/bin/kmc_tools
+	-rm $(PREFIX)/bin/supervised_test.R
 
 clean:
 	-rm $(SATC_MAIN_DIR)/*.o

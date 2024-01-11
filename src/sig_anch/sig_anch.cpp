@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <regex>
 #include <memory>
+#include <iterator>
 
 #include "../common/version.h"
 #include "../common/csv.h"
