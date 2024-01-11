@@ -19,3 +19,13 @@ if __name__ == "__main__":
     print(f"To export it to file run: docker save {repo}:{ver} -o {repo}_{ver}.tar")
     print(f"To convert to singularity run: singularity build {repo}_{ver}.sif docker-archive://{repo}_{ver}.tar")
     print(f"Example {repo} run from docker: sudo docker run -v $(pwd):/home/ubuntu {repo}:{ver} splash input.txt")
+
+# Pushing to github packages:
+# https://docs.github.com/en/packages/learn-github-packages/connecting-a-repository-to-a-package
+#  docker tag {repo}:{ver} ghcr.io/refresh-bio/{repo}:{ver}
+#  docker push ghcr.io/refresh-bio/{repo}:{ver}
+# May require:
+#  docker login ghcr.io -u USERNAME
+# To use docker image in registry but from singularity:
+# singularity run docker://ghcr.io/refresh-bio/{repo}:{ver} splash input.txt
+# conver to sif: singularity build {repo}_{ver}.sif docker-archive://{repo}_{ver}.tar
