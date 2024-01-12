@@ -9,6 +9,7 @@ import queue
 import gzip
 import shutil
 import uuid
+from sys import platform
 
 class SmartFormatter(argparse.HelpFormatter):
 
@@ -18,7 +19,7 @@ class SmartFormatter(argparse.HelpFormatter):
         # this is the RawTextHelpFormatter._split_lines
         return argparse.HelpFormatter._split_lines(self, text, width)
 
-SPLASH_VERSION="2.1.4"
+SPLASH_VERSION="2.1.14"
 
 parser = argparse.ArgumentParser(
                     prog = "splash",
@@ -245,7 +246,10 @@ def check_and_handle_error():
 def run_cmd(cmd, out, err):
     global was_error
     check_and_handle_error()
-    cmd = f"/usr/bin/time -v {cmd}"
+    if platform == "darwin":
+        cmd = f"/usr/bin/time {cmd}"
+    else:
+        cmd = f"/usr/bin/time -v {cmd}"
     out.write(get_cur_time() + ": " + cmd + "\n")
     out.flush()
     p = subprocess.Popen(cmd, stderr=err,stdout=out, shell=True)
@@ -415,6 +419,7 @@ else:
 # output: file {n_bins} files, where each have
 # its (sample, anchor, target, count)
 # this stage may be is used to compute pvals and other stats
+# and optionaly to dump merged files (in satc or text format)
 ###############################################################################
 
 print("Stage 1 done")
@@ -424,6 +429,16 @@ print("Current time:", get_cur_time(), flush=True)
 Cjs_dir = f"{outname_prefix}_Cjs"
 if dump_Cjs and not os.path.exists(Cjs_dir):
     os.makedirs(Cjs_dir)
+
+if dump_sample_anchor_target_count_txt:
+    dump_dir = f"{outname_prefix}_dumps"
+    if not os.path.exists(dump_dir):
+        os.makedirs(dump_dir)
+
+if dump_sample_anchor_target_count_binary:
+    satc_dir = f"{outname_prefix}_satc"
+    if not os.path.exists(satc_dir):
+        os.makedirs(satc_dir)
 
 def stage_2_task(bin_id, out, err):
     satc_merge_inputs = []

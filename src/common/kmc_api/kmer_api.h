@@ -13,6 +13,7 @@ Date   : 2022-01-04
 
 
 #include "kmer_defs.h"
+#include <cassert>
 #include <string>
 #include <iostream>
 #include <vector>
@@ -491,6 +492,26 @@ public:
 		{
 			for (int32 i = no_of_rows - 1; i >= 0; --i)
 				kmer[i] = kmer_data[i];
+		}
+	}
+
+	inline void from_long(const std::vector<uint64>& kmer)
+	{
+		assert(kmer.size() == no_of_rows);
+		uint32 offset = 62 - ((kmer_length - 1 + byte_alignment) & 31) * 2;
+		if (offset)
+		{
+			for (uint32 i = 0 ; i < no_of_rows - 1; ++i)
+			{
+				kmer_data[i] = kmer[i] << offset;
+				kmer_data[i] += kmer[i + 1] >> (64 - offset);
+			}
+			kmer_data[no_of_rows - 1] = kmer[no_of_rows - 1] << offset;
+		}
+		else
+		{
+			for (int32 i = no_of_rows - 1; i >= 0; --i)
+				kmer_data[i] = kmer[i];
 		}
 	}
 

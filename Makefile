@@ -1,4 +1,4 @@
-all: satc satc_dump satc_merge sig_anch download_kmc splash supervised_test
+all: satc satc_dump satc_merge sig_anch compactors download_kmc splash supervised_test
 
 SPLASH_LIBS_DIR = libs
 LIBS_DIR = . #/usr/local/lib
@@ -11,6 +11,7 @@ SATC_DUMP_MAIN_DIR=src/satc_dump
 SIG_ANCH_MAIN_DIR=src/sig_anch
 COMMON_DIR=src/common
 
+COMPACTORS_MAIN_DIR=src/compactors
 OUT_BIN_DIR=bin
 
 CC 	= g++
@@ -94,6 +95,21 @@ $(OUT_BIN_DIR)/sig_anch: $(SIG_ANCH_MAIN_DIR)/sig_anch.o \
 	$(CC) -o $@ $^ \
 	$(CLINK)
 
+compactors: $(OUT_BIN_DIR)/compactors
+
+$(OUT_BIN_DIR)/compactors: $(COMPACTORS_MAIN_DIR)/main.o \
+	$(COMPACTORS_MAIN_DIR)/console.o \
+	$(COMPACTORS_MAIN_DIR)/engine.o \
+	$(COMPACTORS_MAIN_DIR)/io.o \
+	$(COMPACTORS_MAIN_DIR)/main.o \
+	$(COMPACTORS_MAIN_DIR)/read_select.o \
+	$(COMMON_DIR)/edit_distance.o \
+	$(COMMON_DIR)/illumina_adapters_static.o \
+	$(SPLASH_LIBS_DIR)/cdflib/cdflib.o
+	-mkdir -p $(OUT_BIN_DIR)
+	$(CC) -o $@ $^ \
+	$(SPLASH_LIBS_DIR)/$(LIB_ZLIB) \
+	$(CLINK) 
 download_kmc:
 	-mkdir -p $(OUT_BIN_DIR)
 	./download_kmc.sh $(OUT_BIN_DIR)
@@ -111,6 +127,7 @@ install: all
 
 uninstall:
 	-rm $(PREFIX)/bin/satc
+	-rm $(PREFIX)/bin/compactors
 	-rm $(PREFIX)/bin/satc_dump
 	-rm $(PREFIX)/bin/satc_merge
 	-rm $(PREFIX)/bin/sig_anch
@@ -124,6 +141,7 @@ clean:
 	-rm $(COMMON_DIR)/kmc_api/*.o
 	-rm $(SATC_MERGE_MAIN_DIR)/*.o
 	-rm $(SATC_DUMP_MAIN_DIR)/*.o
+	-rm $(COMPACTORS_MAIN_DIR)/*.o
 	-rm $(COMMON_DIR)/*.o
 	-rm $(SIG_ANCH_MAIN_DIR)/*.o
 	-rm -rf $(OUT_BIN_DIR)
