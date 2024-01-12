@@ -104,6 +104,7 @@ $(OUT_BIN_DIR)/compactors: $(COMPACTORS_MAIN_DIR)/main.o \
 	$(CC) -o $@ $^ \
 	$(SPLASH_LIBS_DIR)/$(LIB_ZLIB) \
 	$(CLINK) 
+
 download_kmc:
 	-mkdir -p $(OUT_BIN_DIR)
 	./download_kmc.sh $(OUT_BIN_DIR)
@@ -113,6 +114,7 @@ splash:
 	cp src/splash.py bin/splash
 
 supervised_test:
+	-mkdir -p $(OUT_BIN_DIR)
 	cp src/supervised_test/supervised_test.R bin
 
 install: all
