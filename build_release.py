@@ -32,7 +32,7 @@ if __name__ == "__main__":
     run_cmd("git submodule init")
     run_cmd("git submodule update")
     run_cmd("make clean")
-    run_cmd("make -j32 release")
+    run_cmd("make release -j")
 
     run_cmd("mkdir -p bin/example")
 

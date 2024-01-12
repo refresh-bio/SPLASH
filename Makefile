@@ -3,7 +3,6 @@ all: satc satc_dump satc_merge sig_anch compactors download_kmc splash supervise
 SPLASH_LIBS_DIR = libs
 LIBS_DIR = . #/usr/local/lib
 INCLUDE_DIR= libs
-MIMALLOC_INLUCDE_DIR = libs/mimalloc/include
 
 SATC_MAIN_DIR=src/satc
 SATC_MERGE_MAIN_DIR=src/satc_merge
@@ -15,16 +14,14 @@ COMPACTORS_MAIN_DIR=src/compactors
 OUT_BIN_DIR=bin
 
 CC 	= g++
-CFLAGS	= -fPIC -Wall -O3 -m64 -std=c++17 -pthread -I $(INCLUDE_DIR) -I $(MIMALLOC_INLUCDE_DIR) -fpermissive
+CFLAGS	= -fPIC -Wall -O3 -m64 -std=c++17 -pthread -I $(INCLUDE_DIR) -fpermissive
 CLINK	= -lm -std=c++17 -lpthread -static-libstdc++
 
-MIMALLOC_OBJ=libs/mimalloc/mimalloc.o
-
 release: CLINK	= -lm -std=c++17 -static -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
-release: CFLAGS	= -fPIC -Wall -O3 -DNDEBUG -m64 -std=c++17 -pthread -I $(INCLUDE_DIR) -I $(MIMALLOC_INLUCDE_DIR) -fpermissive
+release: CFLAGS	= -fPIC -Wall -O3 -DNDEBUG -m64 -std=c++17 -pthread -I $(INCLUDE_DIR) -fpermissive
 release: all
 
-debug: CFLAGS	= -fPIC -Wall -O0 -g -m64 -std=c++17 -pthread -I $(INCLUDE_DIR) -I $(MIMALLOC_INLUCDE_DIR) -fpermissive
+debug: CFLAGS	= -fPIC -Wall -O0 -g -m64 -std=c++17 -pthread -I $(INCLUDE_DIR) -fpermissive
 debug: all
 
 ifdef MSVC     # Avoid the MingW/Cygwin sections
@@ -49,9 +46,6 @@ endif
 ifeq ($(PREFIX),)
 	PREFIX ?= /usr/local
 endif
-
-$(MIMALLOC_OBJ):
-	$(CC) -DMI_MALLOC_OVERRIDE -O3 -DNDEBUG -fPIC -Wall -Wextra -Wno-unknown-pragmas -fvisibility=hidden -ftls-model=initial-exec -fno-builtin-malloc -c -I libs/mimalloc/include libs/mimalloc/src/static.c -o $(MIMALLOC_OBJ)
 
 %.o: %.cpp
 	$(CC) $(CFLAGS) -c $< -o $@
