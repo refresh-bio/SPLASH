@@ -204,10 +204,10 @@ if n_threads_stage_1 == 0 and n_threads_stage_1_internal == 0:
     print(f"n_threads_stage_1 auto adjusted to {n_threads_stage_1}", flush=True)
     print(f"n_threads_stage_1_internal auto adjusted to {n_threads_stage_1_internal}", flush=True)
 elif n_threads_stage_1_internal == 0:
-    threads_stage_1_internal = max_cpus_to_use_in_auto_adjust // n_threads_stage_1
+    n_threads_stage_1_internal = max(1, max_cpus_to_use_in_auto_adjust // n_threads_stage_1)
     print(f"n_threads_stage_1_internal auto adjusted to {n_threads_stage_1_internal}", flush=True)
 elif n_threads_stage_1 == 0:
-    n_threads_stage_1 = max_cpus_to_use_in_auto_adjust // n_threads_stage_1_internal
+    n_threads_stage_1 = max(1, max_cpus_to_use_in_auto_adjust // n_threads_stage_1_internal)
     print(f"n_threads_stage_1 auto adjusted to {n_threads_stage_1}", flush=True)
 
 if n_threads_stage_1_internal_boost != 1:
