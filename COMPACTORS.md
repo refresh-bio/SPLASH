@@ -1,4 +1,4 @@
-# NOMAD: compactors
+# SPLASH: compactors
 
 ## Usage
 
