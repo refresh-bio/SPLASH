@@ -33,6 +33,41 @@ public:
 	}
 };
 
+
+enum class Technology {
+	base,
+	_10x,
+	visium
+};
+
+bool is_10x_or_visium(Technology technology) {
+	return technology == Technology::_10x || technology == Technology::visium;
+}
+
+std::string to_string(Technology technology) {
+	switch (technology) {
+		case Technology::base:
+			return "base";
+		case Technology::_10x:
+			return "10x";
+		case Technology::visium:
+			return "visium";
+		default:
+			std::cerr << "Error: unsupported technology, please contact authors showing this message: " << __FILE__ << ":" << __LINE__ << "\n";
+			exit(1);
+	}
+}
+Technology technology_from_string(const std::string& technology) {
+	if (technology == "base")
+		return Technology::base;
+	if (technology == "10x")
+		return Technology::_10x;
+	if (technology == "visium")
+		return Technology::visium;
+	std::cerr << "Error: unknown technology: " << technology << "\n";
+	exit(1);
+}
+
 struct Params
 {
 	uint64_t anchor_count_threshold{}; //remove all anchors for which the sum of counters across all samples and targets is <= anchor_count_threshold
@@ -45,7 +80,7 @@ struct Params
 
 	double opt_train_fraction = 0.25;
 
-	bool is_10X = false; //true for 10X data
+	Technology technology = Technology::base;
 
 	int opt_num_inits = 10;
 
@@ -88,7 +123,7 @@ struct Params
 		oss << "\tanchor_count_threshold                  : " << anchor_count_threshold << "\n";
 		oss << "\tanchor_unique_targets_threshold         : " << anchor_unique_targets_threshold << "\n";
 		oss << "\tanchor_samples_threshold                : " << anchor_samples_threshold << "\n";
-		oss << "\tis_10X                                  : " << std::boolalpha << is_10X << "\n";
+		oss << "\ttechnology                              : " << to_string(technology) << "\n";
 		oss << "\twithout_alt_max                         : " << std::boolalpha << without_alt_max << "\n";
 		oss << "\twith_effect_size_cts                    : " << std::boolalpha << with_effect_size_cts << "\n";
 		oss << "\twith_pval_asymp_opt                     : " << std::boolalpha << with_pval_asymp_opt << "\n";
@@ -125,7 +160,7 @@ struct Params
 			<< "    <file_with_list_of_bins_to_merge>   - file with list of paths of bins to be processed\n";
 		std::cerr
 			<< "Options:\n"
-			<< "    --is_10X                                          - if used input treat as 10X data\n"// text file containing anchors separated by whitespaces, only anchors from this file will be dumped\n";
+			<< "    --technology <base|10x|visium>                    - sequencing technology (default: base)\n"// text file containing anchors separated by whitespaces, only anchors from this file will be dumped\n";
 			<< "    --anchor_count_threshold <int>                    - filter out all anchors for which the total count <= anchor_count_threshold\n"
 			<< "    --anchor_unique_targets_threshold <int>           - filter out all anchors for which the number of unique targets is <= anchor_unique_targets_threshold\n"
 			<< "    --n_most_freq_targets <int>                       - output also n_most_freq_targets most frequent targets and their counts (default: 0)\n"
@@ -260,8 +295,8 @@ Params read_params(int argc, char** argv)
 		if (param == "--Cjs_samplesheet") {
 			res.Cjs_samplesheet = argv[++i];
 		}
-		if (param == "--is_10X") {
-			res.is_10X = true;
+		if (param == "--technology") {
+			res.technology = technology_from_string(argv[++i]);
 		}
 		if (param == "--dump_sample_anchor_target_count_txt") {
 			res.dump_sample_anchor_target_count_txt = argv[++i];
@@ -639,7 +674,7 @@ class IAnchorProcessor {
 public:
 	virtual void ProcessAnchor(
 		Anchor&& anchor,
-		bool is_10X,
+		bool _10X_or_visium,
 		size_t anchor_len_symbols,
 		size_t target_len_symbols,
 		size_t n_uniqe_targets,
@@ -689,7 +724,7 @@ public:
 		size_t num_rand_cf,
 		size_t num_splits,
 		const std::string& cjs_out,
-		bool is_10X,
+		bool _10X_or_visium,
 		size_t anchor_len_symbols,
 		size_t barcode_len_symbols,
 		const std::string& sample_names,
@@ -709,7 +744,7 @@ public:
 		opt_num_iters(opt_num_iters),
 		num_rand_cf(num_rand_cf),
 		num_splits(num_splits),
-		cj_writer(cjs_out, is_10X, anchor_len_symbols, barcode_len_symbols, sample_names),
+		cj_writer(cjs_out, _10X_or_visium, anchor_len_symbols, barcode_len_symbols, sample_names),
 		max_pval_opt_for_Cjs(max_pval_opt_for_Cjs),
 		cbc_to_cell_type(cbc_to_cell_type),
 		non_10X_supervised(non_10X_supervised) {
@@ -741,7 +776,7 @@ public:
 
 	void ProcessAnchor(
 		Anchor&& anchor,
-		bool is_10X,
+		bool _10X_or_visium,
 		size_t anchor_len_symbols,
 		size_t target_len_symbols,
 		size_t n_uniqe_targets,
@@ -755,7 +790,7 @@ public:
 
 		extra_stats.Compute(anchor, target_len_symbols, 5, 200, n_uniqe_targets, unique_samples, anchor_stats);
 
-		if (!is_10X || n_uniqe_targets < 1000000)
+		if (!_10X_or_visium || n_uniqe_targets < 1000000)
 				compute_stats(
 					std::move(anchor),
 					anchor_len_symbols,
@@ -849,7 +884,7 @@ public:
 
 	void ProcessAnchor(
 		Anchor&& anchor,
-		bool is_10X,
+		bool _10X_or_visium,
 		size_t anchor_len_symbols,
 		size_t target_len_symbols,
 		size_t n_uniqe_targets,
@@ -920,7 +955,7 @@ public:
 
 	void ProcessAnchor(
 		Anchor&& anchor,
-		bool is_10X,
+		bool _10X_or_visium,
 		size_t anchor_len_symbols,
 		size_t target_len_symbols,
 		size_t n_uniqe_targets,
@@ -956,7 +991,7 @@ public:
 
 	void ProcessAnchor(
 		Anchor&& anchor,
-		bool is_10X,
+		bool _10X_or_visium,
 		size_t anchor_len_symbols,
 		size_t target_len_symbols,
 		size_t n_uniqe_targets,
@@ -973,7 +1008,7 @@ public:
 		//must be last because it destroys anchor content
 		if (stats_writer)
 			stats_writer->ProcessAnchor(std::move(anchor),
-				is_10X,
+				_10X_or_visium,
 				anchor_len_symbols,
 				target_len_symbols,
 				n_uniqe_targets,
@@ -1042,7 +1077,7 @@ std::unique_ptr<IAnchorProcessor> get_anchor_processor(
 	size_t num_rand_cf,
 	size_t num_splits,
 	const std::string& cjs_out,
-	bool is_10X,
+	bool _10X_or_visium,
 	double max_pval_opt_for_Cjs,
 	CBCToCellType* cbc_to_cell_type,
 	Non10XSupervised* non_10X_supervised) {
@@ -1097,7 +1132,7 @@ std::unique_ptr<IAnchorProcessor> get_anchor_processor(
 		num_rand_cf,
 		num_splits,
 		cjs_out,
-		is_10X,
+		_10X_or_visium,
 		anchor_len_symbols,
 		barcode_len_symbols,
 		sample_names,
@@ -1241,7 +1276,7 @@ void run_non_10X(const Params& params) {
 	stats.print(std::cerr);
 }
 
-void run_10X(const Params& params) {
+void run_10X_or_visium(const Params& params) {
 	std::vector<Record> all_records;
 	Timer timer;
 
@@ -1460,8 +1495,8 @@ int main(int argc, char** argv)
 	auto params = read_params(argc, argv);
 	params.print(std::cerr);
 
-	if (params.is_10X)
-		run_10X(params);
+	if (is_10x_or_visium(params.technology))
+		run_10X_or_visium(params);
 	else
 		run_non_10X(params);
 

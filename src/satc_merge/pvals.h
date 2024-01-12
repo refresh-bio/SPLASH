@@ -264,7 +264,7 @@ public:
 };
 
 class CjWriter {
-	bool is_10X;
+	bool _10X_or_visium;
 	uint32_t anchor_len;
 	uint32_t barcode_len;
 	bool enabled = false;
@@ -273,11 +273,11 @@ class CjWriter {
 public:
 	CjWriter(
 		const std::string& path,
-		bool is_10X,
+		bool _10X_or_visium,
 		uint32_t anchor_len,
 		uint32_t barcode_len,
 		const std::string& sample_names) :
-		is_10X(is_10X),
+		_10X_or_visium(_10X_or_visium),
 		anchor_len(anchor_len),
 		barcode_len(barcode_len),
 		sample_name_decoder(sample_names) {
@@ -293,7 +293,7 @@ public:
 		enabled = true;
 		out << "anchor\t";
 		out << "sample\t";
-		if (is_10X)
+		if (_10X_or_visium)
 			out << "barcode\t";
 		out << "Cj\n";
 	}
@@ -307,7 +307,7 @@ public:
 		//out << sample_id << "\t";
 		sample_name_decoder.store_sample_id(out, sample_id);
 		out << "\t";
-		if (is_10X)
+		if (_10X_or_visium)
 			out << kmer_to_string(barcode, barcode_len) << "\t";
 		out << Cj << "\n";
 	}

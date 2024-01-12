@@ -1,11 +1,11 @@
 bin
 src/satc/*.o
 src/common/*.o
+src/sig_anch/*.o
 src/common/kmc_api/*.o
-src/satc/kmc_api/*.o
 src/satc_merge/*.o
 src/satc_dump/*.o
-src/sig_anch/*.o
+src/compactors/*.o
 *.fastq
 *.fastq.gz
 *.tsv
