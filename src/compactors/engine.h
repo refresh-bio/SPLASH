@@ -10,7 +10,7 @@
 #include "../common/edit_distance.h"
 #include "../common/artifacts_filter.h"
 #include "../common/illumina_adapters_static.h"
-
+#include "../common/common_types.h"
 #include "../../libs/refresh/parallel-queues.h"
 
 #include <thread>
@@ -26,6 +26,7 @@ public:
 	virtual size_t extractKmers(
 		int numFollowers,
 		int followerLen,
+		bool allAnchors,
 		std::unordered_map<kmer_t, std::vector<kmer_t>>& targets,
 		int& anchorLen) = 0;
 
@@ -34,8 +35,9 @@ public:
 		int queryLen,
 		int numFollowers,
 		int followerLen,
-		std::unordered_map<kmer_t, std::vector<kmer_t>>& targets,
-		bool reverse) = 0;
+		bool reverse,
+		bool allAnchors,
+		std::unordered_map<kmer_t, std::vector<kmer_t>>& targets) = 0;
 
 	virtual size_t extractPredecessorWithGap(
 		const std::unordered_set<kmer_t>& queries,
@@ -65,6 +67,7 @@ public:
 		int anchorLen{ 27 }; // this will be overwriten by the contents of the anchor table
 		int kmerLen{ 27 };
 		int numKmers{ 2 };
+		bool allAnchors{ false };
 
 		double epsilon{ 0.05 };
 		double beta{ 5 };

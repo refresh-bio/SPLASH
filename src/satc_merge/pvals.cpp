@@ -4,6 +4,7 @@
 #include <numeric>
 #include <cmath>
 #include <fstream>
+#include <array>
 
 #include "../../libs/refresh/deterministic_random.h"
 #include "pvals.h"
@@ -571,9 +572,37 @@ double calc_pval_base_ext(
 	return pval_base;
 }
 
+template<unsigned M>
+float sequence_entropy(uint64_t x, const size_t len)
+{
+	const uint64_t mask = (1u << (2 * M)) - 1u;
+
+	std::array<int, mask + 1> stat{ 0 };
+
+	for (size_t i = M - 1; i < len; ++i)
+	{
+		++stat[x & mask];
+		x >>= 2;
+	}
+
+	float r = 0;
+	int ma = len - (M - 1);
+	float fma = (float)ma;
+
+	for (const auto x : stat)
+		if (x && x != ma)
+		{
+			float p = (float)x / fma;
+			r -= p * log2(p);
+		}
+
+	return r;
+}
+
 void compute_stats(
 	Anchor&& anchor,
 	size_t anchor_len_symbols,
+	size_t target_len_symbols,
 	size_t n_uniq_targets,
 	const std::unordered_set<uint64_t>& unique_samples,
 	AnchorStats& anchor_stats,
@@ -648,8 +677,17 @@ void compute_stats(
 	anchor.data.clear();
 	anchor.data.shrink_to_fit();
 
-	if (n_most_freq_targets)
+	anchor_stats.sequence_entropy_anchor = std::make_pair(sequence_entropy<2>(anchor.anchor, anchor_len_symbols), sequence_entropy<3>(anchor.anchor, anchor_len_symbols));
+
+	if (n_most_freq_targets) {
 		get_most_freq_targets(sp_anch_contingency_table, targets, n_most_freq_targets, anchor_stats.most_freq_targets);
+
+		anchor_stats.sequence_entropy_targets.clear();
+		anchor_stats.sequence_entropy_targets.reserve(anchor_stats.most_freq_targets.size());
+
+		for (const auto& tc : anchor_stats.most_freq_targets)
+			anchor_stats.sequence_entropy_targets.emplace_back(sequence_entropy<2>(tc.kmer, target_len_symbols), sequence_entropy<3>(tc.kmer, target_len_symbols));
+	}
 
 	auto Xtrain = get_train_mtx_2(sp_anch_contingency_table, opt_train_fraction, eng);
 

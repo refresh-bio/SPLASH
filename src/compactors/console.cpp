@@ -18,12 +18,15 @@ void Console::printUsage() {
 		<< "   anchors_tsv		   - input tsv file with anchors\n"
 		<< "   compactors_tsv      - output tsv with compactors\n"
 		<< "Options:\n"
+
+		<< "  " << PARAM_INPUT_FORMAT << " <fasta|fastq> - input format (default: " << to_string(inputFormat) << ")\n"
 		<< "  " << PARAM_NUM_KMERS << " <int> - number of tiling kmers following an anchor (default: " << params.numKmers << ")\n"
 		<< "  " << PARAM_KMER_LEN << " <int> - length of tiling kmers (default: " << params.kmerLen << ")\n"
 		<< "  " << PARAM_EPSILON << " <real> - sequencing error (default: " << params.epsilon << ")\n"
 		<< "  " << PARAM_BETA << " <real> - beta parameter for active set generation (default: " << params.beta << ")\n"
 		<< "  " << PARAM_LOWER_BOUND << " <int> - minimum kmer abundance to add it to an active set (default: " << params.lowerBound << ")\n"
-		<< "  " << PARAM_MAX_MISMATCH << " <int> - maximum mismatch count for compactor candidates (default: " << params.maxMismatch << ")\n\n"
+		<< "  " << PARAM_MAX_MISMATCH << " <int> - maximum mismatch count for compactor candidates (default: " << params.maxMismatch << ")\n"
+		<< "  " << SWITCH_ALL_ANCHORS << " - find all anchors' occurences in a read, not just the first one (default: off)\n\n"
 
 		<< "  " << SWITCH_NO_EXTENSION << " - disable recursive extension (default: enabled)\n"
 		<< "  " << PARAM_MAX_LENGTH << " <int> - maximum compactor length in bases (used only with recursion; default: " << params.maxLen << ")\n"
@@ -51,7 +54,13 @@ bool Console::parse(int argc, char** argv) {
 		args.emplace_back(argv[i]);
 	}
 
+	std::string input_format_str;
+	if (findOption(args, PARAM_INPUT_FORMAT, input_format_str)) {
+		inputFormat = input_format_from_string(input_format_str);
+	}
+
 	findOption(args, PARAM_NUM_KMERS, params.numKmers);
+	params.allAnchors = findSwitch(args, SWITCH_ALL_ANCHORS);
 
 	findOption(args, PARAM_KMER_LEN, params.kmerLen);
 	findOption(args, PARAM_POLY_THRSEHOLD, params.polyThreshold);

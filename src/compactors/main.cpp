@@ -90,6 +90,7 @@ int main(int argc, char** argv) {
 		
 		loader = make_shared<ReadLoader>(
 			console.sampleFastqs,
+			console.inputFormat,
 			console.anchorsTsv,
 			console.getParams().polyThreshold,
 			console.numThreads,

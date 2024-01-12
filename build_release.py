@@ -20,7 +20,37 @@ def get_ver(splash_path):
     print("Error: cannot read SPLASH_VERSION")
     sys.exit(1)
 
-def run_cmd(cmd):    
+def get_os():
+    if os.name == 'nt':
+        return 'windows'
+    elif os.name == 'posix':
+        if os.uname()[0] == 'Linux':
+            return 'linux'
+        elif os.uname()[0] == 'Darwin':
+            return 'mac'
+        else:
+            print("Error: unknown os", os.uname()[0])
+            sys.exit(1)
+    else:
+        print("Error: unknown os.name", os.name)
+        sys.exit(1)
+
+def get_hardware():
+    if os.name == 'nt':
+        return 'x64' # TODO: do a real check and support ARM also...
+    elif os.name == 'posix':
+        if os.uname()[4] == 'x86_64':
+            return 'x64'
+        elif os.uname()[4] == 'aarch64' or os.uname()[4] == 'arm64':
+            return 'arm64'
+        else:
+            print("Error: unknown hardware", os.uname()[4])
+            sys.exit(1)
+    else:
+        print("Error: unknown os.name", os.name)
+        sys.exit(1)
+
+def run_cmd(cmd):
     p = subprocess.Popen(cmd, shell=True)
     p.communicate()
 
@@ -29,6 +59,9 @@ def run_cmd_get_stdout(cmd):
     return p.stdout.decode('utf-8')
 
 if __name__ == "__main__":
+    system = get_os()
+    hardware = get_hardware()
+
     run_cmd("git submodule init")
     run_cmd("git submodule update")
     run_cmd("make clean")
@@ -51,5 +84,5 @@ if __name__ == "__main__":
 
     ver = get_ver("bin/splash")
 
-    run_cmd(f"cd bin; tar -c * | pigz > ../splash-{ver}.linux.x64.tar.gz; cd ..;")
+    run_cmd(f"cd bin; tar -c * | pigz > ../splash-{ver}.{system}.{hardware}.tar.gz; cd ..;")
     run_cmd("rm -rf bin")

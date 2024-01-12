@@ -10,23 +10,16 @@
 
 #include "zlib.h"
 #include "../../libs/refresh/hash_map.h"
+#include "../common/common_types.h"
 
 using namespace std;
-
-// Currently does not support k_len != f_len
-//#define ENABLE_PROCESS_BOTH_WAYS		
 
 class ReadSelector
 {
 public:
 	using dict_t = vector<pair<uint64_t, vector<vector<uint64_t>>>>;
 	//	static const size_t max_n_followers = 16;
-#ifdef ENABLE_PROCESS_BOTH_WAYS
-	enum class direction_t { forward, reverse, both_ways };
-#else
 	enum class direction_t { forward, reverse};
-#endif
-
 	const uint64_t empty_kmer = ~0ull;
 
 private:
@@ -42,6 +35,7 @@ private:
 	dict_t dict;
 	process_mode_t process_mode;
 	bool find_all_mode = false;
+	input_format_t input_format = input_format_t::fastq;
 
 	dict_t dict_fwd;
 	dict_t dict_rev;
@@ -98,13 +92,8 @@ private:
 	void determine_clean_read_kmer(uint64_t& read_kmer, uint32_t k, uint8_t* ptr, const size_t pos);
 
 	bool process_file(const string& fn, const size_t file_id);
-	void process_read_anchor_followers(vector<uint64_t>& read_kmers, uint8_t* ptr, size_t len, bool contains_Ns, size_t file_id);
-//	void process_read_extender_anchor(vector<uint64_t>& read_kmers, uint8_t* ptr, size_t len, bool contains_Ns, size_t file_id);
+	void process_read_anchor_followers(vector<uint64_t>& read_kmers, vector<uint64_t>& aux_kmers, uint8_t* ptr, size_t len, bool contains_Ns, size_t file_id);
 	void process_read_anchor_extender(vector<uint64_t>& read_kmers, uint8_t* ptr, size_t len, bool contains_Ns, size_t file_id);
-#ifdef ENABLE_PROCESS_BOTH_WAYS		
-	void process_read_both_ways(vector<uint64_t>& read_kmers, size_t file_id);
-	void analyze_followers(vector<uint64_t>& read_kmers, vector<uint64_t>& ext_vec, int pos);
-#endif
 
 	uint64_t MurMur64Hash(uint64_t h) const noexcept
 	{
@@ -173,21 +162,17 @@ public:
 	{}
 
 	void set_dict(const unordered_map<uint64_t, bool>& _dict);
-//	void set_k_n(uint32_t _k_len, uint32_t _n_followers);
-//	void set_kf_n(uint32_t _k_len, uint32_t _f_len, uint32_t _n_followers);
 	void set_input_names(const vector<string>& _file_names);
 	void set_output_dir(const string& _output_dir);
 	void set_max_memory_usage(size_t _max_mem);
 	void set_no_threads(size_t _no_threads);
 	void set_max_read_len(size_t _max_read_len);
-//	void set_direction(direction_t _direction);
+	void set_input_format(const input_format_t _input_format);
 	void set_keep_temps(bool v) { keep_temps = v; }
 	bool get_keep_temps() const { return keep_temps; }
 
-//	dict_t& process();
 
-	dict_t& process_anchor_followers(direction_t _direction, uint32_t _anchor_len, uint32_t _follower_len, uint32_t _n_followers);
-//	dict_t& process_extender_anchor(direction_t _direction, uint32_t _extender_len, uint32_t _anchor_len, uint32_t _gap_len);
+	dict_t& process_anchor_followers(direction_t _direction, uint32_t _anchor_len, uint32_t _follower_len, uint32_t _n_followers, bool _find_all_mode = false);
 	dict_t& process_anchor_extender(direction_t _direction, uint32_t _anchor_len, uint32_t _extender_len, uint32_t _gap_len, bool _find_all_mode = true);
 
 	pair<reference_wrapper<ReadSelector::dict_t>, reference_wrapper<ReadSelector::dict_t>> process_both_ways();

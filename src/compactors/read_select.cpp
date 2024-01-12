@@ -36,20 +36,10 @@ void ReadSelector::set_dict(const unordered_map<uint64_t, bool>& _dict)
 }
 
 // ************************************************************************************
-/*void ReadSelector::set_k_n(uint32_t _k_len, uint32_t _n_followers)
+void ReadSelector::set_input_format(const input_format_t _input_format)
 {
-	k_len = _k_len;
-	f_len = _k_len;
-	n_followers = _n_followers;
-}*/
-
-// ************************************************************************************
-/*void ReadSelector::set_kf_n(uint32_t _k_len, uint32_t _f_len, uint32_t _n_followers)
-{
-	k_len = _k_len;
-	f_len = _f_len;
-	n_followers = _n_followers;
-}*/
+	input_format = _input_format;
+}
 
 // ************************************************************************************
 void ReadSelector::set_input_names(const vector<string>& _file_names)
@@ -94,12 +84,6 @@ void ReadSelector::set_max_read_len(size_t _max_read_len)
 {
 	max_read_len = _max_read_len;
 }
-
-// ************************************************************************************
-/*void ReadSelector::set_direction(direction_t _direction)
-{
-	direction = _direction;
-}*/
 
 // ************************************************************************************
 void ReadSelector::init_bloom(const unordered_map<uint64_t, bool>& anchors)
@@ -235,98 +219,6 @@ size_t ReadSelector::dna_compress(char* dna_raw, uint8_t* dna_packed)
 }
 
 // ************************************************************************************
-/*ReadSelector::dict_t& ReadSelector::process()
-{
-	for (auto& ad : anchor_dict)
-	{
-		ad.second.clear();
-		ad.second.resize(file_names.size());
-	}
-
-#ifdef ENABLE_PROCESS_BOTH_WAYS
-	if (direction == direction_t::both_ways)
-	{
-		anchor_dict_fwd = anchor_dict;
-		anchor_dict_rev = anchor_dict;
-	}
-	else
-	{
-#endif
-		anchor_dict_fwd.clear();
-		anchor_dict_fwd.shrink_to_fit();
-		anchor_dict_rev.clear();
-		anchor_dict_fwd.shrink_to_fit();
-#ifdef ENABLE_PROCESS_BOTH_WAYS
-	}
-#endif
-
-	vector<thread> threads;
-	atomic<int> file_id{ 0 };
-
-	if (need_preprocessing)
-	{
-		for (size_t i = 0; i < no_threads; ++i)
-			threads.emplace_back([&] {
-			while (true)
-			{
-				int c_id = file_id.fetch_add(1);
-				if (c_id < file_names.size())
-				{
-					int f_id = file_size_id[c_id].second;
-
-					// if keep temps - try to load a temporary file
-					bool temp_loaded = false;
-					if (keep_temps) {
-						temp_loaded = process_file(file_names[f_id], f_id);
-					}
-					
-					if (!temp_loaded) {
-						preprocess_fastq(file_names[f_id], f_id);
-					}
-				}
-				else
-					break;
-			}
-				});
-
-		for (auto& th : threads)
-			th.join();
-
-		threads.clear();
-
-		need_preprocessing = false;
-
-		prefetch_dna_files();
-	}
-	else
-	{
-		for (size_t i = 0; i < no_threads; ++i)
-			threads.emplace_back([&] {
-			while (true)
-			{
-				int c_id = file_id.fetch_add(1);
-				if (c_id < file_names.size())
-				{
-					int f_id = file_size_id[c_id].second;
-					process_file(file_names[f_id], f_id);
-				}
-				else
-					break;
-			}
-				});
-
-		for (auto& th : threads)
-			th.join();
-
-		threads.clear();
-	}
-
-//	cerr << "ReadSelector::process() - end\n";	fflush(stdout);
-
-	return anchor_dict;
-}*/
-
-// ************************************************************************************
 void ReadSelector::process_general()
 {
 	for (auto& ad : dict)
@@ -403,7 +295,7 @@ void ReadSelector::process_general()
 }
 
 // ************************************************************************************
-ReadSelector::dict_t& ReadSelector::process_anchor_followers(direction_t _direction, uint32_t _anchor_len, uint32_t _follower_len, uint32_t _n_followers)
+ReadSelector::dict_t& ReadSelector::process_anchor_followers(direction_t _direction, uint32_t _anchor_len, uint32_t _follower_len, uint32_t _n_followers, bool _find_all_mode)
 {
 	direction = _direction;
 	anchor_len = _anchor_len;
@@ -411,26 +303,13 @@ ReadSelector::dict_t& ReadSelector::process_anchor_followers(direction_t _direct
 	n_followers = _n_followers;
 	process_mode = process_mode_t::anchor_followers;
 
-	find_all_mode = false;
+	find_all_mode = _find_all_mode;
 
 	process_general();
 
 	return dict;
 }
 
-// ************************************************************************************
-/*ReadSelector::dict_t& ReadSelector::process_extender_anchor(direction_t _direction, uint32_t _extender_len, uint32_t _anchor_len, uint32_t _gap_len)
-{
-	direction = _direction;
-	extender_len = _extender_len;
-	anchor_len = _anchor_len;
-	gap_len = _gap_len;
-	process_mode = process_mode_t::extender_anchor;
-
-	process_general();
-
-	return dict;
-}*/
 // ************************************************************************************
 ReadSelector::dict_t& ReadSelector::process_anchor_extender(direction_t _direction, uint32_t _anchor_len, uint32_t _extender_len, uint32_t _gap_len, bool _find_all_mode)
 {
@@ -446,22 +325,6 @@ ReadSelector::dict_t& ReadSelector::process_anchor_extender(direction_t _directi
 
 	return dict;
 }
-
-#ifdef ENABLE_PROCESS_BOTH_WAYS
-// ************************************************************************************
-pair<reference_wrapper<ReadSelector::dict_t>, reference_wrapper<ReadSelector::dict_t>> ReadSelector::process_both_ways()
-{
-	auto old_direction = direction;
-
-	direction = direction_t::both_ways;
-
-	auto x = process();
-
-	direction = old_direction;
-
-	return pair(ref(anchor_dict_fwd), ref(anchor_dict_rev));
-}
-#endif
 
 // ************************************************************************************
 bool ReadSelector::prefetch_dna_files()
@@ -538,143 +401,132 @@ void ReadSelector::release_prefetch_files()
 }
 
 // ************************************************************************************
-void ReadSelector::process_read_anchor_followers(vector<uint64_t>& read_kmers, uint8_t* ptr, size_t len, bool contains_Ns, size_t file_id)
+void ReadSelector::process_read_anchor_followers(vector<uint64_t>& read_kmers, vector<uint64_t>& aux_kmers, uint8_t* ptr, size_t len, bool contains_Ns, size_t file_id)
 {
-	if(contains_Ns)
+	if (contains_Ns)
 		determine_read_kmers(read_kmers, anchor_len, ptr, len);
 	else
 		determine_clean_read_kmers(read_kmers, anchor_len, ptr, len);
-
-#ifdef ENABLE_PROCESS_BOTH_WAYS		
-	if (direction == direction_t::both_ways)
-	{
-		process_read_both_ways(read_kmers, file_id);
-		return;
-	}
-#endif
 
 	if (direction == direction_t::reverse)
 		reverse(read_kmers.begin(), read_kmers.end());
 
 	size_t n_kmers = read_kmers.size();
-	
+
 	if (n_kmers <= follower_len)
 		return;
 
 	size_t i;
 	size_t max_i = n_kmers - follower_len;
+	bool aux_constructed = false;
 
-	for (i = 0; i < max_i; ++i)
+	if (find_all_mode)
 	{
-		if (check_in_bloom(read_kmers[i]) && dict_map.check(read_kmers[i]))
-			break;
+		for (i = 0; i < max_i; ++i)
+			if (check_in_bloom(read_kmers[i]) && dict_map.check(read_kmers[i]))
+			{
+				auto p = dict_map.find(read_kmers[i]);
 
-		if (++i >= max_i)
-			return;
+				if (p->second == excluded_val)
+					continue;
 
-		if (check_in_bloom(read_kmers[i]) && dict_map.check(read_kmers[i]))
-			break;
+				if (read_kmers[i + follower_len] == empty_kmer)
+					continue;
+
+				if (!aux_constructed)
+				{
+					if (anchor_len != follower_len)
+					{
+						if (contains_Ns)
+							determine_read_kmers(aux_kmers, follower_len, ptr, len);
+						else
+							determine_clean_read_kmers(aux_kmers, follower_len, ptr, len);
+						if (direction == direction_t::reverse)
+							reverse(aux_kmers.begin(), aux_kmers.end());
+
+						n_kmers = aux_kmers.size();
+					}
+					else
+						aux_kmers = read_kmers;
+
+					aux_constructed = true;
+				}
+
+				size_t j_end = i + anchor_len + follower_len * n_followers;
+
+				auto& ext_vec = dict[p->second].second[file_id];
+
+				size_t n_extended = 0;
+
+				for (size_t j = i + anchor_len; j < n_kmers && j < j_end; j += follower_len)
+					if (aux_kmers[j] != empty_kmer)
+					{
+						ext_vec.emplace_back(aux_kmers[j]);
+						++n_extended;
+					}
+					else
+						break;
+
+				for (; n_extended < n_followers; ++n_extended)
+					ext_vec.emplace_back(empty_kmer);
+			}
 	}
-
-	if (i >= max_i)
-		return;
-
-	auto p = dict_map.find(read_kmers[i]);
-
-	if (p->second == excluded_val)
-		return;
-
-	if (read_kmers[i + follower_len] == empty_kmer)
-		return;
-
-	if (anchor_len != follower_len)
+	else
 	{
-		if (contains_Ns)
-			determine_read_kmers(read_kmers, follower_len, ptr, len);
-		else
-			determine_clean_read_kmers(read_kmers, follower_len, ptr, len);
-		if (direction == direction_t::reverse)
-			reverse(read_kmers.begin(), read_kmers.end());
-
-		n_kmers = read_kmers.size();
-	}
-
-	size_t j_end = i + anchor_len + follower_len * n_followers;
-
-	auto& ext_vec = dict[p->second].second[file_id];
-
-	size_t n_extended = 0;
-
-	for (size_t j = i + anchor_len; j < n_kmers && j < j_end; j += follower_len)
-		if (read_kmers[j] != empty_kmer)
+		for (i = 0; i < max_i; ++i)
 		{
-			ext_vec.emplace_back(read_kmers[j]);
-			++n_extended;
+			if (check_in_bloom(read_kmers[i]) && dict_map.check(read_kmers[i]))
+				break;
+
+			if (++i >= max_i)
+				return;
+
+			if (check_in_bloom(read_kmers[i]) && dict_map.check(read_kmers[i]))
+				break;
 		}
-		else
-			break;
 
-	for (; n_extended < n_followers; ++n_extended)
-		ext_vec.emplace_back(empty_kmer);
-}
-
-// ************************************************************************************
-/*void ReadSelector::process_read_extender_anchor(vector<uint64_t>& read_kmers, uint8_t* ptr, size_t len, bool contains_Ns, size_t file_id)
-{
-	if (contains_Ns)
-		determine_read_kmers(read_kmers, extender_len, ptr, len);
-	else
-		determine_clean_read_kmers(read_kmers, extender_len, ptr, len);
-
-	if (direction == direction_t::reverse)
-		reverse(read_kmers.begin(), read_kmers.end());
-
-	size_t n_kmers = read_kmers.size();
-
-	size_t read_len = n_kmers + extender_len - 1;
-	size_t suffix_len = gap_len + anchor_len;
-
-	if (n_kmers <= suffix_len)
-		return;
-
-	n_kmers -= suffix_len;
-	read_kmers.resize(n_kmers);
-
-	size_t i;
-
-	for (i = 0; i < n_kmers; ++i)
-	{
-		if (check_in_bloom(read_kmers[i]) && dict_map.check(read_kmers[i]))
-			break;
-
-		if (++i >= n_kmers)
+		if (i >= max_i)
 			return;
 
-		if (check_in_bloom(read_kmers[i]) && dict_map.check(read_kmers[i]))
-			break;
+		auto p = dict_map.find(read_kmers[i]);
+
+		if (p->second == excluded_val)
+			return;
+
+		if (read_kmers[i + follower_len] == empty_kmer)
+			return;
+
+		if (anchor_len != follower_len)
+		{
+			if (contains_Ns)
+				determine_read_kmers(read_kmers, follower_len, ptr, len);
+			else
+				determine_clean_read_kmers(read_kmers, follower_len, ptr, len);
+			if (direction == direction_t::reverse)
+				reverse(read_kmers.begin(), read_kmers.end());
+
+			n_kmers = read_kmers.size();
+		}
+
+		size_t j_end = i + anchor_len + follower_len * n_followers;
+
+		auto& ext_vec = dict[p->second].second[file_id];
+
+		size_t n_extended = 0;
+
+		for (size_t j = i + anchor_len; j < n_kmers && j < j_end; j += follower_len)
+			if (read_kmers[j] != empty_kmer)
+			{
+				ext_vec.emplace_back(read_kmers[j]);
+				++n_extended;
+			}
+			else
+				break;
+
+		for (; n_extended < n_followers; ++n_extended)
+			ext_vec.emplace_back(empty_kmer);
 	}
-
-	if (i >= n_kmers)
-		return;
-
-	auto p = dict_map.find(read_kmers[i]);
-
-	if (p->second == excluded_val)
-		return;
-
-	uint64_t anchor_kmer;
-
-	if (contains_Ns)
-		determine_read_kmer(anchor_kmer, anchor_len, ptr, i + gap_len + extender_len);
-	else
-		determine_clean_read_kmer(anchor_kmer, anchor_len, ptr, i + gap_len + extender_len);
-
-	if (anchor_kmer == empty_anchor)
-		return;
-
-	auto& ext_vec = dict[p->second].second[file_id];
-	ext_vec.emplace_back(anchor_kmer);
-}*/
+}
 
 // ************************************************************************************
 void ReadSelector::process_read_anchor_extender(vector<uint64_t>& read_kmers, uint8_t* ptr, size_t len, bool contains_Ns, size_t file_id)
@@ -737,89 +589,6 @@ void ReadSelector::process_read_anchor_extender(vector<uint64_t>& read_kmers, ui
 		}
 	}
 }
-
-#ifdef ENABLE_PROCESS_BOTH_WAYS		
-// ************************************************************************************
-void ReadSelector::process_read_both_ways(vector<uint64_t>& read_kmers, size_t file_id)
-{
-	size_t n_kmers = read_kmers.size();
-
-	if (n_kmers <= k_len)
-		return;
-
-	int i;
-	int max_i = (int) n_kmers;
-
-	// Look for "interesting" k-mers
-	int i_first = -1;
-	int i_last = -1;
-
-	for (i = 0; i < max_i; ++i)
-	{
-		if (check_in_bloom(read_kmers[i]) && anchor_map.check(read_kmers[i]))
-		{
-			if (i_first < 0)
-				i_first = i;
-			i_last = i;
-		}
-
-		if (++i >= max_i)
-			break;
-
-		if (check_in_bloom(read_kmers[i]) && anchor_map.check(read_kmers[i]))
-		{
-			if (i_first < 0)
-				i_first = i;
-			i_last = i;
-		}
-	}
-
-	if (i_first < 0)
-		return;
-
-	auto p = anchor_map.find(read_kmers[i_first]);
-	if (i_first + k_len < n_kmers && p->second != excluded_val)
-		analyze_followers(read_kmers, anchor_dict_fwd[p->second].second[file_id], i_first);
-
-	if(i_first != i_last)
-		p = anchor_map.find(read_kmers[i_last]);
-
-	if (p->second != excluded_val)
-	{
-		i_last = (int)n_kmers - i_last - 1;
-
-		if (i_last + k_len < n_kmers)
-		{
-			reverse(read_kmers.begin(), read_kmers.end());
-			analyze_followers(read_kmers, anchor_dict_rev[p->second].second[file_id], i_last);
-		}
-	}
-}
-
-// ************************************************************************************
-void ReadSelector::analyze_followers(vector<uint64_t>& read_kmers, vector<uint64_t>& ext_vec, int pos)
-{
-	if (read_kmers[pos + k_len] == empty_kmer)
-		return;
-
-	size_t j_end = pos + k_len * n_followers;
-
-	size_t n_extended = 0;
-	size_t n_kmers = read_kmers.size();
-
-	for (size_t j = pos + k_len; j < n_kmers && j < j_end; j += k_len)
-		if (read_kmers[j] != empty_kmer)
-		{
-			ext_vec.emplace_back(read_kmers[j]);
-			++n_extended;
-		}
-		else
-			break;
-
-	for (; n_extended < n_followers - 1; ++n_extended)
-		ext_vec.emplace_back(empty_kmer);
-}
-#endif
 
 // ************************************************************************************
 void ReadSelector::determine_read_kmers(vector<uint64_t>& read_kmers, uint32_t k, uint8_t* ptr, const size_t len)
@@ -1008,6 +777,7 @@ bool ReadSelector::process_file(const string& fn, const size_t file_id)
 	size_t read_pos = 0;
 
 	vector<uint64_t> read_kmers;
+	vector<uint64_t> aux_kmers;
 	bool contains_Ns = false;
 
 	if (!prefetched_files.empty() && prefetched_files[file_id].first != nullptr)
@@ -1024,7 +794,7 @@ bool ReadSelector::process_file(const string& fn, const size_t file_id)
 			if (code_with_EOR[packed_dna[read_pos]])		// end-of-read marker
 			{
 				if(process_mode == process_mode_t::anchor_followers)
-					process_read_anchor_followers(read_kmers, packed_dna, read_pos + 1, contains_Ns, file_id);
+					process_read_anchor_followers(read_kmers, aux_kmers, packed_dna, read_pos + 1, contains_Ns, file_id);
 				else
 					process_read_anchor_extender(read_kmers, packed_dna, read_pos + 1, contains_Ns, file_id);
 				read_pos = 0;
@@ -1042,7 +812,7 @@ bool ReadSelector::process_file(const string& fn, const size_t file_id)
 			if (code_with_EOR[packed_dna[read_pos]])		// end-of-read marker
 			{
 				if (process_mode == process_mode_t::anchor_followers)
-					process_read_anchor_followers(read_kmers, packed_dna, read_pos + 1, contains_Ns, file_id);
+					process_read_anchor_followers(read_kmers, aux_kmers, packed_dna, read_pos + 1, contains_Ns, file_id);
 				else
 					process_read_anchor_extender(read_kmers, packed_dna, read_pos + 1, contains_Ns, file_id);
 				read_pos = 0;
@@ -1074,7 +844,7 @@ bool ReadSelector::process_file(const string& fn, const size_t file_id)
 			if (code_with_EOR[packed_dna[read_pos]])		// end-of-read marker
 			{
 				if (process_mode == process_mode_t::anchor_followers)
-					process_read_anchor_followers(read_kmers, packed_dna, read_pos + 1, contains_Ns, file_id);
+					process_read_anchor_followers(read_kmers, aux_kmers, packed_dna, read_pos + 1, contains_Ns, file_id);
 				else
 					process_read_anchor_extender(read_kmers, packed_dna, read_pos + 1, contains_Ns, file_id);
 				read_pos = 0;
@@ -1147,6 +917,7 @@ bool ReadSelector::preprocess_fastq(const string& file_name, size_t file_id)
 	FILE* dna_out;
 
 	vector<uint64_t> read_kmers;
+	vector<uint64_t> aux_kmers;
 
 	if (!open_input_FASTQ_file(file_name, gz_in))
 		return false;
@@ -1167,8 +938,12 @@ bool ReadSelector::preprocess_fastq(const string& file_name, size_t file_id)
 	{
 		gzgets(gz_in, tmp, max_read_len);	// id
 		gzgets(gz_in, dna, max_read_len);	// bases
-		gzgets(gz_in, tmp, max_read_len);	// +
-		gzgets(gz_in, tmp, max_read_len);	// qualities
+
+		if (input_format == input_format_t::fastq)
+		{
+			gzgets(gz_in, tmp, max_read_len);	// +
+			gzgets(gz_in, tmp, max_read_len);	// qualities
+		}
 
 //		if (strlen(dna) < k_len * n_followers)
 		if (process_mode == process_mode_t::anchor_followers)
@@ -1189,7 +964,7 @@ bool ReadSelector::preprocess_fastq(const string& file_name, size_t file_id)
 			contains_Ns |= code_with_N[packed[i]];
 
 		if(process_mode == process_mode_t::anchor_followers)
-			process_read_anchor_followers(read_kmers, packed, packed_len, contains_Ns, file_id);
+			process_read_anchor_followers(read_kmers, aux_kmers, packed, packed_len, contains_Ns, file_id);
 		else
 			process_read_anchor_extender(read_kmers, packed, packed_len, contains_Ns, file_id);
 		if (!contains_Ns) {
