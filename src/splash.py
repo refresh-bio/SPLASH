@@ -483,11 +483,11 @@ def stage_1_task(id, input, out, err):
     ram_only_param = ""
     if kmc_use_RAM_only_mode:
         ram_only_param="-r"
-	
-	file_format = get_file_format(fname)
-	
-	gap_len_for_kmc = gap_len
-	fname_for_kmc = fname
+
+    file_format = get_file_format(fname)
+
+    gap_len_for_kmc = gap_len
+    fname_for_kmc = fname
     
     cmd = f"{kmc} -t{n_threads_stage_1_internal} -{file_format} -b -ci1 -cs65535 -k{anchor_len + gap_len_for_kmc + target_len} {ram_only_param} -m{kmc_max_mem_GB} {fname_for_kmc} {tmp_dir}/{sample_name} {kmc_dir_tmp_name}"
     run_cmd(cmd, out, err)
@@ -618,7 +618,7 @@ def stage_2_task(bin_id, out, err):
     _without_alt_max_param = "--without_alt_max" if without_alt_max else ""
     _with_effect_size_cts_param = "--with_effect_size_cts" if with_effect_size_cts else ""
     _with_pval_asymp_opt_param = "--with_pval_asymp_opt" if with_pval_asymp_opt else ""
-	_without_seqence_entropy_param = "--without_seqence_entropy" if without_seqence_entropy else ""
+    _without_seqence_entropy_param = "--without_seqence_entropy" if without_seqence_entropy else ""
 
     _cjs_out_param = f"--cjs_out {Cjs_dir}/bin{bin_id}.cjs" if dump_Cjs else ""
 
@@ -636,7 +636,7 @@ def stage_2_task(bin_id, out, err):
     {_without_alt_max_param} \
     {_with_effect_size_cts_param} \
     {_with_pval_asymp_opt_param} \
-	{_without_seqence_entropy_param} \
+    {_without_seqence_entropy_param} \
     {_cjs_out_param} \
     --max_pval_opt_for_Cjs {max_pval_opt_for_Cjs} \
     --anchor_count_threshold {anchor_count_threshold} \
@@ -757,7 +757,7 @@ if keep_top_n_target_entropy != 0:
     print("Top target entropy select done")
 
 if supervised_test_samplesheet != "":
-	_datatype_param = "non10x"
+    _datatype_param = "non10x"
     print("Starting supervised_test")
     print("Current time:", get_cur_time(), flush=True)
     cmd = f"Rscript {supervised_test} \
