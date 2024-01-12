@@ -363,21 +363,25 @@ size_t CExtraStats::edit_distance_dp(uint64_t x, uint64_t y)
 }
 
 // *********************************************************************************************
-void CExtraStats::Compute(const Anchor& anchor, size_t target_len_symbols, size_t min_hp_len, size_t all2all_max_no_targets,
+void CExtraStats::Compute(const Anchor& _anchor, size_t anchor_len_symbols, size_t target_len_symbols, size_t min_hp_len, size_t all2all_max_no_targets,
 	size_t n_uniq_targets, const std::unordered_set<uint64_t>& unique_samples, AnchorStats& anchor_stats)
 {
 	stats = anchor_stats;
 
 	stats.clear_extra();
 
-	if (anchor.data.empty())
+	if (_anchor.data.empty())
 		return;
 
-	condense_targets(anchor);
+	condense_targets(_anchor);
 
 	size_t size = target_counter.size();
 	need_monte_carlo = size > all2all_max_no_targets;
+
+	anchor_len = anchor_len_symbols;
 	target_len = target_len_symbols;
+
+	anchor = _anchor.anchor;
 
 	max_target_id = std::distance(target_counter.begin(), std::max_element(target_counter.begin(), target_counter.end(), [](const auto& x, const auto& y) {return x.second < y.second; }));
 

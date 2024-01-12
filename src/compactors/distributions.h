@@ -1,8 +1,9 @@
 #pragma once
 #include <cmath>
+#include <cinttypes>
 
 #include "../../libs/cdflib/cdflib.hpp"
-#include <cstdint>
+
 template <typename T, int MaxN>
 class NChooseK {
 	T tab[MaxN + 1][MaxN + 1]{ 0 };

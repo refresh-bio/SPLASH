@@ -24,7 +24,7 @@ bool Engine::operator()() {
 
 	auto t = std::chrono::high_resolution_clock::now();
 	std::unordered_map<kmer_t, std::vector<kmer_t>> anchors2kmers;
-	size_t n_hits = kmerProvider->extractKmers(numKmers, params.kmerLen, anchors2kmers, params.anchorLen);  // overwrite anchor length
+	size_t n_hits = kmerProvider->extractKmers(numKmers, params.kmerLen, params.allAnchors, anchors2kmers, params.anchorLen);  // overwrite anchor length
 	auto dt = std::chrono::high_resolution_clock::now() - t;
 
 	LOG_NORMAL << n_hits << " reads found for " << anchors2kmers.size() << " anchors in " << chrono::duration<double>(dt).count() << " s" << endl << endl;
@@ -144,7 +144,7 @@ bool Engine::operator()() {
 			int n_last = compactors.size();
 			if (query.size()) {
 				anchors2kmers.clear();
-				kmerProvider->extractKmers(query, extenderLen, numKmers, params.kmerLen, anchors2kmers, false);
+				kmerProvider->extractKmers(query, extenderLen, numKmers, params.kmerLen, false, params.allAnchors, anchors2kmers);
 
 				for (int i = i_start; i < n_last; ++i) {
 					Compactor& c = compactors[i];
@@ -320,19 +320,19 @@ bool Engine::extendCompactors(
 				}
 				else {
 					// new method
-					double k_choose_d = (double)n_choose_k(kmerLen, d);
+					//double k_choose_d = (double)n_choose_k(kmerLen, d);
 					double bin = binomial.pdf(kmerLen, d);
 
 					double p_val = 1.0 - poissonCdf(r.second * bin, (double)v_info.n); // get probability of observing n or more reads given that they were produced by sequencing error from 
 		
-					double p_val_corr = params.beta * p_val * k_choose_d;
+					double p_val_corr = params.beta * p_val;
 
-					if (p_val_corr >= 0.01) {
+					if (p_val_corr > 0.01) {
 						add = false;
 						LOG_DEBUG << "similar found: [" << KmerHelper::to_string(r.first, params.kmerLen) 
 							<< ", d = " << d
 							<< ", pval(lambda=" << r.second << " * " << bin << ", n=" << v_info.n << ") = " << p_val
-							<<  ", P_CORR = " << params.beta << " * " << k_choose_d << " * pval = " << p_val_corr << "], ";
+							<<  ", P_CORR = " << params.beta << " * pval = " << p_val_corr << "], ";
 					}
 				}
 			} 

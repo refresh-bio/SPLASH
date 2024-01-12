@@ -98,6 +98,8 @@ struct Params
 
 	bool compute_also_old_base_pvals = false;
 
+	bool without_seqence_entropy = false;
+
 	std::string outpath;
 
 	std::string anchor_list;
@@ -128,6 +130,7 @@ struct Params
 		oss << "\twith_effect_size_cts                    : " << std::boolalpha << with_effect_size_cts << "\n";
 		oss << "\twith_pval_asymp_opt                     : " << std::boolalpha << with_pval_asymp_opt << "\n";
 		oss << "\tcompute_also_old_base_pvals             : " << std::boolalpha << compute_also_old_base_pvals << "\n";
+		oss << "\twithout_seqence_entropy                 : " << std::boolalpha << without_seqence_entropy << "\n";
 		oss << "\toutpath                                 : " << outpath << "\n";
 		oss << "\tanchor_list                             : " << anchor_list << "\n";
 		oss << "\tcjs_out                                 : " << cjs_out << "\n";
@@ -180,6 +183,7 @@ struct Params
 			<< "    --with_effect_size_cts                            - compute effect_size_cts\n"
 			<< "    --with_pval_asymp_opt                             - compute pval_asymp_opt\n"
 			<< "    --compute_also_old_base_pvals                     - compute old base pvals\n"
+			<< "    --without_seqence_entropy                         - disable seqence entropy computation\n"
 			<< "    --sample_names <path>                             - path for decode sample id, each line should contain <sample_name> <sample_id>\n"
 			<< "    --cell_type_samplesheet <path>                    - path for mapping barcode to cell type, is used Helmert-based supervised mode is turned on\n"
 			<< "    --Cjs_samplesheet <path>                          - path for file with predefined Cjs for non-10X supervised mode\n"
@@ -275,6 +279,9 @@ Params read_params(int argc, char** argv)
 		}
 		if (param == "--compute_also_old_base_pvals") {
 			res.compute_also_old_base_pvals = true;
+		}
+		if (param == "--without_seqence_entropy") {
+			res.without_seqence_entropy = true;
 		}
 		if (param == "--anchor_list") {
 			res.anchor_list = argv[++i];
@@ -451,7 +458,17 @@ public:
 };
 
 
-void write_out_header(std::ofstream& out, bool without_alt_max, bool with_effect_size_cts, bool with_pval_asymp_opt, bool compute_also_old_base_pvals, bool is_removing_least_freq_targets_enabled, uint32_t n_most_freq_targets, CBCToCellType* cbc_to_cell_type, Non10XSupervised* non_10X_supervised) {
+void write_out_header(
+	std::ofstream& out,
+	bool without_alt_max,
+	bool with_effect_size_cts,
+	bool with_pval_asymp_opt,
+	bool compute_also_old_base_pvals,
+	bool is_removing_least_freq_targets_enabled,
+	bool without_seqence_entropy,
+	uint32_t n_most_freq_targets,
+	CBCToCellType* cbc_to_cell_type,
+	Non10XSupervised* non_10X_supervised) {
 	//mkokot_TODO: czy doimplementowac zakomentowane?
 	out
 		<< "anchor" << "\t";
@@ -518,9 +535,18 @@ void write_out_header(std::ofstream& out, bool without_alt_max, bool with_effect
 		<< "avg_edit_distance_max_target\t"
 		<< "avg_edit_distance_all_pairs\t";
 
+	if (!without_seqence_entropy) {
+		out << "anchor_2mer_seq_entropy\t";
+		out << "anchor_3mer_seq_entropy\t";
+	}
+
 	for (size_t i = 1; i <= n_most_freq_targets; ++i) {
 		out << "most_freq_target_" << i << "\t";
 		out << "cnt_most_freq_target_" << i << "\t";
+		if (!without_seqence_entropy) {
+			out << "most_freq_target_" << i << "_2mer_seq_entropy\t";
+			out << "most_freq_target_" << i << "_3mer_seq_entropy\t";
+		}
 	}
 	out
 		<< "\n";
@@ -542,6 +568,7 @@ void write_out_rec(
 	bool with_pval_asymp_opt,
 	bool compute_also_old_base_pvals,
 	bool is_removing_least_freq_targets_enabled,
+	bool without_seqence_entropy,
 	uint32_t n_most_freq_targets,
 	CBCToCellType* cbc_to_cell_type,
 	Non10XSupervised* non_10X_supervised) {
@@ -650,14 +677,28 @@ void write_out_rec(
 		<< anchor_stats.avg_hamming_distance_all_pairs << "\t"
 		<< anchor_stats.avg_edit_distance_max_target << "\t"
 		<< anchor_stats.avg_edit_distance_all_pairs << "\t";
+
+	if (!without_seqence_entropy) {
+		out << anchor_stats.sequence_entropy_anchor.first << "\t";
+		out << anchor_stats.sequence_entropy_anchor.second << "\t";
+	}
+
 	for (size_t i = 0; i < anchor_stats.most_freq_targets.size(); ++i) {
 		out << kmer_to_string(anchor_stats.most_freq_targets[i].kmer, target_len_symbols) << "\t";
 		out << anchor_stats.most_freq_targets[i].counter << "\t";
+		if (!without_seqence_entropy) {
+			out << anchor_stats.sequence_entropy_targets[i].first << "\t";
+			out << anchor_stats.sequence_entropy_targets[i].second << "\t";
+		}
 	}
 	//if there were less targets than n_most_freq_targets for current anchor
 	for (size_t i = anchor_stats.most_freq_targets.size(); i < n_most_freq_targets; ++i) {
 		out << "-\t";
 		out << "0\t";
+		if (!without_seqence_entropy) {
+			out << "-\t";
+			out << "-\t";
+		}
 	}
 	out
 		<< "\n";
@@ -693,6 +734,7 @@ class StatsWriter : public IAnchorProcessor {
 	bool with_pval_asymp_opt;
 	bool compute_also_old_base_pvals;
 	bool is_removing_least_freq_targets_enabled;
+	bool without_seqence_entropy;
 	uint32_t n_most_freq_targets;
 	double opt_train_fraction;
 	int opt_num_inits;
@@ -717,6 +759,7 @@ public:
 		bool with_pval_asymp_opt,
 		bool compute_also_old_base_pvals,
 		bool is_removing_least_freq_targets_enabled,
+		bool without_seqence_entropy,
 		uint32_t n_most_freq_targets,
 		double opt_train_fraction,
 		int opt_num_inits,
@@ -738,6 +781,7 @@ public:
 		with_pval_asymp_opt(with_pval_asymp_opt),
 		compute_also_old_base_pvals(compute_also_old_base_pvals),
 		is_removing_least_freq_targets_enabled(is_removing_least_freq_targets_enabled),
+		without_seqence_entropy(without_seqence_entropy),
 		n_most_freq_targets(n_most_freq_targets),
 		opt_train_fraction(opt_train_fraction),
 		opt_num_inits(opt_num_inits),
@@ -763,6 +807,7 @@ public:
 			with_pval_asymp_opt,
 			compute_also_old_base_pvals,
 			is_removing_least_freq_targets_enabled,
+			without_seqence_entropy,
 			n_most_freq_targets,
 			cbc_to_cell_type,
 			non_10X_supervised);
@@ -788,12 +833,13 @@ public:
 
 		auto _anchor = anchor.anchor;
 
-		extra_stats.Compute(anchor, target_len_symbols, 5, 200, n_uniqe_targets, unique_samples, anchor_stats);
+		extra_stats.Compute(anchor, anchor_len_symbols, target_len_symbols, 5, 200, n_uniqe_targets, unique_samples, anchor_stats);
 
 		if (!_10X_or_visium || n_uniqe_targets < 1000000)
 				compute_stats(
 					std::move(anchor),
 					anchor_len_symbols,
+					target_len_symbols,
 					n_uniqe_targets,
 					unique_samples,
 					anchor_stats,
@@ -828,6 +874,7 @@ public:
 			with_pval_asymp_opt,
 			compute_also_old_base_pvals,
 			is_removing_least_freq_targets_enabled,
+			without_seqence_entropy,
 			n_most_freq_targets,
 			cbc_to_cell_type,
 			non_10X_supervised);
@@ -1070,6 +1117,7 @@ std::unique_ptr<IAnchorProcessor> get_anchor_processor(
 	bool with_pval_asymp_opt,
 	bool compute_also_old_base_pvals,
 	bool is_removing_least_freq_targets_enabled,
+	bool without_seqence_entropy,
 	uint32_t n_most_freq_targets,
 	double opt_train_fraction,
 	int opt_num_inits,
@@ -1125,6 +1173,7 @@ std::unique_ptr<IAnchorProcessor> get_anchor_processor(
 		with_pval_asymp_opt,
 		compute_also_old_base_pvals,
 		is_removing_least_freq_targets_enabled,
+		without_seqence_entropy,
 		n_most_freq_targets,
 		opt_train_fraction,
 		opt_num_inits,
@@ -1208,6 +1257,7 @@ void run_non_10X(const Params& params) {
 		params.with_pval_asymp_opt,
 		params.compute_also_old_base_pvals,
 		params.n_most_freq_targets_for_stats != 0,
+		params.without_seqence_entropy,
 		params.n_most_freq_targets,
 		params.opt_train_fraction,
 		params.opt_num_inits,
@@ -1379,6 +1429,7 @@ void run_10X_or_visium(const Params& params) {
 		params.with_pval_asymp_opt,
 		params.compute_also_old_base_pvals,
 		false, //mkokot_TODO: add support to remove least freq targets from contignency table for 10X
+		params.without_seqence_entropy,
 		params.n_most_freq_targets,
 		params.opt_train_fraction,
 		params.opt_num_inits,

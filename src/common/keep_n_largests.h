@@ -9,7 +9,7 @@ class KeepNLargests {
 	size_t n;
 	PRED pred;	
 public:
-	KeepNLargests(size_t n, PRED pred = std::greater<T>{}) : n(n), pred(pred) {
+	KeepNLargests(size_t n, PRED pred = PRED{}) : n(n), pred(pred) {
 
 	}
 	void Add(T&& elem) {
@@ -32,6 +32,10 @@ public:
 		return heap;
 	}
 
+	void Steal(std::vector<T>& res) const {
+		res = std::move(heap);
+	}
+
 	template<typename Pred = std::less<T>>
 	std::vector<T> GetSorted(Pred pred = std::less<T>{}) {
 		std::vector<T> res = heap;
@@ -47,4 +51,3 @@ public:
 };
 
 #endif // !_KEEP_N_LARGESTS
-

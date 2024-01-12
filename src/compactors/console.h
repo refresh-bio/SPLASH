@@ -3,13 +3,16 @@
 #include <vector>
 #include <sstream>
 #include <algorithm>
-
+#include "../common/common_types.h"
 #include "engine.h"
 
 class Console {
 
+	const std::string PARAM_INPUT_FORMAT {"--input_format"};
+
 	const std::string PARAM_NUM_KMERS {"--num_kmers"};
 	const std::string PARAM_KMER_LEN{ "--kmer_len" };
+	const std::string SWITCH_ALL_ANCHORS{ "--all_anchors"};
 	
 	const std::string PARAM_EPSILON { "--epsilon" };
 	const std::string PARAM_BETA{ "--beta" };
@@ -48,6 +51,7 @@ public:
 
 	std::string anchorsTsv;
 	std::vector<std::string> sampleFastqs;
+	input_format_t inputFormat = input_format_t::fastq;
 	std::string outputFasta;
 	std::string outputTsv;
 	bool keepTemp;

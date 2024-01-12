@@ -153,11 +153,11 @@ Params read_params(int argc, char** argv)
 		res.n_bins = 64;
 	}
 	if (res.anchor_len == 0) {
-		std::cerr << "Error: anchor len (-a) must be specified\n";
+		std::cerr << "Error: anchor len (--anchor_len) must be specified\n";
 		exit(1);
 	}
 	if (res.target_len == 0) {
-		std::cerr << "Error: anchor len (-t) must be specified\n";
+		std::cerr << "Error: target len (--target_len) must be specified\n";
 		exit(1);
 	}
 	return res;

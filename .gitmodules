@@ -1,0 +1,6 @@
+[submodule "libs/cloudflare-zlib"]
+	path = libs/cloudflare-zlib
+	url = https://github.com/refresh-bio/dependencies-zlib/
+[submodule "libs/zstd"]
+	path = libs/zstd
+	url = https://github.com/refresh-bio/dependencies-zstd/

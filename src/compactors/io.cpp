@@ -11,6 +11,7 @@ namespace fs = std::filesystem;
 
 ReadLoader::ReadLoader(
 	const std::vector<std::string>& fastqFiles,
+	input_format_t inputFormat,
 	const std::string& anchorFile,
 	int homopolymerThreshold,
 	int numThreads,
@@ -32,6 +33,7 @@ ReadLoader::ReadLoader(
 	}
 
 	selector.set_input_names(outFastqFiles);
+	selector.set_input_format(inputFormat);
 
 	selector.set_max_memory_usage((size_t)readsBufferGb << 30);		// I/O buffer
 	selector.set_max_read_len(1 << 20);				// optional 
@@ -63,6 +65,7 @@ ReadLoader::~ReadLoader() {
 size_t ReadLoader::extractKmers(
 	int numFollowers,
 	int followerLen,
+	bool allAnchors,
 	std::unordered_map<kmer_t, std::vector<kmer_t>>& targets,
 	int& anchorLen) {
 
@@ -147,7 +150,7 @@ size_t ReadLoader::extractKmers(
 		}
 
 		selector.set_dict(anchors);
-		auto tmp = selector.process_anchor_followers(ReadSelector::direction_t::forward, anchorLen, followerLen, numFollowers);
+		auto tmp = selector.process_anchor_followers(ReadSelector::direction_t::forward, anchorLen, followerLen, numFollowers, allAnchors);
 		n_passed += translate(tmp, numFollowers, targets);
 
 		// deactivate batch
@@ -169,8 +172,9 @@ size_t ReadLoader::extractKmers(
 	int queryLen,
 	int numFollowers,
 	int followerLen,
-	std::unordered_map<kmer_t, std::vector<kmer_t>>& targets,
-	bool reverse) {
+	bool reverse,
+	bool allAnchors,
+	std::unordered_map<kmer_t, std::vector<kmer_t>>& targets) {
 
 	ReadSelector::direction_t dir = reverse ? ReadSelector::direction_t::reverse : ReadSelector::direction_t::forward;
 	
@@ -192,7 +196,7 @@ size_t ReadLoader::extractKmers(
 		}
 
 		selector.set_dict(query);
-		auto tmp = selector.process_anchor_followers(dir, queryLen, followerLen, numFollowers);
+		auto tmp = selector.process_anchor_followers(dir, queryLen, followerLen, numFollowers, allAnchors);
 		n_passed += translate(tmp, numFollowers, targets);
 
 		// deactivate batch

@@ -5,7 +5,7 @@
 #include <cstdio>
 #include <string>
 
-#include "../../libs/zstd/zstd.h"
+#include "../../libs/zstd/lib/zstd.h"
 
 namespace refresh
 {

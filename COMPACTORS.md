@@ -18,6 +18,7 @@ Options:
 * `--beta <real>` - beta parameter for active set generation, lower values increase sensitivity (default: 5)
 * `--lower_bound <int>` - minimum kmer abundance to add it to an active set, lower values increase sensitivity (default: 10)
 * `--max_mismatch <int>` - maximum mismatch count for compactor candidates (default: 4)
+* `--all_anchors` - find all anchors' occurences in a read, not just the first one (default: off)
 
 * `--no_extension` - disable recursive extension (default: enabled)
 * `--max_length <int>` - maximum compactor length in bases (used only with recursion; default: 2000)

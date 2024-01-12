@@ -30,6 +30,8 @@ struct AnchorStats {
 	double avg_edit_distance_all_pairs;
 
 	std::vector<KmerAndCounter> most_freq_targets;
+	std::vector<std::pair<float, float>> sequence_entropy_targets;
+	std::pair<float, float> sequence_entropy_anchor;
 
 	std::vector<double> helmert_decomposition_pvals;
 	std::vector<double> helmert_decomposition_effect_size_cts;
@@ -317,6 +319,7 @@ public:
 void compute_stats(
 	Anchor&& anchor,
 	size_t anchor_len_symbols,
+	size_t target_len_symbols,
 	size_t n_uniq_targets,
 	const std::unordered_set<uint64_t>& unique_samples,
 	AnchorStats &anchor_stats,

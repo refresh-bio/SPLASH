@@ -352,6 +352,15 @@ void sort();
 
 		csv_ostream(csv_ostream& x) = delete;
 
+		~csv_ostream()
+		{
+			if (ofs && !header_stored)
+			{
+				join(header);
+				ofs.write(buffer.c_str(), buffer.size());
+			}
+		}
+
 		bool open(const std::string& filename);
 
 		bool good()

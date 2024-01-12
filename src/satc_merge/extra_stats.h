@@ -21,6 +21,8 @@ class CExtraStats
 	CEditDistanceOneWord edow;
 	size_t max_target_id;
 	bool need_monte_carlo;
+	uint64_t anchor;
+	size_t anchor_len;
 	size_t target_len;
 
 	std::vector<std::pair<uint64_t, uint64_t>> target_counter;
@@ -43,7 +45,7 @@ class CExtraStats
 public:
 	CExtraStats() = default;
 
-	void Compute(const Anchor& anchor, size_t target_len_symbols, size_t min_hp_len, size_t all2all_max_no_targets,
+	void Compute(const Anchor& _anchor, size_t anchor_len_symbols, size_t target_len_symbols, size_t min_hp_len, size_t all2all_max_no_targets,
 		size_t n_uniq_targets, const std::unordered_set<uint64_t>& unique_samples, AnchorStats& anchor_stats);
 };
 

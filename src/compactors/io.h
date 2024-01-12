@@ -28,6 +28,7 @@ public:
 
 	ReadLoader(
 		const std::vector<std::string>& fastqFiles,
+		input_format_t inputFormat,
 		const std::string& anchorFile,
 		int homopolymerThreshold,
 		int numThreads,
@@ -40,6 +41,7 @@ public:
 	size_t extractKmers(
 		int numFollowers,
 		int followerLen,
+		bool allAnchors,
 		std::unordered_map<kmer_t, std::vector<kmer_t>>& targets,
 		int& anchorLen) override;
 
@@ -48,8 +50,10 @@ public:
 		int queryLen,
 		int numFollowers,
 		int followerLen,
-		std::unordered_map<kmer_t, std::vector<kmer_t>>& targets,
-		bool reverse) override;
+		bool reverse,
+		bool allAnchors,
+		std::unordered_map<kmer_t, std::vector<kmer_t>>& targets	
+	) override;
 
 	size_t extractPredecessorWithGap(
 		const std::unordered_set<kmer_t>& queries,
