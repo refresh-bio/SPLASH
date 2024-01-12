@@ -65,6 +65,7 @@ It is also possible to run without pulling first:
 ```
 singularity run docker://ghcr.io/refresh-bio/splash:2.1.4 splash input.txt
 ```
+Depending on your configuration, it may be necessary to configure appropriate bind for singularity (`-B` parameter).
 
 ### Compile from sources
 SPLASH is implemented as several applications written in the C++ programming language and a Python wrapper to run the whole pipeline.
