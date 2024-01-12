@@ -26,9 +26,9 @@ The image below presents the SPLASH pipeline on a high-level.
 ## Installation
 ### Precompiled binaries
 The easiest way to get SPLASH is to use [precompiled release](https://github.com/refresh-bio/SPLASH/releases).
-To get version 2.1.4 and run the example, is is sufficient to do the following:
+To get version 2.1.14 and run the example, is is sufficient to do the following:
 ```
-curl -L https://github.com/refresh-bio/SPLASH/releases/download/v2.1.4/splash-2.1.4.linux.x64.tar.gz | tar xz
+curl -L https://github.com/refresh-bio/SPLASH/releases/download/v2.1.14/splash-2.1.14.linux.x64.tar.gz | tar xz
 cd example
 ./run-example.sh
 ```
@@ -38,14 +38,14 @@ It is possible to run splash using the docker container available through GitHub
 
 To pull the image run:
 ```
-sudo docker pull ghcr.io/refresh-bio/splash:2.1.4 # replace version number if needed
+sudo docker pull ghcr.io/refresh-bio/splash:2.1.14 # replace version number if needed
 ```
 Example of how to run splash with docker.
 Prerequisites:
  * There is `input.txt` in the current directory
  * All input splash files defined in the `input.txt` are in the same or child directory
 ```
-sudo docker run -v `pwd`:/home/ubuntu ghcr.io/refresh-bio/splash:2.1.4 splash input.txt
+sudo docker run -v `pwd`:/home/ubuntu ghcr.io/refresh-bio/splash:2.1.14 splash input.txt
 ```
 
 ### Singularity container
@@ -54,16 +54,16 @@ In such a case docker container may be transformed into a singularity container 
 
 To pull the singularity version of splash use:
 ```
-singularity pull docker://ghcr.io/refresh-bio/splash:2.1.4 # replace version as needed
+singularity pull docker://ghcr.io/refresh-bio/splash:2.1.14 # replace version as needed
 ```
-This will result in a `splash_2.1.4.sif` file created in the current directory.
+This will result in a `splash_2.1.14.sif` file created in the current directory.
 To execute splash using this file run:
 ```
-./splash_2.1.4.sif splash input.txt
+./splash_2.1.14.sif splash input.txt
 ```
 It is also possible to run without pulling first:
 ```
-singularity run docker://ghcr.io/refresh-bio/splash:2.1.4 splash input.txt
+singularity run docker://ghcr.io/refresh-bio/splash:2.1.14 splash input.txt
 ```
 It may be necessary to configure bind for singularity (`-B` parameter) depending on your configuration.
 
