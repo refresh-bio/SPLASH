@@ -309,11 +309,15 @@ public:
 	}
 
 	inline uint64 subkmer(uint32 pos, uint32 len) {
+		if (len == 0)
+			return 0;
 		auto lo_row = (pos + len - 1 + byte_alignment) >> 5;
 		auto hi_row = (pos + byte_alignment) >> 5;
 
 		auto start_pos = ((pos + len - 1 + byte_alignment) % 32) * 2;
-		uint64 mask = (1ull << (2 * len)) - 1;
+
+		//uint64 mask = (1ull << (2 * len)) - 1;
+		uint64 mask = ((1ull << len) << len) - 1; //I shift twice because len may be 32...
 		//subkmer is in single row
 		if (hi_row == lo_row) {
 			return (kmer_data[hi_row] >> (62 - start_pos)) & mask;

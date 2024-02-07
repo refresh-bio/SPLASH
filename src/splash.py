@@ -33,12 +33,23 @@ parser = argparse.ArgumentParser(
                     )
 
 parser.add_argument("input_file", help="path to the file where input samples are defined, the format is: per each line {sample_name}<space>{path}, path is a fastq[.gz] file")
+def check_anchor_len(len):
+    ilen = int(len)
+    if ilen < 1 or ilen > 32:
+        raise argparse.ArgumentTypeError(f"anchor_len must be in [1;32]")
+    return ilen
+
+def check_target_len(len):
+    ilen = int(len)
+    if ilen < 1 or ilen > 32:
+        raise argparse.ArgumentTypeError(f"target_len must be in [1;32]")
+    return ilen
 
 group_base_configuration = parser.add_argument_group('Base configuration')
 group_base_configuration.add_argument("--outname_prefix", default="result", type=str, help="prefix of output file names")
-group_base_configuration.add_argument("--anchor_len", default=27, type=int, help="anchor length")
+group_base_configuration.add_argument("--anchor_len", default=27, type=check_anchor_len, help="anchor length")
 group_base_configuration.add_argument("--gap_len", default="0", type=str, help="gap length, if 'auto' it will be inferred from the data, in the opposite case it must be an int")
-group_base_configuration.add_argument("--target_len", default=27, type=int, help="target length")
+group_base_configuration.add_argument("--target_len", default=27, type=check_target_len,  help="target length")
 group_base_configuration.add_argument("--anchor_list", default="", type=str, help="list of accepted anchors, this is path to plain text file with one anchor per line without any header")
 group_base_configuration.add_argument("--pvals_correction_col_name", default="pval_opt", type=str, help="for which column correction should be applied")
 group_base_configuration.add_argument("--without_compactors", default=False, action='store_true', help="if used compactors will not be run")
@@ -498,6 +509,10 @@ def stage_1_task(id, input, out, err):
     cmd = f"{kmc_tools} -t{n_threads_stage_1_internal} transform {tmp_dir}/{sample_name} sort {tmp_dir}/{sample_name}.sorted"
     run_cmd(cmd, out, err)
 
+    # if we have small k kmc_tools will omit sorting because it is already sorted, lets just copy
+    if not os.path.exists(f"{tmp_dir}/{sample_name}.sorted.kmc_pre"):
+        shutil.copy(f"{tmp_dir}/{sample_name}.kmc_pre", f"{tmp_dir}/{sample_name}.sorted.kmc_pre")
+        shutil.copy(f"{tmp_dir}/{sample_name}.kmc_suf", f"{tmp_dir}/{sample_name}.sorted.kmc_suf")
     if clean_up:
         remove_kmc_output(f"{tmp_dir}/{sample_name}")
     
