@@ -55,9 +55,7 @@ Bowtie2_univec_index = args[11]            # path to the Bowtie2 index for unive
 annotated_splice_juncs_file = args[12]     # path to the file containing annotated splice junctions
 annotated_exon_boundaries_file = args[13]  # path to the file containing annotated exon boundaries
 gene_coords_file = args[14]                # path to the file containing gene coordinates
-if (length(args) == 15){
-  paralogs_file = args[15]                 # path to the file containing list of paralogous genes from reference genome
-}
+repeats_annotation_file = args[15]         # path to the file containing repeats coordinates
 ##################################################
 ##################################################
 
@@ -395,57 +393,19 @@ anchors[!is.na(soft_clipped_bases) & STAR_T2T_num_alignments==1 & Bowtie_T2T_sof
 toc()
 
 
-if (length(args) == 15){
-  tic("paralog")
-  #############################################################################
-  ############ finding extendors involving paralogs ##########################
-  #############################################################################
-  paralog_genes = fread(paralogs_file,select=c("gene_name","paralog_gene_name"))
-  paralog_genes[,num_paralog:=.N,by=gene_name]
-  paralog_genes = unique(paralog_genes)
-  paralog_genes = paralog_genes[num_paralog<100]
-  paralog_genes[,all_paralogs:=paste(paralog_gene_name,collapse = "--"), by=gene_name]
-  
-  anchors_high_rank = anchors[extendor_order<3 ]
-  anchors_high_rank[ ,is.paralog:=0]
-  ## below I only want to look at the paralog alignments that are uniquely and perfectly mapped
-  anchors_high_rank[,multimapping:=0]
-  anchors_high_rank[STAR_T2T_num_alignments>1,multimapping:=1] # a flag that shows us it is a multimapping
-  anchors_high_rank[,multimapping:=sum(multimapping),by=anchor]
-  anchors_high_rank = anchors_high_rank[multimapping==0]
-  anchors_high_rank[,total_mismatches:=sum(STAR_T2T_num_mismatches),by=anchor] # a flag that shows us it is a multimapping
-  anchors_high_rank = anchors_high_rank[total_mismatches==0]
-  
-  #removing those alignments from candidate paralogs that have either I or D
-  anchors_high_rank[,is.indel:=0]
-  anchors_high_rank[STAR_T2T_CIGAR%like%"D" | STAR_T2T_CIGAR%like%"I",is.indel:=1]
-  anchors_high_rank[,is.indel:=sum(is.indel),by=anchor]
-  anchors_high_rank = anchors_high_rank[is.indel==0]
-  
-  anchors_high_rank = anchors_high_rank[!is.na(extendor_gene)] # I do not want to look at those extendors with no gene name
-  anchors_high_rank[ ,num_genes:=length(unique(extendor_gene)),by = anchor]
-  anchors_high_rank = anchors_high_rank[num_genes>1]
-  
-  anchors_high_rank_second_extendor = anchors_high_rank[extendor_order==2]
-  anchors_high_rank = anchors_high_rank[extendor_order==1]
-  anchors_high_rank = merge(anchors_high_rank ,anchors_high_rank_second_extendor[,list(anchor,extendor_gene)],all.x=TRUE,all.y=FALSE,by.x="anchor",by.y="anchor" )
-  setnames(anchors_high_rank,c("extendor_gene.x","extendor_gene.y"),c("gene1","gene2"))
-  
-  #below I add paralogs for gene1 and gene2
-  anchors_high_rank = merge(anchors_high_rank,paralog_genes[!duplicated(gene_name),list(gene_name,all_paralogs)],all.x=TRUE,all.y=FALSE,by.x="gene1",by.y="gene_name")
-  anchors_high_rank = merge(anchors_high_rank,paralog_genes[!duplicated(gene_name),list(gene_name,all_paralogs)],all.x=TRUE,all.y=FALSE,by.x="gene2",by.y="gene_name")
-  setnames(anchors_high_rank,c("all_paralogs.x","all_paralogs.y"),c("all_paralogs_for_gene1","all_paralogs_for_gene2"))
-  anchors_high_rank = anchors_high_rank[!(is.na(all_paralogs_for_gene1) | is.na(all_paralogs_for_gene2))] # if one of the gene1 or gene2 does not have paralog the other one also does not have
-  
-  anchors_high_rank[mapply(grepl,gene2,all_paralogs_for_gene1),is.paralog:=1] # if either gene2 is among the paralogs of gene1 or gene1 is among paralogs of gene2 is.paralog:=1
-  anchors_high_rank[mapply(grepl,gene1,all_paralogs_for_gene2),is.paralog:=1]
-  
-  anchors = merge(anchors,anchors_high_rank[!duplicated(anchor),list(anchor,is.paralog)],all.x=TRUE,all.y=FALSE,by.x="anchor",by.y="anchor")
-  ###############################################################################
-  ###############################################################################
-  ###############################################################################
-  toc()
-}
+tic("annotate repeats")
+#############################################################################
+########################## annotate repeats #################################
+#############################################################################
+anchors[,repeat_annotation:=NULL]
+system(paste(bedtools_executable, " intersect -a ", SPLASH_directory, "STAR_alignment/T2T_called_exons.bed -b ", repeats_annotation_file, " -wb -loj | cut -f 4,10 | sort -nrk1 | ",bedtools_executable, " groupby -g 1 -c 2 -o distinct  > ", SPLASH_directory,"STAR_alignment/T2T_repeat_annotation.txt",sep=""))
+repeat_annotation = fread(paste(SPLASH_directory, "STAR_alignment/T2T_repeat_annotation.txt", sep = ""), sep = "\t", header = FALSE)
+names(repeat_annotation) = c("extendor_index", "repeat_annotation")
+anchors = merge(anchors,repeat_annotation[!duplicated(extendor_index)],all.x=TRUE,all.y=FALSE,by.x="extendor_index",by.y="extendor_index")
+anchors[,repeat_annotation:=gsub(".,", "", repeat_annotation, fixed = TRUE), by = repeat_annotation]
+##############################################################################################################
+##############################################################################################################
+toc()
 
 tic("assigning classes")
 ##############################################################################################################################################################
@@ -462,6 +422,9 @@ anchors[ is_STAR_SJ_in_top_two>0 & (ham_dist!=lev_dist | ham_dist>5) & num_exten
 anchors[,vdj:=0]
 anchors[((extendor_gene%like%"IGH") |(extendor_gene%like%"IGK") | (extendor_gene%like%"IGV")) & !extendor_gene%like%"PIGK", vdj:=1 ]
 anchors[,vdj:=max(vdj),by=anchor]
+
+repeat_anchors = unique(anchors[anchor_event == ""  & repeat_annotation != "." & (extendor_order == 1 | extendor_order == 2)]$anchor_index)
+anchors[anchor_index %in% repeat_anchors, anchor_event := "Repeat"] 
 ################################################################################################################################################################
 toc()
 
