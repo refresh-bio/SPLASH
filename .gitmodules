@@ -11,3 +11,6 @@
 	path = libs/bkc
 	url = https://github.com/refresh-bio/bkc-dev
 
+[submodule "libs/zlib-ng"]
+	path = libs/zlib-ng
+	url = https://github.com/refresh-bio-dependencies/zlib-ng.git
