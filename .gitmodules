@@ -16,3 +16,6 @@
 [submodule "libs/bkc"]
 	path = libs/bkc
 	url = https://github.com/refresh-bio/bkc-dev
+[submodule "build_tools/nasm"]
+	path = build_tools/nasm
+	url = https://github.com/netwide-assembler/nasm.git
