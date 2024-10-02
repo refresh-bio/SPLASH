@@ -1,0 +1,5 @@
+{
+	"name": "blast",
+	"test_run": "blastn -help",	
+	"command": "blastn -outfmt \"6 qseqid stitle sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore sgi sacc slen staxids stitle\" -query {all_extendors_fasta} -remote -db nt -out blast_output.txt -evalue 0.01 -task blastn -dust no -word_size 24 -reward 1 -penalty -3 -max_target_seqs 5"
+}

@@ -6,12 +6,12 @@
 #include "../common/version.h"
 #include "../common/kmc_api/kmer_api.h"
 #include "../common/kmc_api/kmc_file.h"
-#include "../common/murmur64.h"
-#include "../common/satc_data.h"
-#include "../common/poly_ACGT_filter.h"
-#include "../common/artifacts_filter.h"
+#include <refresh/hash_tables/lib/murmur_hash.h>
+#include "../common/types/satc_data.h"
+#include "../common/filters/poly_ACGT_filter.h"
+#include "../common/filters/artifacts_filter.h"
 #include "../common/hamming_filter.h"
-#include "../common/illumina_adapters_static.h"
+#include "../common/filters/illumina_adapters_static.h"
 #include "../common/target_count.h"
 
 struct SampleDesc
@@ -229,7 +229,7 @@ void sort_merge_and_store(uint64_t anchor,
 	}
 
 	uint64_t n_bins = bins.size();
-	uint64_t bin_id = MurMur64Hash{}(anchor) % n_bins;
+	uint64_t bin_id = refresh::MurMur64Hash{}(anchor) % n_bins;
 	auto& bin = bins[bin_id];
 
 	std::sort(targets_in_current_anchor.begin(), targets_in_current_anchor.end(), [](const auto& e1, const auto& e2) {return e1.target < e2.target; }); //mkokot_TODO: use parallel sort? raduls?
@@ -389,6 +389,8 @@ int main(int argc, char** argv)
 	header.target_len_symbols = params.target_len;
 	header.anchor_size_bytes = (header.anchor_len_symbols + 3) / 4;
 	header.target_size_bytes = (header.target_len_symbols + 3) / 4;
+
+	header.ordering = Header::ordering_t::SBATC;
 
 	header.gap_len_symbols = verify_kmc_dbs_and_get_gap_len(params.input_sample, params.anchor_len, params.target_len);
 

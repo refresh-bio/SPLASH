@@ -3,7 +3,7 @@
 
 #include <string>
 #include <sstream>
-#include "../common/satc_data.h"
+#include "../common/types/satc_data.h"
 
 class Non10XSupervised {	
 	std::vector<std::vector<double>> Cjs;//first index is Cj_variant, second is sample_id

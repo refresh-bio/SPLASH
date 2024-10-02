@@ -6,6 +6,7 @@ src/common/kmc_api/*.o
 src/satc_merge/*.o
 src/satc_dump/*.o
 src/compactors/*.o
+src/read_selector/*.o
 src/dsv_manip/*.o
 *.fastq
 *.fastq.gz

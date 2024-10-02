@@ -62,17 +62,24 @@ if __name__ == "__main__":
     system = get_os()
     hardware = get_hardware()
 
-    run_cmd("git submodule init")
-    run_cmd("git submodule update")
+    run_cmd("git submodule update --init --recursive")
     run_cmd("make clean")
-    run_cmd("make release -j")
+    run_cmd("make -j32 release")
 
     run_cmd("mkdir -p bin/example")
 
     run_cmd("cp example/download.py bin/example/download.py")
+    run_cmd("cp example/download_10X.py bin/example/download_10X.py")
+    run_cmd("cp example/test_data_cell_barcode_samplesheet.csv bin/example/test_data_cell_barcode_samplesheet.csv")
+    run_cmd("cp example/test_non_10X_Cj_samplesheet.csv bin/example/test_non_10X_Cj_samplesheet.csv")
 
     run_cmd("cp example/input.txt bin/example")
 
+    run_cmd("cp example/input-10X.txt bin/example")
+    run_cmd("cp example/S10.txt bin/example")
+    run_cmd("cp example/S11.txt bin/example")
+    run_cmd("cp example/S12.txt bin/example")
+    run_cmd("cp example/S13.txt bin/example")
 
     with open("bin/example/run-example.sh", "w") as f:
         f.write("#!/bin/bash\n")

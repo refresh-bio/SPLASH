@@ -202,7 +202,7 @@ public:
 	uint64 KmerCount(void);
 
 	// Return the length of kmers
-	uint32 KmerLength(void);
+	uint32 KmerLength(void) const;
 
 	// Set initial values to enable listing kmers from the begining. Only in listing mode
 	bool RestartListing(void);

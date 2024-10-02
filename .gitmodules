@@ -1,6 +1,24 @@
-[submodule "libs/cloudflare-zlib"]
-	path = libs/cloudflare-zlib
-	url = https://github.com/refresh-bio/dependencies-zlib/
+[submodule "libs/mimalloc"]
+	path = libs/mimalloc
+	url = https://github.com/microsoft/mimalloc
 [submodule "libs/zstd"]
 	path = libs/zstd
-	url = https://github.com/refresh-bio/dependencies-zstd/
+	url = https://github.com/refresh-bio/dependencies-zstd
+[submodule "libs/SBWT"]
+	path = libs/SBWT
+	url = https://github.com/refresh-bio-dependencies/SBWT
+[submodule "libs/zlib-ng"]
+	path = libs/zlib-ng
+	url = https://github.com/refresh-bio-dependencies/zlib-ng.git
+[submodule "libs/isa-l"]
+	path = libs/isa-l
+	url = https://github.com/refresh-bio-dependencies/isa-l.git
+[submodule "build_tools/nasm"]
+	path = build_tools/nasm
+	url = https://github.com/netwide-assembler/nasm.git
+[submodule "libs/libdeflate"]
+	path = libs/libdeflate
+	url = https://github.com/refresh-bio-dependencies/libdeflate
+[submodule "libs/bkc"]
+	path = libs/bkc
+	url = https://github.com/refresh-bio/bkc

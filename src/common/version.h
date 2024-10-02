@@ -1,7 +1,7 @@
 #pragma once
 
-#define SPLASH_VER "2.3.0"
+#define SPLASH_VER "2.11.0"
 
 inline void SPLASH_VER_PRINT(std::ostream& oss) {
-	oss << "Version: " << SPLASH_VER << "\n";
+	oss << "splash version: " << SPLASH_VER << "\n";
 }

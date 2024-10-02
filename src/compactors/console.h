@@ -3,7 +3,7 @@
 #include <vector>
 #include <sstream>
 #include <algorithm>
-#include "../common/common_types.h"
+#include "../common/types/common_types.h"
 #include "engine.h"
 
 class Console {
@@ -26,6 +26,8 @@ class Console {
 	const std::string SWITCH_NO_EXTENSION{ "--no_extension" };
 	const std::string PARAM_MAX_LENGTH{ "--max_length" };
 	const std::string PARAM_MIN_EXTENDER_SPECIFICITY{ "--min_extender_specificity" };
+	const std::string PARAM_NUM_EXTENDERS{ "--num_extenders" };
+	const std::string PARAM_EXTENDERS_SHIFT{ "--extenders_shift"};
 	
 	const std::string PARAM_MAX_ANCHOR_COMPACTORS{ "--max_anchor_compactors" };
 	const std::string PARAM_MAX_CHILD_COMPACTORS{ "--max_child_compactors" };
@@ -37,6 +39,9 @@ class Console {
 	const std::string PARAM_READS_BUFFER{ "--reads_buffer_gb" };
 	const std::string PARAM_ANCHORS_BATCH{ "--anchors_batch" };
 	const std::string SWITCH_KEEP_TEMP{ "--keep_temp" };
+	const std::string SWITCH_NO_SUBCOMPACTORS{ "--no_subcompactors"};
+	const std::string SWITCH_CUMULATED_STATS{ "--cumulated_stats" };
+	const std::string SWITCH_INDEPENDENT_OUTPUTS{ "--independent_outputs" };
 
 	const std::string PARAM_LOG{ "--log" };
 
@@ -54,7 +59,10 @@ public:
 	input_format_t inputFormat = input_format_t::fastq;
 	std::string outputFasta;
 	std::string outputTsv;
-	bool keepTemp;
+	bool keepTemp{ false };
+	bool noSubcompactors{ false };
+	bool cumulatedStats{ false };
+	bool independentOutputs{ false };
 
 	std::string logFile;
 
