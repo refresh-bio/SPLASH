@@ -4,3 +4,6 @@
 [submodule "libs/zstd"]
 	path = libs/zstd
 	url = https://github.com/refresh-bio/dependencies-zstd/
+[submodule "libs/bkc"]
+	path = libs/bkc
+	url = https://github.com/refresh-bio/bkc-dev

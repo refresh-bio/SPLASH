@@ -1,13 +1,16 @@
 #ifndef _PVALS_H
 #define _PVALS_H
+#include <cstdio>
 #include <unordered_set>
-#include "../common/satc_data.h"
+#include "../common/types/satc_data.h"
 #include "../common/cbc_to_cell_type.h"
+#include "matrix.h"
 #include "non_10X_supervised.h"
 #include "matrix.h"
 #include "anchor.h"
 
-
+#include <refresh/compression/lib/gz_wrapper.h>
+#include <refresh/conversions/lib/conversions.h>
 
 struct KmerAndCounter {
 	uint64_t kmer;
@@ -18,6 +21,7 @@ struct AnchorStats {
 	double pval_base;
 	double pval_base_old;
 	double pval_opt;
+	double pval_sample_spectral_sum;
 	double effect_size_cts;
 	double effect_size_bin;
 	double effect_size_bin_old;
@@ -44,7 +48,7 @@ struct AnchorStats {
 
 	std::vector<uint32_t> cell_types_ids;  //unique ids of cell types for a given Xtrain contignency table
 
-	AnchorStats(double pval_base, double pval_base_old, double pval_opt,
+	AnchorStats(double pval_base, double pval_base_old, double pval_opt, double pval_sample_spectral_sum,
 		double effect_size_cts, double effect_size_bin, double effect_size_bin_old, double pval_asymp_opt, double entropy,
 		double avg_no_homopolymer_targets,
 		double avg_hamming_distance_max_target, double avg_hamming_distance_all_pairs,
@@ -53,6 +57,7 @@ struct AnchorStats {
 		pval_base(pval_base),
 		pval_base_old(pval_base_old),
 		pval_opt(pval_opt),
+		pval_sample_spectral_sum(pval_sample_spectral_sum),
 		effect_size_cts(effect_size_cts),
 		effect_size_bin(effect_size_bin),
 		effect_size_bin_old(effect_size_bin_old),
@@ -69,6 +74,7 @@ struct AnchorStats {
 		pval_base(1),
 		pval_base_old(1),
 		pval_opt(1),
+		pval_sample_spectral_sum(1),
 		effect_size_cts(0),
 		effect_size_bin(0),
 		effect_size_bin_old(0),
@@ -86,6 +92,7 @@ struct AnchorStats {
 		pval_base = 1;
 		pval_base_old = 1;
 		pval_opt = 1;
+		pval_sample_spectral_sum = 1;
 		
 		clear_extra();
 	}
@@ -271,10 +278,38 @@ class CjWriter {
 	uint32_t barcode_len;
 	bool enabled = false;
 	SampleNameDecoder sample_name_decoder;
-	std::ofstream out;
+
+	FILE* out = nullptr;
+
+	const size_t buffer_size = 16 << 20;
+	const size_t max_line_len = 128;
+
+	char* buffer;
+	char* compressed_buffer;
+	size_t compressed_buffer_size;
+	size_t in_buf_pos;
+
+	refresh::gz_in_memory giz{ 6, false };
+
+	void store_buffer()
+	{
+		size_t compressed_size = giz.compress(buffer, in_buf_pos, compressed_buffer, compressed_buffer_size);
+
+		fwrite(compressed_buffer, 1, compressed_size, out);
+
+		in_buf_pos = 0;
+	}
+
+	void add_to_buffer(const char* p)
+	{
+		strcpy(buffer + in_buf_pos, p);
+		in_buf_pos += strlen(p);
+	}
+
 public:
 	CjWriter(
 		const std::string& path,
+		bool without_header,
 		bool _10X_or_visium,
 		uint32_t anchor_len,
 		uint32_t barcode_len,
@@ -287,17 +322,44 @@ public:
 		if (path == "")
 			return;
 
-		out.open(path);
+		out = fopen(path.c_str(), "wb");
+
 		if (!out) {
 			std::cerr << "Error: cannot open file " << path << "\n";
 			exit(1);
 		}
+
+		setvbuf(out, nullptr, _IOFBF, 16 << 20);
+
 		enabled = true;
-		out << "anchor\t";
-		out << "sample\t";
-		if (_10X_or_visium)
-			out << "barcode\t";
-		out << "Cj\n";
+
+		buffer = new char[buffer_size];
+		compressed_buffer_size = buffer_size + giz.get_overhead(buffer_size);
+		compressed_buffer = new char[compressed_buffer_size];
+		in_buf_pos = 0;
+
+		if (!without_header)
+		{
+			add_to_buffer("anchor\t");
+			add_to_buffer("sample\t");
+			if (_10X_or_visium)
+				add_to_buffer("barcode\t");
+			add_to_buffer("Cj\n");
+		}
+	}
+
+	~CjWriter()
+	{
+		if (!out)
+			return;
+
+		if (in_buf_pos)
+			store_buffer();
+
+		fclose(out);
+
+		delete[] buffer;
+		delete[] compressed_buffer;
 	}
 
 	operator bool() const {
@@ -305,13 +367,18 @@ public:
 	}
 
 	void write(uint64_t anchor, uint64_t sample_id, uint64_t barcode, double Cj) {
-		out << kmer_to_string(anchor, anchor_len) << "\t";
-		//out << sample_id << "\t";
-		sample_name_decoder.store_sample_id(out, sample_id);
-		out << "\t";
+		if (in_buf_pos + max_line_len >= buffer_size)
+			store_buffer();
+
+		in_buf_pos += refresh::kmer_to_pchar(anchor, buffer + in_buf_pos, anchor_len, false, '\t');
+
+		in_buf_pos += sample_name_decoder.store_sample_id(buffer + in_buf_pos, sample_id);
+		buffer[in_buf_pos++] = '\t';
+
 		if (_10X_or_visium)
-			out << kmer_to_string(barcode, barcode_len) << "\t";
-		out << Cj << "\n";
+			in_buf_pos += refresh::kmer_to_pchar(barcode, buffer + in_buf_pos, barcode_len, false, '\t');
+
+		in_buf_pos += refresh::real_to_pchar(Cj, buffer + in_buf_pos, 8, '\n');
 	}
 };
 
@@ -324,6 +391,7 @@ void compute_stats(
 	const std::unordered_set<uint64_t>& unique_samples,
 	AnchorStats &anchor_stats,
 	bool without_alt_max,
+	bool without_sample_spectral_sum,
 	bool with_effect_size_cts,
 	bool with_pval_asymp_opt,
 	bool compute_also_old_base_pvals,
@@ -339,5 +407,7 @@ void compute_stats(
 	Non10XSupervised* non_10X_supervised);
 
 void dump_fXc(const refresh::matrix_1d<double>& f, const refresh::matrix_sparse_compact<uint32_t, double, refresh::matrix_col_major>& X, const refresh::matrix_1d<double>& c);
+std::pair<double, double> sample_spectral_sum(const refresh::matrix_sparse_compact<uint32_t, double, refresh::matrix_col_major>& table);
+
 
 #endif

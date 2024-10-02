@@ -8,5 +8,4 @@
 !Makefile
 !download_kmc.py
 !hash.git
-
-
+!.git/

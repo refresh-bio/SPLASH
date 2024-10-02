@@ -4,43 +4,95 @@
 
 #include "../../libs/cdflib/cdflib.hpp"
 
+/*
 template <typename T, int MaxN>
 class NChooseK {
-	T tab[MaxN + 1][MaxN + 1]{ 0 };
+	const int SIZE = (MaxN + 1);
+	T* tab;
 
 public:
 	NChooseK() {
-		tab[0][0] = 1;
+		tab = new T[SIZE * SIZE];
+		std::fill(tab, tab + SIZE * SIZE, 0);
+
+		tab[0] = 1;
 		for (int n = 1; n <= MaxN; ++n) {
-			tab[n][0] = 1;
+			tab[n * SIZE + 0] = 1;
 			for (int k = 1; k <= n; ++k) {
-				tab[n][k] = tab[n - 1][k - 1] + tab[n - 1][k];
+				tab[n * SIZE + k] = tab[(n - 1) * SIZE + k - 1] + tab[(n - 1) * SIZE + k];
 			}
 		}
 	}
 
 	T operator()(int n, int k) const {
-		return tab[n][k];
+		return tab[n * SIZE + k];
+	}
+
+	~NChooseK() {
+		delete[] tab;
+	}
+};
+*/
+
+template <int MaxN>
+class NChooseK_log {
+	double ret[32 * 32];
+	double* prefix_logs;
+
+	double calc(int n, int k) const
+	{
+		double nominator = prefix_logs[n] - prefix_logs[n - k];
+		double denominator = prefix_logs[k];
+		return std::exp(nominator - denominator);
+	}
+
+public:
+	NChooseK_log() : prefix_logs(new double [MaxN + 1]) {
+
+		prefix_logs[0] = prefix_logs[1] = 0;
+		double current = 0;
+		for (int n = 2; n <= MaxN; ++n) {
+			current += std::log((double)n);
+			prefix_logs[n] = current;
+		}
+
+		for (int n = 0; n < 32; ++n)
+			for (int k = 0; k <= n; ++k)
+				ret[n * 32 + k] = calc(n, k);
+	}
+
+	~NChooseK_log() { delete[] prefix_logs; }
+
+	double operator()(int n, int k) const {
+		if (n < 32)
+			return ret[n * 32 + k];
+
+		return calc(n, k);
 	}
 };
 
 
 template <int MaxN>
 class Binomial {
-	NChooseK<uint64_t, MaxN> n_choose_k;
-	double tab[MaxN + 1][MaxN + 1]{ 0 };
+	NChooseK_log<MaxN> n_choose_k;
+	double* pows;
+	double* inv_pows;
 	double p;
 
 public:
-	Binomial(double p_success) : p(p_success) {
-		for (int n = 0; n <= MaxN; ++n) {
-			for (int k = 0; k <= n; ++k) {
-				tab[n][k] = (double)n_choose_k(n, k) * std::pow(p, k) * std::pow(1.0 - p, n - k);
-			}
+	Binomial(double p_success) : p(p_success), pows(new double[MaxN + 1]), inv_pows(new double[MaxN + 1]) {
+		for (int i = 0; i <= MaxN; ++i) {
+			pows[i] = std::pow(p, i);
+			inv_pows[i] = std::pow(1.0 - p, i);
 		}
 	}
 
-	double pdf(int n, int k) const { return tab[n][k]; }
+	~Binomial() {
+		delete [] pows;
+		delete [] inv_pows;
+	}
+
+	double pdf(int n, int k) const { return n_choose_k(n, k) * pows[k] * inv_pows[n - k]; }
 
 };
 

@@ -17,8 +17,9 @@ ReadLoader::ReadLoader(
 	int numThreads,
 	int readsBufferGb,
 	size_t anchorsBatchSize,
-	bool keepTemp)
-	: polyFilter(homopolymerThreshold), anchorFile(anchorFile), anchorsBatchSize(anchorsBatchSize) {
+	bool keepTemp,
+	string tempPath)
+	: polyFilter(homopolymerThreshold), anchorFile(anchorFile), anchorsBatchSize(anchorsBatchSize), tempPath(tempPath) {
 
 	std::vector<string> outFastqFiles;
 
@@ -40,7 +41,7 @@ ReadLoader::ReadLoader(
 	selector.set_no_threads(numThreads);					
 	selector.set_keep_temps(keepTemp);
 	
-	fs::path tmp_dir(TEMP_PATH);
+	fs::path tmp_dir(tempPath);
 	bool ok = false;
 	if (!fs::exists(tmp_dir)) {
 		ok = fs::create_directory(tmp_dir);
@@ -50,7 +51,7 @@ ReadLoader::ReadLoader(
 	}
 	
 	if (!ok) {
-		throw runtime_error("Unable to create/open temporary directory: " + TEMP_PATH);
+		throw runtime_error("Unable to create/open temporary directory: " + tempPath);
 	}
 
 	selector.set_output_dir(tmp_dir.string());
@@ -58,7 +59,7 @@ ReadLoader::ReadLoader(
 
 ReadLoader::~ReadLoader() {
 	if (!selector.get_keep_temps()) {
-		fs::remove_all(fs::path(TEMP_PATH));
+		fs::remove_all(fs::path(tempPath));
 	}
 }
 
@@ -264,7 +265,7 @@ size_t ReadLoader::translate(
 	size_t n_passed = 0;
 	size_t n_total = 0;
 
-	for (const auto& entry : in) {
+	for (auto& entry : in) {
 
 		std::vector<kmer_t>& out_v = out[entry.first];
 
@@ -289,6 +290,9 @@ size_t ReadLoader::translate(
 
 		}
 
+		// force memory free
+		std::vector<std::vector<kmer_t>>().swap(entry.second);
+
 		if (out_v.size() == 0) {
 			out.erase(entry.first);
 		}
@@ -304,8 +308,8 @@ size_t ReadLoader::translate(
 
 
 
-Output::Output(const std::string& table, const std::string& fasta)
-	: tableFile(table, std::ios_base::out), fastaFile(fasta, std::ios_base::out), writerQueue(1024, 1) {
+Output::Output(const std::string& table, const std::string& fasta, bool noSubcompactors, bool cumulatedStats)
+	: tableFile(table, std::ios_base::out), fastaFile(fasta, std::ios_base::out), writerQueue(1024, 1), noSubcompactors(noSubcompactors), cumulatedStats(cumulatedStats) {
 	if (!tableFile) {
 		throw std::runtime_error("Unable to open output file: " + table);
 	}
@@ -313,31 +317,61 @@ Output::Output(const std::string& table, const std::string& fasta)
 	tableBuffer.resize(16 << 20);
 	fastaBuffer.resize(16 << 20);
 
-	std::string header{ "anchor\tcompactor\tsupport\texact_support\textender_specificity\tnum_extended\n" };
+	std::string header{ 
+		"anchor\t"
+		"compactor\t"
+		"id\t"
+		"parent_id\t"
+		"support\t"
+		"exact_support\t"
+		"extender_specificity\t"
+		"extender_shift\t"
+		"total_length\t"
+		"num_extended\t"
+		"expected_read_count"
+	};
+
+	if (cumulatedStats) {
+		header += "\t"
+			"cumulated_id\t"
+			"cumulated_exact_support\t"
+			"cumulated_extender_specificity";
+	}
+
+	header += "\n";
+
+	
 	tableFile.write(header.c_str(), header.length());
 
 	worker = std::thread([this]() {
 		task_t task;
 		while (this->writerQueue.pop(task)) {
-			this->internal_save(task.first, task.last);
+			this->internal_save(task.begin, task.end);
 		}
 	});
 
 }
 
-void Output::internal_save(std::deque<Compactor>::iterator first, std::deque<Compactor>::iterator last) {
+void Output::internal_save(std::deque<Compactor>::iterator begin, std::deque<Compactor>::iterator end) {
 
 	
 	char* p_table = tableBuffer.data();
 	char* p_fasta = fastaBuffer.data();
 
-	int n_compactors = 0;
+	for (auto it = begin; it != end; ++it) {
+		Compactor& c = *it;
 
-	for (auto it = first; it != last; ++it) {
-		const Compactor& c = *it;
+		// omit subcompactors if disabled
+		if (noSubcompactors && c.num_children > 0) {
+			continue;
+		}
+
 		if (c.total_support >= 0) { // omit anchors which have total support set to -1
 
-			size_t bytes_needed = (c.num_kmers_total + 1) * c.k  + 1024; // +1 due to anchor column
+			// set identifier
+			c.id = numCompactors++;
+			
+			size_t bytes_needed = (c.num_kmers_total + 1) * c.k  + (1 << 16); // +1 due to anchor column
 
 			// no more space in buffer - write to file
 			if (p_table + bytes_needed >= tableBuffer.data() + tableBuffer.size()) {
@@ -353,7 +387,7 @@ void Output::internal_save(std::deque<Compactor>::iterator first, std::deque<Com
 
 			// extract compactor sequence 
 			char* seq_begin = p_table;
-			p_table = c.to_string(p_table);
+			p_table = c.to_string(p_table, false);
 			char* seq_end = p_table;
 
 			// copy anchor
@@ -361,7 +395,32 @@ void Output::internal_save(std::deque<Compactor>::iterator first, std::deque<Com
 
 			// fill rest of columns
 			int n_extensions = ((c.num_kmers_total - 1) / c.num_kmers) - 1;
-			p_table += sprintf(p_table, "\t%d\t%d\t%f\t%d\n", c.total_support, c.exact_support, c.extender_specificity, n_extensions);
+			int total_len = seq_end - seq_begin;
+			p_table += sprintf(p_table, "\t%d\t%d\t%d\t%d\t%f\t%d\t%d\t%d\t%f",
+				c.id,
+				c.get_parent_id(),
+				c.total_support,
+				c.exact_support,
+				c.extender_specificity,
+				c.extender_shift,
+				total_len,
+				n_extensions,
+				c.calculate_expected_read_count());
+
+			if (cumulatedStats) {
+				*p_table = '\t';
+				++p_table;
+				p_table += c.print_cumulated_id(p_table);
+				*p_table = '\t';
+				++p_table;
+				p_table += c.print_cumulated_exact_support(p_table);
+				*p_table = '\t';
+				++p_table;
+				p_table += c.print_cumulated_extender_specificity(p_table);
+			}
+
+			*p_table = '\n';
+			++p_table;
 
 
 			if (fastaFile) {
@@ -371,13 +430,11 @@ void Output::internal_save(std::deque<Compactor>::iterator first, std::deque<Com
 					p_fasta = fastaBuffer.data();
 				}
 
-				p_fasta += sprintf(p_fasta, ">compactor-%d\n", n_compactors);
+				p_fasta += sprintf(p_fasta, ">compactor-%d\n", c.id);
 				p_fasta = copy(seq_begin, seq_end, p_fasta);
 				*p_fasta = '\n';
 				++p_fasta;
 			}
-
-			++n_compactors;
 		}
 	}
 

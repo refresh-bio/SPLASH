@@ -6,7 +6,7 @@
 #include <fstream>
 #include <unordered_map>
 #include <sstream>
-#include "../common/satc_data.h"
+#include "../common/types/satc_data.h"
 
 class CBCToCellType {
 	std::unordered_map<std::string, uint32_t> cell_name_to_cell_id;

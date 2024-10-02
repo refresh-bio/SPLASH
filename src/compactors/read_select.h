@@ -8,9 +8,9 @@
 #include <functional>
 #include <utility>
 
-#include "zlib.h"
-#include "../../libs/refresh/hash_map.h"
-#include "../common/common_types.h"
+#include <zlib-ng/zlib.h>
+#include <refresh/hash_tables/lib/hash_map.h>
+#include "../common/types/common_types.h"
 
 using namespace std;
 

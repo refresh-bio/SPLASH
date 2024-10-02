@@ -4,6 +4,7 @@
 #include <string>
 #include <iostream>
 #include <numeric>
+#include <cassert>
 
 namespace refresh {
 
@@ -219,6 +220,25 @@ public:
 	{
 		for (size_t i = 0; i < n_elems; ++i)
 			ptr[i] = ptr[i] * ptr[i];
+
+		return *this;
+	}
+
+	matrix_1d<T>& pow3()
+	{
+		for (size_t i = 0; i < n_elems; ++i)
+			ptr[i] = ptr[i] * ptr[i] * ptr[i];
+
+		return *this;
+	}
+
+	matrix_1d<T>& pow4()
+	{
+		for (size_t i = 0; i < n_elems; ++i)
+		{
+			ptr[i] *= ptr[i];
+			ptr[i] *= ptr[i];
+		}
 
 		return *this;
 	}
@@ -507,6 +527,22 @@ matrix_1d<T> pow2(const matrix_1d<T>& x)
 }
 
 template<typename T>
+matrix_1d<T> pow3(const matrix_1d<T>& x)
+{
+	auto res(x);
+	res.pow3();
+	return res;
+}
+
+template<typename T>
+matrix_1d<T> pow4(const matrix_1d<T>& x)
+{
+	auto res(x);
+	res.pow4();
+	return res;
+}
+
+template<typename T>
 matrix_1d<T> abs(const matrix_1d<T>& x)
 {
 	auto res(x);
@@ -608,5 +644,55 @@ T dot_product(const matrix_1d<T>& a, const matrix_1d<T>& b)
 	return res;
 #endif
 }
+
+template<typename T>
+T dot_product_squared(const matrix_1d<T>& a, const matrix_1d<T>& b)
+{
+	assert(a.size() == b.size());
+
+	T res = (T)0;
+
+	size_t i = 0;
+
+	switch (a.size() % 4)
+	{
+	case 3:
+		res += a(i) * a(i) * b(i) * b(i);
+		++i;
+	case 2:
+		res += a(i) * a(i) * b(i) * b(i);
+		++i;
+	case 1:
+		res += a(i) * a(i) * b(i) * b(i);
+		++i;
+	}
+
+	for (; i < a.size(); i += 4)
+	{
+		res += a(i) * a(i) * b(i) * b(i);
+		res += a(i + 1) * a(i+1) * b(i+1) * b(i+1);
+		res += a(i+2) * a(i+2) * b(i+2) * b(i+2);
+		res += a(i+3) * a(i+3) * b(i+3) * b(i+3);
+	}
+
+	return res;
+}
+
+template<typename T>
+matrix_1d<T> product(const matrix_1d<T>& a, const matrix_1d<T>& b)
+{
+	assert(a.size() == b.size());
+
+	matrix_1d<T> res(a);
+
+	auto res_ptr = res.data();
+	auto b_ptr = b.data();
+
+	for (size_t i = 0; i < a.size(); ++i)
+		*res_ptr++ *= *b_ptr++;
+
+	return res;
+}
+
 
 } // namespace refresh

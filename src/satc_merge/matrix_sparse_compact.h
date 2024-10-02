@@ -77,7 +77,7 @@ public:
 	matrix_sparse_compact(size_t n_rows, size_t n_cols) : n_rows(n_rows), n_cols(n_cols)
 	{}
 
-	matrix_sparse_compact(const matrix_sparse<I, T, ORDER>& x)
+	matrix_sparse_compact(const matrix_sparse_compact<I, T, ORDER>& x)
 	{
 		data = x.data;
 		n_rows = x.n_rows;
@@ -449,6 +449,16 @@ public:
 		return *this;
 	}
 
+	matrix_sparse_compact<I, T, ORDER>& div_col(matrix_1d<T>& divisor)
+	{
+		assert(n_cols == divisor.size());
+
+		for (auto& x : data)
+			x.second /= divisor(x.first.col);
+
+		return *this;
+	}
+
 	template<typename X>
 	matrix_sparse_compact<I, T, ORDER> compact(std::vector<X>& preserve_rows, std::vector<X>& preserve_cols) const
 	{
@@ -550,6 +560,16 @@ matrix_1d<T> operator*(const matrix_1d<T>& x, const matrix_sparse_compact<I, T, 
 
 	return res;
 }
+
+template<typename I, typename T, unsigned ORDER>
+matrix_sparse_compact<I, T, ORDER> div_col(const matrix_sparse_compact<I, T, ORDER>& x, matrix_1d<T>& divisor)
+{
+	matrix_sparse_compact<I, T, ORDER> res(x);
+	res.div_col(divisor);
+
+	return res;
+}
+
 
 template<typename I, typename T, unsigned ORDER>
 matrix_1d<T> operator*(const matrix_sparse_compact<I, T, ORDER>& x, const matrix_1d<T>& y)

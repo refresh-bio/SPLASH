@@ -4,7 +4,7 @@
 #include <thread>
 #include <atomic>
 #include <filesystem>
-#include "../../src/common/kmer.h"
+#include "../../src/common/types/kmer.h"
 
 #include <cstring>
 

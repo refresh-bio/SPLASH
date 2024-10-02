@@ -47,8 +47,8 @@ def run_cmd(cmd):
 system = get_os()
 hardware = get_hardware()
 
-tar_name=f"KMC3.2.2.{system}.{hardware}.tar.gz"
-URL=f"https://github.com/refresh-bio/KMC/releases/download/v3.2.2/{tar_name}"
+tar_name=f"KMC3.2.4.{system}.{hardware}.tar.gz"
+URL=f"https://github.com/refresh-bio/KMC/releases/download/v3.2.4/{tar_name}"
 
 run_cmd(f"wget {URL}")
 run_cmd(f"tar -xvf {tar_name}")

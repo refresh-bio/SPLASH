@@ -6,7 +6,7 @@
 #include <fstream>
 #include <array>
 
-#include "../../libs/refresh/deterministic_random.h"
+#include <refresh/deterministic_random/lib/deterministic_random.h>
 #include "pvals.h"
 #include "get_train_mtx.h"
 #include "helmert_decomposition.h"
@@ -469,6 +469,80 @@ void generate_f_from_c(const refresh::matrix_sparse_compact<uint32_t, double, re
 		fOpt(non_zero_rows[row]) = fMax(row);
 }
 
+std::pair<double, double> sample_spectral_sum(const refresh::matrix_sparse_compact<uint32_t, double, refresh::matrix_col_major>& table)
+{
+	auto ns = table.get_col_sums();
+	auto num_targets = table.rows();
+	auto num_samples = table.cols();
+
+	// Python:  matrix = table / table.sum(axis=0)
+	auto matrix = div_col(table, ns);
+
+	// Python:	center = matrix @ ns / ns.sum()
+	auto center = table.get_row_sums() / ns.sum();
+
+	// Python:     matrix = matrix - center[:, None]@np.ones([1, num_samples])
+	// Python:     test_statistic = (matrix**2).sum() / num_samples
+	double test_statistic = 0.0;
+	for (auto i = 0; i < num_targets; ++i)
+		test_statistic += num_samples * center(i) * center(i);
+
+	for (const auto& x : matrix)
+	{
+		test_statistic -= center(x.first.row) * center(x.first.row);
+		test_statistic += (x.second - center(x.first.row)) * (x.second - center(x.first.row));
+	}
+
+	test_statistic /= num_samples;
+
+	double center_sum = center.sum();
+	double center_sum2 = center_sum * center_sum;
+	double center_dp = dot_product(center, center);
+	double center_dp1 = dot_product(center, 1 - center);
+
+	auto ns_rev = 1 / ns;
+	// Python:     mu = (1/ns).sum() * (center*(1-center)).sum() / num_samples
+	double mu = ns_rev.sum() * center_dp1 / num_samples;
+
+	auto ns_rev_pow3 = pow3(ns_rev);
+
+	// Python:     sigma_A1 = (((center*(1-center))[:,None]@(1/ns[None,:]**3)) * (1 + (center*(1-center))[:,None]@(3*ns[None,:]-6))).sum()
+	double sigma_A1 = center_dp1 * ns_rev_pow3.sum() + dot_product_squared(center, 1 - center) * product(ns_rev_pow3, (ns * 3 - 6)).sum();
+	// Python:     sigma_A2 = sum([((center[:,None]@center[None,:]) / n**3) * (1 + (n-2) * (1 - center[:,None] - center[None,:] + 3*center[:,None]@center[None,:])) for n in ns]).sum()
+	double sigma_A2 = center_sum2 * ns_rev_pow3.sum() + (center_sum2 - 2 * center_dp * center_sum + 3 * center_dp * center_dp) * product(ns_rev_pow3, ns - 2).sum();
+
+	// Python:     sigma_A = sigma_A1 + sigma_A2
+	double sigma_A = sigma_A1 + sigma_A2;
+
+	double ns_rev_sum = ns_rev.sum();
+	// Python:     sigma_B = ((1 / (ns[:,None]@ns[None,:])).sum() - (1/ns**2).sum()) * ((center*(1-center)).sum())**2
+	double sigma_B = (ns_rev_sum * ns_rev_sum - pow2(ns_rev).sum()) * center_dp1 * center_dp1;
+
+	// Python:     sigma = (sigma_A + sigma_B) / num_samples**2 - mu**2
+	double sigma = (sigma_A + sigma_B) / (num_samples * num_samples) - mu * mu;
+
+	// Python:	    def kullback(x):
+	// Python:			return (1 + x) * np.log(1 + x) - x
+	auto kullback = [](double x) {return (1 + x) * log1p(x) - x; };
+
+	// Python:	    p_value_kl = np.min([np.exp( - sigma * kullback( test_statistic / sigma ) ), np.exp(-(test_statistic - mu)**2 / (2 * (sigma_A + sigma_B) / num_samples**2))])
+	double p_value_kl = std::min(exp(-sigma * kullback(test_statistic / sigma)), exp(-pow(test_statistic - mu, 2) / (2 * (sigma_A + sigma_B) / pow(num_samples, 2))));
+
+	double x = test_statistic - mu;
+	double p_value_cheb;
+
+	// Python:		if (x:=test_statistic-mu) > 0:
+	// Python:			p_value_cheb = sigma / x * *2
+	// Python:		else:
+	// Python:			p_value_cheb = 1
+	if (x > 0)
+		p_value_cheb = sigma / (x * x);
+	else
+		p_value_cheb = 1;
+
+	// Python:     return test_statistic, np.min([p_value_kl, p_value_cheb,1])
+	return std::make_pair(test_statistic, std::min<double>({ p_value_kl, p_value_cheb, 1.0 }));
+}
 
 void get_most_freq_targets(
 //	const refresh::matrix_sparse<uint32_t, double, refresh::matrix_col_major>& anch_contingency_table,
@@ -607,6 +681,7 @@ void compute_stats(
 	const std::unordered_set<uint64_t>& unique_samples,
 	AnchorStats& anchor_stats,
 	bool without_alt_max,
+	bool without_sample_spectral_sum,
 	bool with_effect_size_cts,
 	bool with_pval_asymp_opt,
 	bool compute_also_old_base_pvals,
@@ -703,6 +778,12 @@ void compute_stats(
 	}
 	else
 		anchor_stats.pval_base = calc_pval_base(sp_anch_contingency_table, num_rand_cf, eng); //mkokot_TODO: I am calculating this after splitting because the same generator is used and I want to keep new results as similar to the pre-memory optimization as possible, but in general this could be computed before get_train_mtx_2
+
+	//sample_spectral_sum
+	if (!without_sample_spectral_sum)
+	{
+		anchor_stats.pval_sample_spectral_sum = sample_spectral_sum(sp_anch_contingency_table).second;
+	}
 
 	sp_anch_contingency_table -= Xtrain;
 

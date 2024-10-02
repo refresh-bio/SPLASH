@@ -6,12 +6,12 @@
 #include "log.h"
 
 #include "chunked_vector.h"
-#include "../common/poly_ACGT_filter.h"
+#include "../common/filters/poly_ACGT_filter.h"
 #include "../common/edit_distance.h"
-#include "../common/artifacts_filter.h"
-#include "../common/illumina_adapters_static.h"
-#include "../common/common_types.h"
-#include "../../libs/refresh/parallel-queues.h"
+#include "../common/filters/artifacts_filter.h"
+#include "../common/filters/illumina_adapters_static.h"
+#include "../common/types/common_types.h"
+#include <refresh/parallel_queues/lib/parallel-queues.h>
 
 #include <thread>
 #include <vector>
@@ -19,6 +19,7 @@
 #include <unordered_set>
 #include <memory>
 #include <chrono>
+#include <atomic>
 
 
 class IKmerProvider {
@@ -54,7 +55,12 @@ public:
 
 class ICompactorWriter {
 public:
-	virtual void save(std::deque<Compactor>::iterator first, std::deque<Compactor>::iterator last, bool lastPortion) {}
+
+	virtual void save(
+		std::deque<Compactor>::iterator begin, 
+		std::deque<Compactor>::iterator current, 
+		std::deque<Compactor>::iterator end, 
+		bool lastPortion) {}
 
 	virtual ~ICompactorWriter() {}
 };
@@ -80,6 +86,9 @@ public:
 		bool useRecursion{ false };
 		int maxLen{ 2000 };
 		double minExtenderSpecificity{ 0.9 };
+		int numExtenders{ 1 };
+		int extendersShift{ 1 };
+
 		int maxAnchorCompactors{ 1000 };
 		int maxChildCompactors{ 20 };
 		bool extendAll{ false };
@@ -88,12 +97,11 @@ public:
 
 protected:
 
-	static const int MaxN{ 128 };
-	static const int MaxPoisson{ 1 << 20 };
+	static const int MAX_READ_LENGTH{ 1 << 20 };
 
-	const NChooseK<uint64_t, MaxN> n_choose_k;
-	const Binomial<MaxN> binomial;
-	const Poisson<MaxPoisson> poisson;
+	const NChooseK_log<MAX_READ_LENGTH> n_choose_k;
+	const Poisson<MAX_READ_LENGTH> poisson;
+	const Binomial<MAX_READ_LENGTH> binomial; 
 	const PolyACGTFilter polyFilter;
 	ArtifactsFilter artifactsFilter;
 
@@ -109,6 +117,8 @@ protected:
 
 	std::deque<Compactor> compactors;
 	chunked_vector<kmer_t> compactorKmers{ 1000000 };
+
+	
 
 public:
 

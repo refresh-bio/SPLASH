@@ -17,6 +17,8 @@ Authors: Sebastian Deorowicz, Adam Gudys, Maciej Dlugosz, Marek Kokot, Agnieszka
 #define LOG_NORMAL Log::getInstance(Log::LEVEL_NORMAL)
 
 
+
+
 class LockedStream {
 	std::ostream* out{ nullptr };
 	std::recursive_mutex* mtx{ nullptr };

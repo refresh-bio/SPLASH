@@ -3,8 +3,7 @@ import build_release
 import os
 
 if __name__ == "__main__":
-    build_release.run_cmd("git submodule init")
-    build_release.run_cmd("git submodule update")
+    build_release.run_cmd("git submodule update --init --recursive")
     # https://stackoverflow.com/questions/15715825/how-do-you-get-the-git-repositorys-name-in-some-git-repository
     repo = build_release.run_cmd_get_stdout("basename -s .git `git config --get remote.origin.url`").strip().lower()
     with open("hash.git", "w") as f:

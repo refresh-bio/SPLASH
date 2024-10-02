@@ -76,8 +76,6 @@ bool Engine::operator()() {
 		t = std::chrono::high_resolution_clock::now();
 
 		size_t non_extended = compactors.size();
-		unordered_set<kmer_t> query;
-		
 		for (int iter = 1; i_start != compactors.size(); ++iter) {
 			
 			// verify max compactor length
@@ -85,70 +83,97 @@ bool Engine::operator()() {
 				break;
 			}
 
-			LOG_NORMAL << "  Iteration " << iter << ": " << compactors.size() - i_start << " compactors, ";
+			unordered_set<kmer_t> forwardQuery;
+
+			int n_to_extend = (int)compactors.size() - i_start;
+			LOG_NORMAL << "  Iteration " << iter << ": " << n_to_extend << " compactors" << endl;
 			auto t = std::chrono::high_resolution_clock::now();
-			// iterate over compactors added to extract pontential extenders
-			for (int i = i_start; i < compactors.size(); ++i) {
-				Compactor& c = compactors[i];
-				kmer_t extender = c.get_extender(extenderLen);
-				
-				query.insert(extender);
+			// check all offsets
+			for (int j = 0; j < params.numExtenders; ++j) {
+				int shift = j * params.extendersShift;
 
-				//cout << std::hex << extender << endl;
-			}
+				unordered_set<kmer_t> query;
 
-			// make a query to kmer provider
-			anchors2kmers.clear();
-			
-			if (!kmerProvider->extractPredecessorWithGap(query, extenderLen, numKmers * params.kmerLen - extenderLen, extenderLen, anchors2kmers)) {
-				// if kmer provider is unable to extract kmers for given query
-				break;
-			}
-				
-			// iterate over compactors again to establish extendors specificity
-			int n_extendables = 0;
-			query.clear();
-			for (int i = i_start; i < compactors.size(); ++i) {
-				Compactor& c = compactors[i];
-				kmer_t extender = c.get_extender(extenderLen);
-				kmer_t anchor = c.parent->get_extender(extenderLen);
+				LOG_NORMAL << "    Shift " << shift << ": ";
 
-				const std::vector<kmer_t>& predecessors = anchors2kmers[extender];
+				// iterate over compactors added to extract pontential extenders
+				for (int i = i_start; i < compactors.size(); ++i) {
+					Compactor& c = compactors[i];
 
-				// get only leftmost predecessor (at original anchor position)
-				int agree = 0;
-				int total = 0;
-				for (int i = 0; i < predecessors.size(); ++i) {
-					//if (!polyFilter.IsPolyACGT(predecessors[i], extenderLen)) {
-						++total;
-						if (predecessors[i] == anchor) {
-							++agree;
+					// consider only compactors without extender
+					if (c.extender_specificity < params.minExtenderSpecificity) {
+						kmer_t extender = c.get_extender(extenderLen, shift);
+						query.insert(extender);
+					}
+
+					//cout << std::hex << extender << endl;
+				}
+
+				// make a query to kmer provider
+				anchors2kmers.clear();
+
+				if (!kmerProvider->extractPredecessorWithGap(query, extenderLen, numKmers * params.kmerLen - (extenderLen + shift), extenderLen, anchors2kmers)) {
+					// if kmer provider is unable to extract kmers for given query
+					break;
+				}
+
+				// iterate over compactors again to establish extendors specificity
+				int n_extendables = 0;
+				size_t n_queries_before = forwardQuery.size();
+				for (int i = i_start; i < compactors.size(); ++i) {
+					Compactor& c = compactors[i];
+
+					// consider only compactors without extender
+					if (c.extender_specificity < params.minExtenderSpecificity) {
+
+						kmer_t extender = c.get_extender(extenderLen, shift);
+						kmer_t anchor = c.parent->get_extender(extenderLen, c.parent->extender_shift);
+
+						const std::vector<kmer_t>& predecessors = anchors2kmers[extender];
+
+						// get only leftmost predecessor (at original anchor position)
+						int agree = 0;
+						int total = 0;
+						for (int i = 0; i < predecessors.size(); ++i) {
+							//if (!polyFilter.IsPolyACGT(predecessors[i], extenderLen)) {
+							++total;
+							if (predecessors[i] == anchor) {
+								++agree;
+							}
+							//}
 						}
-					//}
-				}
-				c.extender_specificity = (total == 0) ? -1.0 : (double)agree / total;
+						c.extender_specificity = (total == 0) ? -1.0 : (double)agree / total;
+						c.extender_shift = shift;
 
-				// use extendor as a new anchor
-				if (c.extender_specificity >= params.minExtenderSpecificity) {
-					++n_extendables;
-					query.insert(extender);
+						// use extendor as a new anchor
+						if (c.extender_specificity >= params.minExtenderSpecificity) {
+							++n_extendables;
+							forwardQuery.insert(extender);
+						}
+					}
+				}
+
+				LOG_NORMAL << (forwardQuery.size() - n_queries_before) << " unique seeds (" << n_extendables << " occurences)" << endl;
+
+				if (n_extendables == n_to_extend) {
+					break;
 				}
 			}
 
-			LOG_NORMAL << query.size() << " unique extenders (" << n_extendables << " occurences), ";
+			LOG_NORMAL << "    Trying to extend (" << forwardQuery.size() << " total extenders) ";
 
 			// after calculating specificity one can save the portion of compactors 
-			compactorWriter->save(compactors.begin() + i_start, compactors.end(), false);
+			compactorWriter->save(compactors.begin(), compactors.begin() + i_start, compactors.end(), false);
 
 			// Try to extend
 			int n_last = compactors.size();
-			if (query.size()) {
+			if (forwardQuery.size()) {
 				anchors2kmers.clear();
-				kmerProvider->extractKmers(query, extenderLen, numKmers, params.kmerLen, false, params.allAnchors, anchors2kmers);
+				kmerProvider->extractKmers(forwardQuery, extenderLen, numKmers, params.kmerLen, false, params.allAnchors, anchors2kmers);
 
 				for (int i = i_start; i < n_last; ++i) {
 					Compactor& c = compactors[i];
-					kmer_t extender = c.get_extender(extenderLen);
+					kmer_t extender = c.get_extender(extenderLen, c.extender_shift);
 
 					if (c.extender_specificity >= params.minExtenderSpecificity) {
 						
@@ -177,7 +202,7 @@ bool Engine::operator()() {
 	}
 
 	// after calculating specificity one can save the portion of compactors 
-	compactorWriter->save(compactors.begin() + i_start, compactors.end(), true);
+	compactorWriter->save(compactors.begin(), compactors.begin() + i_start, compactors.end(), true);
 	
 	return true;
 }
@@ -196,7 +221,7 @@ bool Engine::extendCompactors(
 		kmer_t closest{ 0 };
 	};
 
-	
+	/*
 	static std::array<std::array<double, MaxN>, MaxN> expected_factors = [this]() {
 		static std::array<std::array<double, MaxN>, MaxN> out;
 
@@ -208,6 +233,7 @@ bool Engine::extendCompactors(
 
 		return out;
 	}();
+	*/
 
 	if (hits.getHeight() == 0) { 
 		return true;
@@ -424,6 +450,9 @@ bool Engine::extendCompactors(
 	output.emplace_back(candidates[0]); // first candidate accepted in spite of containing homopolymers
 
 	int n_candidates = (int)candidates.size();
+
+	int max_in_output = std::min((int)parent.get_descendants_left(), maxCount);
+
 	for (int i = 1; i < n_candidates; ++i) {
 		// iterate over active set elements
 		auto& v = candidates[i];
@@ -431,8 +460,8 @@ bool Engine::extendCompactors(
 
 		for (auto& r : output) {
 			int d = KmerHelper::calculateHamming(r.first, v.first, numKmers);
-			//double factor = (double)n_choose_k(numKmers * kmerLen, d) * poisson(d) * beta;
-			double factor = expected_factors[kmerLen * numKmers][d];
+			double factor = n_choose_k(numKmers * kmerLen, d) * poisson.pdf(d) * params.beta;
+			//double factor = expected_factors[kmerLen * numKmers][d];
 			if (r.second.n_total * factor >= v.second.n_total) {
 				add = false;
 			}
@@ -447,6 +476,9 @@ bool Engine::extendCompactors(
 			// other compactors cannot contain homopolymers
 			if (!is_poly) {
 				output.emplace_back(v);
+
+				if ((int)output.size() >= max_in_output)
+					break;
 			}
 		}
 	}

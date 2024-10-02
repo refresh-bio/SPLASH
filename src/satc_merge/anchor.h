@@ -51,5 +51,8 @@ Anchor merge_keep_target_order_binary_heap(const std::vector<Non10SingleSampleAn
 
 Anchor merge_keep_target_order_binary_heap(const std::vector<Non10SingleSampleAnchor>& to_merge, uint64_t keep_n_most_freq_targets, uint64_t& n_unique_targets, uint64_t& tot_cnt, uint64_t& n_unique_targets_kept, uint64_t& tot_cnt_kept);
 
+//for dumping or store in satc
+//it assumes that input is sorted by targets
+Anchor keep_n_most_freq_targets(const Anchor& input, uint64_t n_most_freq_targets_to_keep);
 #endif // _ANCHOR_H
 

@@ -1,5 +1,5 @@
 #include "extra_stats.h"
-#include "../../libs/refresh/deterministic_random.h"
+#include <refresh/deterministic_random/lib/deterministic_random.h>
 #include <array>
 #include <random>
 #include <algorithm>

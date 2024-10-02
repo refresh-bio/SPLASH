@@ -731,7 +731,7 @@ void CKMCFile::ResetMinMaxCounts(void)
 // Return the length of kmers
 // RET	: the length of kmers
 //----------------------------------------------------------------------------------------
-uint32 CKMCFile::KmerLength(void)
+uint32 CKMCFile::KmerLength(void) const
 {
 	return kmer_length;			
 }
