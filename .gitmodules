@@ -7,10 +7,12 @@
 [submodule "libs/SBWT"]
 	path = libs/SBWT
 	url = https://github.com/refresh-bio-dependencies/SBWT
-[submodule "libs/bkc"]
-	path = libs/bkc
-	url = https://github.com/refresh-bio/bkc-dev
-
 [submodule "libs/zlib-ng"]
 	path = libs/zlib-ng
 	url = https://github.com/refresh-bio-dependencies/zlib-ng.git
+[submodule "libs/isa-l"]
+	path = libs/isa-l
+	url = https://github.com/refresh-bio-dependencies/isa-l.git
+[submodule "libs/bkc"]
+	path = libs/bkc
+	url = https://github.com/refresh-bio/bkc-dev
