@@ -13,9 +13,12 @@
 [submodule "libs/isa-l"]
 	path = libs/isa-l
 	url = https://github.com/refresh-bio-dependencies/isa-l.git
-[submodule "libs/bkc"]
-	path = libs/bkc
-	url = https://github.com/refresh-bio/bkc-dev
 [submodule "build_tools/nasm"]
 	path = build_tools/nasm
 	url = https://github.com/netwide-assembler/nasm.git
+[submodule "libs/libdeflate"]
+	path = libs/libdeflate
+	url = https://github.com/refresh-bio-dependencies/libdeflate
+[submodule "libs/bkc"]
+	path = libs/bkc
+	url = https://github.com/refresh-bio/bkc-dev
