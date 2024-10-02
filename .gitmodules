@@ -1,9 +1,9 @@
-[submodule "libs/cloudflare-zlib"]
-	path = libs/cloudflare-zlib
-	url = https://github.com/refresh-bio/dependencies-zlib/
 [submodule "libs/zstd"]
 	path = libs/zstd
 	url = https://github.com/refresh-bio/dependencies-zstd/
 [submodule "libs/bkc"]
 	path = libs/bkc
 	url = https://github.com/refresh-bio/bkc-dev
+[submodule "libs/mimalloc"]
+	path = libs/mimalloc
+	url = https://github.com/microsoft/mimalloc
