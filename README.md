@@ -73,7 +73,7 @@ Currently, the software may be used only under Linux.
 A compiler supporting C++17 is needed to compile the code.
 You can use the following snippet to compile SPLASH.
 ```
-git clone https://github.com/refresh-bio/splash
+git clone --recurse-submodules https://github.com/refresh-bio/splash
 cd splash
 make -j
 ```
@@ -264,6 +264,10 @@ The generated output is 1 file per anchor, each file containing 4 subplots. At b
 
 
 The script `c_analysis.ipynb` shows how the saved c vectors can be loaded in for further analysis. `--dump_Cjs` must be enabled for this.
+
+## Compactors
+
+Compactors is a new statistical approach to local seed-based assembly coming as a part of the SPLASH package. While compactors is run automatically by SPLASH with anchors used as seeds, it can be also employed as a standalone local assembler. Here one can find a more detailed [documentation](./COMPACTORS.md).
  
 ## Biological interpretation and classification of anchors
 To facilitate downstream analysis of anchors, we provide a postprocessing script `SPLASH_extendor_classification.R`, that can be run on the anchors file generated from the SPLASH run to classify anchors to biologically meaningful events such as alternative splicing, and base pair changes. `SPLASH_extendor_classification.R` needs the following inputs:
