@@ -902,10 +902,11 @@ without_lookup_table = lookup_table_config == ""
 # verify if file format is supported
 for path, sample_id in inputs:
     file_format_for_10x_visium = ["fq", "fa"]
-    file_format_for_base = ["fq", "fa", "bam"]
+    file_format_for_base = ["fq", "fa", "fbam"]
+    file_format_for_base_err_msg = ["fq", "fa", "bam"] # because I need fbam for kmc but to the user I want display just bam...
 
     err_10x_visium = f"Error: for --technology 10x or visium only following input file formats are supported: "+ ", ".join(file_format_for_10x_visium)
-    err_base = f"Error: for --technology base only following input file formats are supported: "+ ", ".join(file_format_for_base)
+    err_base = f"Error: for --technology base only following input file formats are supported: "+ ", ".join(file_format_for_base_err_msg)
 
     if is_10x_or_visium():
         format = get_file_format_10x_visium(path)
