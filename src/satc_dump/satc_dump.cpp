@@ -48,7 +48,7 @@ struct Params {
 			<< "    --anchor_list <path>  - path to text file containing anchors separated by whitespaces (or tsv file with header containing column named 'anchor'), only anchors from this file will be dumped\n"
 			<< "    --sample_names <path> - path for decode sample id, each line should contain <sample_name> <sample_id>\n"
 			<< "    --format <string>     - output format, available options: satc, splash (default: satc)\n"
-			<< "    --n_bins <int>        - if set to value different than 0 the input is interpreted as a list of bins (each bin in separate line, first line is bin_0, second line is bin_1, etc. (in case of ill-formed input results will be incorrect)\n"
+			<< "    --n_bins <int>        - if set to value different than 0 the input is interpreted as a list of bins (each bin in separate line, first line is bin_0, second line is bin_1, etc. (in case of ill-formed input results will be incorrect))\n"
 			<< "    --separately          - if set with n_bins != 0 output param will be treated as suffix name and there will be output for each bin\n"
 			<< "    --binary              - if set the output will be in binary satc format instead of text (satc_dump my be used as a anchor-based filter)\n";
 	}
