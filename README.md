@@ -32,7 +32,7 @@ Compactors is a new statistical approach to local seed-based assembly. It comes 
 
 ## Installation, usage, example
 
-Please visit our [Wiki page](https://github.com/refresh-bio/SPLASH/wiki).
+Please visit our [Wiki page](../../wiki).
 
 ## References
 Marek Kokot, Roozbeh Dehghannasiri, Tavor Baharav, Julia Salzman, and Sebastian Deorowicz.
