@@ -12,7 +12,7 @@
 
 #include "../common/version.h"
 #include "../common/csv.h"
-#include "../common/base_coding.h"
+#include "../common/types/base_coding.h"
 
 //#define ENABLE_CJ_CODE
 //#define ENABLE_READ_ALL_MODE

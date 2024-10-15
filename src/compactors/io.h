@@ -1,7 +1,7 @@
 #pragma once
 #include "kmer.h"
-#include "../common/poly_ACGT_filter.h"
-#include "../../libs/refresh/parallel-queues.h"
+#include "../common/filters/poly_ACGT_filter.h"
+#include <refresh/parallel_queues/lib/parallel-queues.h>
 #include "read_select.h"
 #include "engine.h"
 
@@ -12,9 +12,6 @@
 
 
 class ReadLoader : public IKmerProvider {
-
-	
-	const string TEMP_PATH{ "./tmp-compactors" };
 	
 	const PolyACGTFilter polyFilter;
 
@@ -23,6 +20,8 @@ class ReadLoader : public IKmerProvider {
 	std::string anchorFile;
 
 	size_t anchorsBatchSize;
+	
+	std::string tempPath;
 
 public: 
 
@@ -34,7 +33,8 @@ public:
 		int numThreads,
 		int readsBufferGb,
 		size_t anchorsBatchSize,
-		bool keepTemp);
+		bool keepTemp,
+		std::string tempPath = "./tmp-compactors");
 
 	~ReadLoader();
 
@@ -78,8 +78,8 @@ protected:
 class Output : public ICompactorWriter {
 
 	struct task_t {
-		std::deque<Compactor>::iterator first;
-		std::deque<Compactor>::iterator last;
+		std::deque<Compactor>::iterator begin;
+		std::deque<Compactor>::iterator end;
 	};
 
 	std::ofstream tableFile;
@@ -92,18 +92,37 @@ class Output : public ICompactorWriter {
 
 	refresh::parallel_queue<task_t> writerQueue;
 
+	bool noSubcompactors;
+	bool cumulatedStats;
+
+	int numCompactors{ 0 };
 
 public:
-	Output(const std::string& table, const std::string& fasta);
 
-	void save(std::deque<Compactor>::iterator first, std::deque<Compactor>::iterator last, bool lastPortion) override {
-		writerQueue.push(task_t{ first, last });
+	Output(const std::string& table, const std::string& fasta, bool noSubcompactors, bool cumulatedStats);
 
-		//internal_save(first, last);
-
+	void save(
+		std::deque<Compactor>::iterator begin,
+		std::deque<Compactor>::iterator current,
+		std::deque<Compactor>::iterator end, 
+		bool lastPortion) override {
+		
 		if (lastPortion) {
+			
+			if (noSubcompactors) {
+				writerQueue.push(task_t{ begin, end });
+			}
+			else {
+				writerQueue.push(task_t{ current, end });
+			}
+
 			writerQueue.mark_completed();
 			worker.join();
+		}
+		else {
+			if (!noSubcompactors) {
+				writerQueue.push(task_t{ current, end });
+			}
 		}
 	}
 

@@ -162,10 +162,14 @@ public:
 		//a &= ~HOMOPOLYMER_MASK;
 		//b &= ~HOMOPOLYMER_MASK;
 
-		kmer_t diffs_even = (a ^ b) & MASK_EVEN_BITS;
-		kmer_t diffs_odd = ((a >> 1) ^ (b >> 1)) & MASK_EVEN_BITS;
+//		kmer_t diffs_even = (a ^ b) & MASK_EVEN_BITS;
+//		kmer_t diffs_odd = ((a >> 1) ^ (b >> 1)) & MASK_EVEN_BITS;
+//		kmer_t diffs = diffs_even | diffs_odd;
 
-		kmer_t diffs = diffs_even | diffs_odd;
+		kmer_t x = a ^ b;
+		x |= x >> 1;
+		kmer_t diffs = x & MASK_EVEN_BITS;
+
 		#ifdef _WIN32
 		int cnt = __popcnt64(diffs);
 		#else

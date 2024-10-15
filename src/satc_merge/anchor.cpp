@@ -289,6 +289,7 @@ Anchor merge_keep_target_order_binary_heap(const std::vector<Non10SingleSampleAn
 
 				e.target = target;
 				e.cnt = to_merge[id].data[pos].count;
+				e.sample_ids_cnts.clear();
 				e.sample_ids_cnts.emplace_back(to_merge[id].sample_id, to_merge[id].data[pos].count);
 			} else {
 				e.cnt += to_merge[id].data[pos].count;
@@ -320,5 +321,90 @@ Anchor merge_keep_target_order_binary_heap(const std::vector<Non10SingleSampleAn
 		}
 	}
 
+	return res;
+}
+
+Anchor keep_n_most_freq_targets(const Anchor& input, uint64_t keep_n_most_freq_targets) {
+	//this should not be called if keep_n_most_freq_targets is zero which means keep all
+	assert(keep_n_most_freq_targets);
+	//this also should be checked outside to prevent unnecessary copy
+	assert(input.data.size() > keep_n_most_freq_targets);
+
+	Anchor res;
+	res.anchor = input.anchor;
+
+	struct elem_t {
+		uint64_t target{};
+		uint64_t cnt{};
+		struct sample_id_barcode_cnt {
+			uint64_t sample_id;
+			uint64_t barcode;
+			uint64_t cnt;
+			sample_id_barcode_cnt(uint64_t sample_id, uint64_t barcode, uint64_t cnt) :
+				sample_id(sample_id),
+				barcode(barcode),
+				cnt(cnt) {
+
+			}
+		};
+		std::vector<sample_id_barcode_cnt> sample_ids_barcodes_cnts;
+		bool operator>(const elem_t& rhs) const {
+			return cnt > rhs.cnt;
+		}
+	};
+	elem_t e;
+
+	KeepNLargests<elem_t> heap(keep_n_most_freq_targets);
+
+	e.target = input.data[0].target;
+	e.cnt = input.data[0].count;
+	e.sample_ids_barcodes_cnts.emplace_back(input.data[0].sample_id, input.data[0].barcode, input.data[0].count);
+
+	for (uint64_t i = 1 ; i < input.data.size(); ++i) {
+		if (input.data[i].target != e.target) {
+			//just checking if targets are sorted
+			assert(input.data[i].target > e.target);
+
+			heap.Add(std::move(e));
+
+			e.target = input.data[i].target;
+			e.cnt = input.data[i].count;
+			e.sample_ids_barcodes_cnts.clear();
+			e.sample_ids_barcodes_cnts.emplace_back(input.data[i].sample_id, input.data[i].barcode, input.data[i].count);
+		} else {
+			e.cnt += input.data[i].count;
+			e.sample_ids_barcodes_cnts.emplace_back(input.data[i].sample_id, input.data[i].barcode, input.data[i].count);
+		}
+	}
+
+	heap.Add(std::move(e));
+
+	std::vector<elem_t> to_keep;
+	heap.StealSorted(to_keep, [](const elem_t& lhs, const elem_t& rhs) {
+		return lhs.target < rhs.target;
+	});
+
+	//repack
+	for (elem_t& elem : to_keep) {
+		//sorting because we store in Header::ordering_t::ATSBC
+		std::sort(elem.sample_ids_barcodes_cnts.begin(), elem.sample_ids_barcodes_cnts.end(), 
+			[](const elem_t::sample_id_barcode_cnt& lhs, const elem_t::sample_id_barcode_cnt& rhs)
+			{
+				if (lhs.sample_id != rhs.sample_id)
+					return lhs.sample_id < rhs.sample_id;
+				if (lhs.barcode != rhs.barcode)
+					return lhs.barcode < rhs.barcode;
+				return lhs.cnt < rhs.cnt;
+			});
+
+		for (auto sample_id_barcode_cnt : elem.sample_ids_barcodes_cnts) {
+			res.data.emplace_back(
+				sample_id_barcode_cnt.barcode,
+				elem.target,
+				sample_id_barcode_cnt.sample_id,
+				sample_id_barcode_cnt.cnt
+			);
+		}
+	}
 	return res;
 }
