@@ -5,6 +5,8 @@
 !/src/**/*.py
 !/src/splash.py
 !/libs
+!/postprocessing
+!/build_tools
 !Makefile
 !download_kmc.py
 !hash.git
