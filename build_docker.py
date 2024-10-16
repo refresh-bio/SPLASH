@@ -45,3 +45,9 @@ if __name__ == "__main__":
 # To use docker image in registry but from singularity:
 # singularity run docker://ghcr.io/refresh-bio/{repo}:{ver} splash input.txt
 # conver to sif: singularity build {repo}_{ver}.sif docker-archive://{repo}_{ver}.tar
+
+
+# Ok, after I created and pushed this on amd64 and arm64 linux I had two disjoint images on ghcr.io/refresh-bio/ (one was with correct tag, and the other was just digest (sha256)).
+# I needed to grab both these sha's anr run docker manifest create ghcr.io/refresh-bio/splash:2.11.0     --amend ghcr.io/refresh-bio/splash@sha256:5f71c33a37ce54af4ca5fe4aaedb6ef28145e7cecfbdd4fb76d4d0f79d5f4f22     --amend ghcr.io/refresh-bio/splash@sha256:234738f09a459ec6658d3d3e3e6df67624a065bb50dd630d388d7fc9f7baeb3f
+# then docker manifest push ghcr.io/refresh-bio/splash:2.11.0
+# this added third package with tag 2.11.0 and the previous two are just visible as digest... anyway it seems it handles archs correctly
