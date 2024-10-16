@@ -382,7 +382,7 @@ supervised_test:
 	cp src/supervised_test/supervised_test.R bin
 
 install: all
-	install bin/* /usr/local/bin
+	cp -r bin/* /usr/local/bin
 
 uninstall:
 	-rm /usr/local/bin/satc
