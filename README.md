@@ -1,6 +1,6 @@
 # SPLASH 2
 [![GitHub downloads](https://img.shields.io/github/downloads/refresh-bio/splash/total.svg?style=flag&label=GitHub%20downloads)](https://github.com/refresh-bio/SPLASH/releases)
-[![Docker pulls](https://img.shields.io/github/downloads/refresh-bio/splash/total?label=downloads&logo=docker)](https://github.com/refresh-bio/SPLASH/pkgs/container/splash)
+<!-- [![Docker pulls](https://img.shields.io/github/downloads/refresh-bio/splash/total?label=downloads&logo=docker)](https://github.com/refresh-bio/SPLASH/pkgs/container/splash) --> <!-- DOES NOT WORK, shows jsut release download -->
 
 ## Introduction
 SPLASH is an unsupervised and reference-free unifying framework to discover regulated sequence variation through statistical analysis of k-mer composition in both DNA and RNA sequence. 
