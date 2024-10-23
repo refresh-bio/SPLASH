@@ -1373,8 +1373,9 @@ if keep_satc_from_satc_merge:
     if not os.path.exists(satc_dir):
         os.makedirs(satc_dir)
 
+#must be defined for post-processing
+compactors_dir = f"{outname_prefix}_compactors"
 if not without_compactors:
-    compactors_dir = f"{outname_prefix}_compactors"
     if not os.path.exists(compactors_dir):
         os.makedirs(compactors_dir)
 
