@@ -266,7 +266,8 @@ tsv_to_fasta: $(OUT_BIN_DIR)/tsv_to_fasta
 
 $(OUT_BIN_DIR)/tsv_to_fasta: $(TSV_TO_FASTA_MAIN_DIR)/tsv_to_fasta.o
 	-mkdir -p $(OUT_BIN_DIR)
-	$(CXX) -o $@ $^
+	$(CXX) -o $@ $^ \
+	$(CLINK)
 
 fafq_filter: $(OUT_BIN_DIR)/fafq_filter
 
