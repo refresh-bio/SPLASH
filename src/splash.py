@@ -23,7 +23,7 @@ class SmartFormatter(argparse.HelpFormatter):
         # this is the RawTextHelpFormatter._split_lines
         return argparse.HelpFormatter._split_lines(self, text, width)
 
-SPLASH_VERSION="2.11.0"
+SPLASH_VERSION="2.11.1"
 
 parser = argparse.ArgumentParser(
                     prog = "splash",
