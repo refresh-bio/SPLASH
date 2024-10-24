@@ -64,7 +64,7 @@ if __name__ == "__main__":
 
     run_cmd("git submodule update --init --recursive")
     run_cmd("make clean")
-    run_cmd("make -j32 release")
+    run_cmd("make -j release")
 
     run_cmd("mkdir -p bin/example")
 
