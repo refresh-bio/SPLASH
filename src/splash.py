@@ -23,7 +23,7 @@ class SmartFormatter(argparse.HelpFormatter):
         # this is the RawTextHelpFormatter._split_lines
         return argparse.HelpFormatter._split_lines(self, text, width)
 
-SPLASH_VERSION="2.11.1"
+SPLASH_VERSION="2.11.2"
 
 parser = argparse.ArgumentParser(
                     prog = "splash",
@@ -1139,16 +1139,17 @@ if not is_10x_or_visium() and anchor_len + gap_len + target_len > 251:
 
 def stage_1_task(id, input, out, err):
     _artifacts_param = f"--artifacts {artifacts}" if artifacts != "" else ""
-    _apply_filter_illumina_adapters_param = "--apply_filter_illumina_adapters" if not dont_filter_illumina_adapters else ""
-    _predefined_cbc_param = f"--predefined_cbc {predefined_cbc}" if predefined_cbc != "" else ""
-    _export_cbc_logs_param = "--export_cbc_logs" if export_cbc_logs else ""
-    _log_path_param = f"--log_name {cbc_dir}" if export_cbc_logs else ""
-    _filtered_input_path_param = f"--filtered_input_path {export_filtered_input_dir}" if export_filtered_input else ""
-    _allow_strange_cbc_umi_reads_param = f"--allow_strange_cbc_umi_reads" if allow_strange_cbc_umi_reads else ""
+
     if is_10x_or_visium():
         fname = input[0]
         sample_name = input[1]
-        
+
+        _apply_filter_illumina_adapters_param = "--apply_filter_illumina_adapters" if not dont_filter_illumina_adapters else ""
+        _predefined_cbc_param = f"--predefined_cbc {predefined_cbc}" if predefined_cbc != "" else ""
+        _log_path_param = f"--log_name {cbc_dir}/{sample_name}" if export_cbc_logs else ""
+        _filtered_input_path_param = f"--filtered_input_path {export_filtered_input_dir}" if export_filtered_input else ""
+        _allow_strange_cbc_umi_reads_param = f"--allow_strange_cbc_umi_reads" if allow_strange_cbc_umi_reads else ""
+
         file_format = get_file_format_10x_visium(fname)
         if file_format == "fa":
             file_format = "fasta"
@@ -1178,7 +1179,6 @@ def stage_1_task(id, input, out, err):
             {_artifacts_param} \
             {_apply_filter_illumina_adapters_param} \
             {_predefined_cbc_param} \
-            {_export_cbc_logs_param} \
             {_allow_strange_cbc_umi_reads_param} \
             {_log_path_param} \
             --input_name {fname} \

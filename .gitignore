@@ -1,5 +1,14 @@
 bin
+src/gap_shortener/*.o
+src/lookup_table/*.o
+src/fafq_filter/*.o
 src/satc/*.o
+libs/cdflib/*.o
+src/satc_to_fasta/*.o
+libs/refresh/parallel_queues/lib/*.o
+src/satc_filter/*.o
+src/satc_undump/*.o
+src/tsv_to_fasta/*.o
 src/common/*.o
 src/sig_anch/*.o
 src/common/kmc_api/*.o
