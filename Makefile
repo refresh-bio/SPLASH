@@ -177,7 +177,7 @@ prefix      = /usr/local
 exec_prefix = $(prefix)
 
 $(LIB_ZLIB):
-	cd $(SPLASH_LIBS_DIR)/zlib-ng; cmake -DCMAKE_CXX_COMPILER=$(CXX) -DCMAKE_C_COMPILER=$(CC) -B build-g++/zlib-ng -S . -DZLIB_COMPAT=ON; cmake --build build-g++/zlib-ng --config Release
+	cd $(SPLASH_LIBS_DIR)/zlib-ng; cmake -DCMAKE_CXX_COMPILER=$(CXX) -DCMAKE_C_COMPILER=$(CC) -B build-g++/zlib-ng -S . -DZLIB_COMPAT=ON; cmake --build build-g++/zlib-ng --config Release --target zlib
 
 $(LIB_ISAL):
 	cd $(SPLASH_LIBS_DIR)/isa-l && PATH=../../build_tools/nasm:$$PATH make -f Makefile.unx
