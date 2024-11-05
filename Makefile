@@ -97,6 +97,12 @@ endif
 
 NASM_V := $(shell build_tools/nasm/nasm --version 2>/dev/null)
 
+CMAKE_OSX_SYSROOT_FLAG =
+ifeq ($(UNAME_S),Darwin)
+	SDK_PATH := $(shell $(CXX) -v 2>&1 | grep -- '--with-sysroot' | sed -E 's/.*--with-sysroot=([^ ]+).*/\1/')
+	CMAKE_OSX_SYSROOT_FLAG := -DCMAKE_OSX_SYSROOT=$(SDK_PATH)
+endif
+
 CPU_FLAGS =
 STATIC_LFLAGS =
 PLATFORM_SPECIFIC_FLAGS =
@@ -177,7 +183,7 @@ prefix      = /usr/local
 exec_prefix = $(prefix)
 
 $(LIB_ZLIB):
-	cd $(SPLASH_LIBS_DIR)/zlib-ng; cmake -DCMAKE_CXX_COMPILER=$(CXX) -DCMAKE_C_COMPILER=$(CC) -B build-g++/zlib-ng -S . -DZLIB_COMPAT=ON; cmake --build build-g++/zlib-ng --config Release --target zlibstatic
+	cd $(SPLASH_LIBS_DIR)/zlib-ng; cmake $(CMAKE_OSX_SYSROOT_FLAG) -DCMAKE_CXX_COMPILER=$(CXX) -DCMAKE_C_COMPILER=$(CC) -B build-g++/zlib-ng -S . -DZLIB_COMPAT=ON; cmake --build build-g++/zlib-ng --config Release --target zlibstatic
 
 $(LIB_ISAL):
 	cd $(SPLASH_LIBS_DIR)/isa-l && PATH=../../build_tools/nasm:$$PATH make -f Makefile.unx
@@ -186,7 +192,7 @@ $(LIB_ZSTD):
 	cd $(SPLASH_LIBS_DIR)/zstd; make -j
 	
 $(LIB_LIBDEFLATE):
-	cd $(SPLASH_LIBS_DIR)/libdeflate; cmake -B build && cmake --build build
+	cd $(SPLASH_LIBS_DIR)/libdeflate; cmake $(CMAKE_OSX_SYSROOT_FLAG) -DCMAKE_CXX_COMPILER=$(CXX) -DCMAKE_C_COMPILER=$(CC) -B build && cmake --build build
 
 $(MIMALLOC_OBJ):
 	$(CXX) -DMI_MALLOC_OVERRIDE -O3 -DNDEBUG -fPIC -Wall -Wextra -Wno-unknown-pragmas -fvisibility=hidden -ftls-model=initial-exec -fno-builtin-malloc -c -I libs/mimalloc/include libs/mimalloc/src/static.c -o $(MIMALLOC_OBJ)
@@ -317,7 +323,7 @@ $(OUT_BIN_DIR)/compactors: $(COMPACTORS_MAIN_DIR)/main.o \
 	$(CLINK) 
 
 $(SPLASH_LIBS_DIR)/SBWT/build/libsbwt_static.a:
-	(cd $(SPLASH_LIBS_DIR)/SBWT/build; cmake -DCMAKE_CXX_COMPILER=$(CXX) -DCMAKE_C_COMPILER=$(CC) .. -DMAX_KMER_LENGTH=32; make -j)
+	(cd $(SPLASH_LIBS_DIR)/SBWT/build; cmake $(CMAKE_OSX_SYSROOT_FLAG) -DCMAKE_CXX_COMPILER=$(CXX) -DCMAKE_C_COMPILER=$(CC) .. -DMAX_KMER_LENGTH=32; make -j)
 
 $(SPLASH_LIBS_DIR)/SBWT/build/external/sdsl-lite/build/lib/libsdsl.a: $(SPLASH_LIBS_DIR)/SBWT/build/libsbwt_static.a
 $(SPLASH_LIBS_DIR)/SBWT/build/external/KMC/build/libkmc_core.a: $(SPLASH_LIBS_DIR)/SBWT/build/libsbwt_static.a
