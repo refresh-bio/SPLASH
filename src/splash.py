@@ -330,7 +330,7 @@ if EXPERIMENTAL_INPUT_GENERATORS:
                             for line2 in _10x_file:
                                 line2 = line2.strip()
                                 if line2 == "": continue
-                                match = re.match(f"(\S+)\s*(.*)?", line2)
+                                match = re.match(r"(\S+)\s*(.*)?", line2)
 
                                 if not match:
                                     print(f"Error: wrong line in file: {_10x_path}")
