@@ -31,7 +31,8 @@ The image below presents the SPLASH pipeline on a high-level.
 
 Compactors is a new statistical approach to local seed-based assembly. It comes as a part of SPLASH package and was particularly suited to assemble regions divere across across samples (see figure below). However, it can be used as an independent assembler on any types of seeds provided by the user.
 
-![compactors-idea-v2](https://github.com/user-attachments/assets/0d9e4fac-949f-452c-baff-0dd842979899)
+
+![compactors-idea-v2](https://github.com/user-attachments/assets/49ee9aaf-54b8-4383-80be-3d225862e8bf)
 
 
 ## Installation, usage, example
