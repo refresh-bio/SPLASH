@@ -1,3 +1,12 @@
+# SPLASH 2.11.3
+This branch contains an archive version of splash. It is highly recommended to use the newest version.
+
+This version is published mainly for reproducibility purposes.
+
+The simplest way to use this archive version is to use the docker container: 
+```
+docker pull ghcr.io/refresh-bio/splash:2.11.3
+```
 # SPLASH 2
 [![GitHub downloads](https://img.shields.io/github/downloads/refresh-bio/splash/total.svg?style=flag&label=GitHub%20downloads)](https://github.com/refresh-bio/SPLASH/releases)
 [![Bioconda downloads](https://img.shields.io/conda/dn/bioconda/splash.svg?style=flag&label=Bioconda%20downloads)](https://anaconda.org/bioconda/splash)
