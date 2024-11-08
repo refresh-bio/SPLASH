@@ -23,7 +23,7 @@ class SmartFormatter(argparse.HelpFormatter):
         # this is the RawTextHelpFormatter._split_lines
         return argparse.HelpFormatter._split_lines(self, text, width)
 
-SPLASH_VERSION="2.11.2"
+SPLASH_VERSION="2.11.3"
 
 parser = argparse.ArgumentParser(
                     prog = "splash",
@@ -1148,6 +1148,7 @@ def stage_1_task(id, input, out, err):
         _predefined_cbc_param = f"--predefined_cbc {predefined_cbc}" if predefined_cbc != "" else ""
         _log_path_param = f"--log_name {cbc_dir}/{sample_name}" if export_cbc_logs else ""
         _filtered_input_path_param = f"--filtered_input_path {export_filtered_input_dir}" if export_filtered_input else ""
+        _export_filtered_input_mode_param = "--export_filtered_input_mode second" if export_filtered_input else "--export_filtered_input_mode none"
         _allow_strange_cbc_umi_reads_param = f"--allow_strange_cbc_umi_reads" if allow_strange_cbc_umi_reads else ""
 
         file_format = get_file_format_10x_visium(fname)
@@ -1175,7 +1176,7 @@ def stage_1_task(id, input, out, err):
             --poly_ACGT_len {poly_ACGT_len} \
             --technology {technology} \
             {_filtered_input_path_param} \
-            --export_filtered_input_mode second \
+            {_export_filtered_input_mode_param} \
             {_artifacts_param} \
             {_apply_filter_illumina_adapters_param} \
             {_predefined_cbc_param} \
