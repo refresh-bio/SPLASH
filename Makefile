@@ -164,6 +164,7 @@ $(OUT_BIN_DIR)/compactors: \
 
 lookup_table: $(OUT_BIN_DIR)/lookup_table $(OUT_BIN_DIR)/build_lookup_table.py
 $(OUT_BIN_DIR)/build_lookup_table.py: $(SRC_LOOKUP_TABLE_MAIN_DIR)/build_lookup_table.py
+	-mkdir -p $(OUT_BIN_DIR)
 	cp $(SRC_LOOKUP_TABLE_MAIN_DIR)/build_lookup_table.py $(OUT_BIN_DIR)/build_lookup_table.py
 $(OUT_BIN_DIR)/lookup_table: \
 	$(OBJ_LOOKUP_TABLE_MAIN) $(OBJ_COMMON_KMC_API)
