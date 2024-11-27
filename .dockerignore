@@ -8,6 +8,7 @@
 !/postprocessing
 !/build_tools
 !Makefile
+!refresh.mk
 !download_kmc.py
 !hash.git
 !.git/

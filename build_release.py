@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import subprocess
 import fileinput
+import shutil
 import sys
 import os
 import stat
@@ -58,13 +59,51 @@ def run_cmd_get_stdout(cmd):
     p = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE)
     return p.stdout.decode('utf-8')
 
+
+
 if __name__ == "__main__":
     system = get_os()
     hardware = get_hardware()
 
-    run_cmd("git submodule update --init --recursive")
-    run_cmd("make clean")
-    run_cmd("make -j release")
+    run_cmd("git submodule update --init --recursive --jobs=8")
+    make_command = "make"
+    if system == "mac":
+        make_command = "gmake"
+
+    platform = "axv"
+
+    if hardware == "arm64":
+        if system == "mac":
+            platform = "m1"
+        else:
+            platform = "arm8"
+
+    # In general use the default g++, but not on mac where the default is just clang++
+    # which is currently not supported
+    cxx = "g++"
+    cc = "gcc"
+    
+    if system == "mac":
+        for version in [13, 12, 11, 10]:
+            if shutil.which(f"g++-{version}") and shutil.which(f"gcc-{version}"):
+                out = run_cmd_get_stdout(f"g++-{version} --version")
+                if "gcc" in out.lower():
+                    cxx = f"g++-{version}"
+                else:
+                    continue
+
+                # lets check if the same version works for CC and is GNU
+                out = run_cmd_get_stdout(f"gcc-{version} --version")
+                if "gcc" in out.lower():
+                    cc = f"gcc-{version}"
+                    break
+    
+    if not "gcc" in run_cmd_get_stdout(f"{cxx} --version").lower() or not "gcc" in run_cmd_get_stdout(f"{cc} --version"):
+        print(f"The selected C++ compiler ({cxx}) or C compiler ({cc}) is not GNU g++/gcc.\n"
+            "If you are using macOS, you may install it with Homebrew (https://brew.sh/)")
+
+    run_cmd(f"{make_command} clean")
+    run_cmd(f"{make_command} CXX=$(cxx) CC=$(cc) PLATFORM={platform} STATIC_LINK=true -j")
 
     run_cmd("mkdir -p bin/example")
 

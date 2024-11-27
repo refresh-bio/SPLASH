@@ -21,10 +21,14 @@ if __name__ == "__main__":
     repo = build_release.run_cmd_get_stdout("basename -s .git `git config --get remote.origin.url`").strip().lower()
     with open("hash.git", "w") as f:
         f.write(build_release.run_cmd_get_stdout("git rev-parse HEAD"))
-    
+
+    platform_for_make = "avx"
+    if hardware_platform == "arm64":
+        platform_for_make = "arm8"
+
     ver = build_release.get_ver("src/splash.py")
     #cmd = f"sudo docker build --no-cache -t {repo}:{ver} ."
-    cmd = f"sudo docker buildx build --no-cache --platform linux/{hardware_platform} -t {repo}:{ver} --load ."
+    cmd = f"sudo docker buildx build --no-cache --platform linux/{hardware_platform} --build-arg PLATFORM={platform_for_make} -t {repo}:{ver} --load ."
 
     print(cmd)
     build_release.run_cmd(cmd)

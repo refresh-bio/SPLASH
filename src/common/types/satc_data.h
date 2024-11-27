@@ -196,15 +196,16 @@ class buffered_binary_reader {
 
 		return fsize;
 	}
-	buffered_binary_reader(const std::string& path, size_t file_size, size_t max_buff_size) :
-	in(3, calc_buff_size(file_size, 1 << 20), 1 << 13),
-	 buff(calc_buff_size(file_size, max_buff_size)) {
+	buffered_binary_reader(const std::string& path, size_t file_size, size_t max_io_buff_size, size_t max_buff_size) :
+		in(3, calc_buff_size(file_size, max_io_buff_size), 1 << 13),
+		buff(calc_buff_size(file_size, max_buff_size)) {
 		in.open_reading(path);
 		ptr = buff.data();
 	}
 public:
-	buffered_binary_reader(const std::string& path, size_t buff_size = 1ull << 13) :
-		buffered_binary_reader(path, get_file_size(path), buff_size) { //delegate ctor, to get file size only once
+	buffered_binary_reader(const std::string& path, size_t max_io_buff_size = 1ull << 20, size_t buff_size = 1ull << 13) :
+//	buffered_binary_reader(const std::string& path, size_t max_io_buff_size, size_t buff_size) :
+		buffered_binary_reader(path, get_file_size(path), max_io_buff_size, buff_size) { //delegate ctor, to get file size only once
 
 	}
 

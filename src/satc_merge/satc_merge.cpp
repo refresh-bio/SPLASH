@@ -434,8 +434,8 @@ class Bin {
 		return true;
 	}
 public:
-	explicit Bin(const std::string& path) :
-		in(path),
+	explicit Bin(const std::string& path, const size_t max_io_buff_size) :
+		in(path, max_io_buff_size),
 		cached_rec(in)
 	{
 		if (!in) {
@@ -1284,8 +1284,14 @@ void run_non_10X(const Params& params) {
 	}
 
 	std::vector<std::unique_ptr<Bin>> bins;
+	size_t max_io_buff_size = 1ull << 20;
+	if (bins.size() > 4096)		max_io_buff_size /= 2;
+	if (bins.size() > 8192)		max_io_buff_size /= 2;
+	if (bins.size() > 16384)	max_io_buff_size /= 2;
+	if (bins.size() > 32768)	max_io_buff_size /= 2;
+
 	for (auto& path : params.bins)
-		bins.emplace_back(std::make_unique<Bin>(path));
+		bins.emplace_back(std::make_unique<Bin>(path, max_io_buff_size));
 
 	Stats stats;
 
