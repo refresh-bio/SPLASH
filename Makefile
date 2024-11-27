@@ -1,5 +1,9 @@
 all: bkc satc satc_dump satc_undump satc_filter satc_to_fasta satc_merge sig_anch read_selector compactors download_kmc lookup_table splash supervised_test dsv_manip gap_shortener fafq_filter tsv_to_fasta
 
+# splash is quite sensitive to the order of operations, which may be different on different archs due to how SIDM is handled
+# to keep results the same across various platforms by default, we set generic platform
+PLATFORM?=generic
+
 # *** REFRESH makefile utils
 include refresh.mk
 
