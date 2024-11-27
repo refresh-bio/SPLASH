@@ -98,12 +98,13 @@ if __name__ == "__main__":
                     cc = f"gcc-{version}"
                     break
     
-    if not "gcc" in run_cmd_get_stdout(f"{cxx} --version").lower() or not "gcc" in run_cmd_get_stdout(f"{cc} --version"):
+    if not "g++" in run_cmd_get_stdout(f"{cxx} --version").lower() or not "gcc" in run_cmd_get_stdout(f"{cc} --version"):
         print(f"The selected C++ compiler ({cxx}) or C compiler ({cc}) is not GNU g++/gcc.\n"
             "If you are using macOS, you may install it with Homebrew (https://brew.sh/)")
+        sys.exit(1)
 
     run_cmd(f"{make_command} clean")
-    run_cmd(f"{make_command} CXX=$(cxx) CC=$(cc) PLATFORM={platform} STATIC_LINK=true -j")
+    run_cmd(f"{make_command} CXX={cxx} CC={cc} PLATFORM={platform} STATIC_LINK=true -j")
 
     run_cmd("mkdir -p bin/example")
 
