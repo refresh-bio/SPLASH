@@ -1,4 +1,4 @@
-### REFRESH group macros - v.1.0.9 (2024-11-25)
+### REFRESH group macros - v.1.0.10 (2024-11-27)
 
 ### Macros for initialization
 define INIT_GLOBALS
@@ -556,11 +556,17 @@ define CHECK_OS_ARCH
 						$(if $(filter avx512,$(1)), \
 							$(eval ARCH_FLAGS:=-mavx512 -m64 -DARCH_X64) \
 							$(info *** x86-64 with AVX512 extensions ***), \
-							$(if $(filter x86_64,$(ARCH_TYPE)), \
-								$(eval ARCH_FLAGS:=-march=native -DARCH_X64) \
-								$(info *** Unspecified platform - using native compilation for x86_64 ***), \
-								$(eval ARCH_FLAGS:=-march=native -DARCH_ARM) \
-								$(info *** Unspecified platform - using native compilation for ARM ***))))))))
+							$(if $(filter generic,$(1)), \
+								$(if $(filter x86_64,$(ARCH_TYPE)), \
+									$(eval ARCH_FLAGS:=-DARCH_X64) \
+									$(info *** Unspecified platform - using generic compilation for x86_64 ***), \
+									$(eval ARCH_FLAGS:=-DARCH_ARM) \
+									$(info *** Unspecified platform - using generic compilation for ARM ***)), \
+								$(if $(filter x86_64,$(ARCH_TYPE)), \
+									$(eval ARCH_FLAGS:=-march=native -DARCH_X64) \
+									$(info *** Unspecified platform - using native compilation for x86_64 ***), \
+									$(eval ARCH_FLAGS:=-march=native -DARCH_ARM) \
+									$(info *** Unspecified platform - using native compilation for ARM ***)))))))))
 	
 	$(if $(filter Darwin,$(OS_TYPE)), \
 		$(eval SDK_PATH:=$(shell $(CXX) -v 2>&1 | grep -- '--with-sysroot' | sed -E 's/.*--with-sysroot=([^ ]+).*/\1/')) \

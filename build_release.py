@@ -104,7 +104,9 @@ if __name__ == "__main__":
         sys.exit(1)
 
     run_cmd(f"{make_command} clean")
-    run_cmd(f"{make_command} CXX={cxx} CC={cc} PLATFORM={platform} STATIC_LINK=true -j")
+    #run_cmd(f"{make_command} CXX={cxx} CC={cc} PLATFORM={platform} STATIC_LINK=true -j")
+    #keep platform generic for result consistency across platforms
+    run_cmd(f"{make_command} CXX={cxx} CC={cc} PLATFORM=generic STATIC_LINK=true -j")
 
     run_cmd("mkdir -p bin/example")
 

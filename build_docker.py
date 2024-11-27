@@ -28,7 +28,9 @@ if __name__ == "__main__":
 
     ver = build_release.get_ver("src/splash.py")
     #cmd = f"sudo docker build --no-cache -t {repo}:{ver} ."
-    cmd = f"sudo docker buildx build --no-cache --platform linux/{hardware_platform} --build-arg PLATFORM={platform_for_make} -t {repo}:{ver} --load ."
+    #cmd = f"sudo docker buildx build --no-cache --platform linux/{hardware_platform} --build-arg PLATFORM={platform_for_make} -t {repo}:{ver} --load ."
+    #keep platform generic for result consistency across platforms
+    cmd = f"sudo docker buildx build --no-cache --platform linux/{hardware_platform} --build-arg PLATFORM=generic -t {repo}:{ver} --load ."
 
     print(cmd)
     build_release.run_cmd(cmd)
