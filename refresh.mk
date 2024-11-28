@@ -1,4 +1,4 @@
-### REFRESH group macros - v.1.0.10 (2024-11-27)
+### REFRESH group macros - v.1.0.11 (2024-11-28)
 
 ### Macros for initialization
 define INIT_GLOBALS
@@ -418,7 +418,7 @@ define SET_FLAGS
 			$(eval PLATFORM_SPECIFIC_LINKER_FLAGS:=-fabi-version=6), \
 			$(if $(filter Darwin_arm64,$(OS_ARCH_TYPE)), \
 				$(eval PLATFORM_SPECIFIC_C_FLAGS:=) \
-				$(eval PLATFORM_SPECIFIC_CPP_FLAGS:=) \
+				$(eval PLATFORM_SPECIFIC_CPP_FLAGS:=-ffp-contract=off) \
 				$(eval PLATFORM_SPECIFIC_LINKER_FLAGS:=), \
 				$(if $(filter Darwin_x86_64,$(OS_ARCH_TYPE)), \
 					$(eval PLATFORM_SPECIFIC_C_FLAGS:=) \
