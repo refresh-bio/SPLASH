@@ -289,10 +289,10 @@ bool load_tsv_stream(const string& fn, uint64_t file_id)
 // ************************************************************************************
 vector<pair<double, bool>> fdr_correction(const vector<double>& pvals, double alpha)
 {
-	vector<pair<double, int>> pv_sorted;
+	vector<pair<double, int64_t>> pv_sorted;
 	vector<pair<double, bool>> pv_corr;
 
-	int size = (int)pvals.size();
+	int64_t size = (int64_t)pvals.size();
 
 	pv_corr.resize(size);
 
@@ -301,47 +301,35 @@ vector<pair<double, bool>> fdr_correction(const vector<double>& pvals, double al
 
 	pv_sorted.resize(size);
 
-	for (int i = 0; i < size; ++i)
+	for (int64_t i = 0; i < size; ++i)
 		pv_sorted[i] = make_pair(pvals[i], i);
 
 	stable_sort(pv_sorted.begin(), pv_sorted.end());
 
 	double cm = 0;
-	for (int i = 1; i <= size; ++i)
+	for (int64_t i = 1; i <= size; ++i)
 		cm += 1.0 / i;
 
-	//    cout << "cm: " << cm << endl;
-
-		// Calculate pvals_corrected_raw
-	for (int i = 0; i < size; ++i)
+	// Calculate pvals_corrected_raw
+	for (int64_t i = 0; i < size; ++i)
 	{
 		pv_corr[i].first = pv_sorted[i].first * (size * cm) / (i + 1);
 		pv_corr[i].second = pv_corr[i].first <= alpha;
 	}
 
-	/*    cout << "pvals_corrected_raw: ";
-		for (auto x : pv_corr)
-			cout << "[" << x.first << "," << x.second << "]  ";
-		cout << endl;*/
-
-		// Calculate pvals_corrected
+	// Calculate pvals_corrected
 	double min_pv = 1.0;
-	for (int i = size - 1; i >= 0; --i)
+	for (int64_t i = size - 1; i >= 0; --i)
 	{
 		min_pv = min(min_pv, pv_corr[i].first);
 		pv_corr[i].first = min_pv;
 	}
 
-	/*    cout << "pvals_corrected: ";
-		for (auto x : pv_corr)
-			cout << "[" << x.first << "," << x.second << "]  ";
-		cout << endl;*/
-
 	vector<pair<double, bool>> pv_original_order;
 
 	pv_original_order.resize(size);
 
-	for (int i = 0; i < size; ++i)
+	for (int64_t i = 0; i < size; ++i)
 		pv_original_order[pv_sorted[i].second] = pv_corr[i];
 
 	return pv_original_order;
@@ -468,27 +456,27 @@ void correct_pvals()
 // ************************************************************************************
 void fdr_correction_stream(vector<double>& pvals, double alpha)
 {
-	vector<pair<double, int>> pv_sorted;
+	vector<pair<double, int64_t>> pv_sorted;
 
-	int size = (int)pvals.size();
+	int64_t size = (int64_t)pvals.size();
 
 	if (size == 0)
 		return;
 
 	pv_sorted.resize(size);
 
-	for (int i = 0; i < size; ++i)
+	for (int64_t i = 0; i < size; ++i)
 		pv_sorted[i] = make_pair(pvals[i], i);
 
 	stable_sort(pv_sorted.begin(), pv_sorted.end());
 
 	double cm = 0;
-	for (int i = 1; i <= size; ++i)
+	for (int64_t i = 1; i <= size; ++i)
 		cm += 1.0 / i;
 
 	// Calculate pvals_corrected
 	double min_pv = 1.0;
-	for (int i = size - 1; i >= 0; --i)
+	for (int64_t i = size - 1; i >= 0; --i)
 	{
 		double pv = pv_sorted[i].first * (size * cm) / (i + 1);
 		min_pv = min(min_pv, pv);
