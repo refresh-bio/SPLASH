@@ -245,28 +245,6 @@ std::vector<std::string> read_bins_paths(const std::string& path, uint32_t n_bin
 	return bin_paths;
 }
 
-std::vector<std::vector<uint64_t>> split_anchors(const std::string& path, uint32_t n_bins) {
-	std::vector<std::vector<uint64_t>> res;
-	if (path == "") {
-		return res;
-	}
-	res.resize(n_bins);
-	std::ifstream in(path);
-	if (!in) {
-		std::cerr << "Error: cannot open file " << path << "\n";
-		exit(1);
-	}
-	std::string str_anchor;
-	ReadAnchorsFromPlainOrDSV(in, path,
-		[&res, &n_bins](uint64_t anchor)
-	{
-		uint64_t bin_id = refresh::MurMur64Hash{}(anchor) % n_bins;
-		res[bin_id].push_back(anchor);
-	});
-	return res;
-}
-
-
 template<typename writer_t>
 class SeparatelyOrNot {
 	static_assert(std::is_same_v<writer_t, writer_binary> ||
@@ -323,20 +301,23 @@ void process_multibin_mode_impl(const Params& params) {
 		std::is_same_v<separately_or_not_t, SeparatelyOrNot<writer_binary>>);
 
 	auto bin_paths = read_bins_paths(params.input, params.n_bins);
-	auto bins_anchors = split_anchors(params.anchor_list_path, params.n_bins);
-	bool accept_all = bins_anchors.empty();
 
 	separately_or_not_t separately_or_not(params.output, params.separately);
 
+
+	//previously I have filtering anchors (params.anchor_list_path) splitted into bins to lower the size of the datastructure in AcceptedAnchors
+	//I have never test how it influences the performance
+	//the problem with this is that if bins in the input file are not in order bin_id_0, bin_id_1, etc. there will be inconsistency
+	//and wrong filtering set is used
+	//this could be solved by checking the bin id based on first anchor in given bin and selecting appropriate filtering anchor set
+	//but for simiplicity I will just create a single AcceptedAnchors instance for all bins
+	//I leave this comment for future reference, if there will be performance issue
+	//Last commit having this with splitting filtering anchors and possible wrong results: 23b32b5d85049d3f808f4e444910832d2d03d2f1
+
+	AcceptedAnchors accepted_anchors(params.anchor_list_path);
 	SampleNameDecoder sample_name_decoder(params.sample_names);
 	for (uint32_t bin_id = 0; bin_id < params.n_bins; ++bin_id) {
 		separately_or_not.StartBin(bin_id);
-
-		if (!accept_all && bins_anchors[bin_id].empty()) {
-			std::cerr << "INFO: none of specified anchors occurs in bin " << bin_id << " (" << bin_paths[bin_id]<< "). Skip reading bin content.\n";
-			continue;
-		}
-		AcceptedAnchors accepted_anchors(accept_all ? std::vector<uint64_t>{} : bins_anchors[bin_id]);
 
 		buffered_binary_reader in(bin_paths[bin_id]);
 		if (!in) {
