@@ -5,15 +5,14 @@
 
 ## Introduction
 SPLASH is an unsupervised and reference-free unifying framework to discover regulated sequence variation through statistical analysis of k-mer composition in both DNA and RNA sequence. 
-SPLASH leverages our observation that detecting sample-regulated sequence variation, such as alternative splicing, RNA editing, gene fusions, V(D)J, transposable element mobilization, allele-specific splicing, genetic variation in a population, and many other regulated events can be unified–in theory and in practice.
-This is achieved with a simple model, SPLASH, that analyzes k-mer composition of raw sequencing reads (Chaung et al. 2022). 
-SPLASH finds constant sequences (anchors) that are followed by a set of sequences (targets) with sample-specific target variation and provides valid p-values. 
-SPLASH is reference-free, sidestepping the computational challenges associated with alignment and making it significantly faster and more efficient than alignment, and enabling discovery and statistical precision not currently available, even from pseudo-alignment.
+It leverages our observation that detecting sample-regulated sequence variation, such as alternative splicing, RNA editing, gene fusions, V(D)J, transposable element mobilization, allele-specific splicing, genetic variation in a population, and many other regulated events can be unified in theory and in practice.
+SPLASH analyzes the k-mer composition of raw sequencing reads to identify constant sequences (anchors) that are followed by sample-specific target variation and provides valid p-values (Chaung et al. 2023). 
+SPLASH is reference-free, sidestepping the computational challenges associated with alignment, enabling fast discovery and statistical precision.
 
-The first version of [SPLASH](https://github.com/salzman-lab/nomad/) pipeline proved its usefulness.
-It was implemented mainly in Python with the use of NextFlow.
-Here we provide a new and improved implementation based in C++ and Python (Kokot et al. 2024).
-This new version is much more efficient and allows for the analysis of datasets >1TB size in hours on a workstation or even a laptop.
+The first version of [SPLASH](https://github.com/salzman-lab/nomad/) implementedf in Python proved its usefulness. Here we provide SPLASH2, a new and improved implementation in C++ and Python (Kokot et al. 2024).
+This new version is much more efficient and allows for the analysis of datasets >1TB size in hours on a workstation or even a laptop. 
+
+We have also extended the SPLASH framework to barcoded single-cell and spatial analysis, called sc-SPLASH (Dehghannasiri et al. 2024), enabling the detection of regulated sequence variation at single-cell resolution in high-throughput single-cell (10x) and spatial (Visium) transcriptomics. sc-SPLASH is integrated into the SPLASH2 pipeline and can be invoked by setting the input parameter `technology = 10x` for 10x scRNA-Seq analysis or `technology = visium` for Visium spatial analysis.
 
 ## How does it work
 
@@ -40,15 +39,16 @@ Compactors is a new statistical approach to local seed-based assembly. It comes 
 Please visit our [Wiki page](../../wiki).
 
 ## References
-Marek Kokot, Roozbeh Dehghannasiri, Tavor Baharav, Julia Salzman, and Sebastian Deorowicz.
-[Scalable and unsupervised discovery from raw sequencing reads using SPLASH2](https://www.nature.com/articles/s41587-024-02381-2), Nature Biotechnology (2024), https://doi.org/10.1038/s41587-024-02381-2
- 
-Kaitlin Chaung, Tavor Baharav,  Ivan Zheludev, Julia Salzman. [A statistical, reference-free algorithm subsumes myriad problems in genome science and enables novel discovery](https://doi.org/10.1101/2022.06.24.497555), bioRxiv (2022)
+Marek Kokot*, Roozbeh Dehghannasiri*, Tavor Baharav, Julia Salzman, and Sebastian Deorowicz.
+[Scalable and unsupervised discovery from raw sequencing reads using SPLASH2](https://www.nature.com/articles/s41587-024-02381-2), Nature Biotechnology (2024)
+
+Roozbeh Dehghannasiri*, Marek Kokot*, Sebastian Deorowicz, and Julia Salzman. [sc-SPLASH provides ultra-efficient reference-free discovery in barcoded single-cell sequencing](https://doi.org/10.1101/2024.12.24.630263), bioRxiv (2024)
+
+Kaitlin Chaung*, Tavor Baharav*, George Henderson, Ivan Zheludev, Peter Wang, and Julia Salzman. [SPLASH: A statistical, reference-free genomic algorithm unifies biological discovery](https://www.cell.com/cell/fulltext/S0092-8674(23)01179-0), Cell (2023)
  
 Tavor Baharav, David Tse, and Julia Salzman. 
-[An Interpretable, Finite Sample Valid Alternative to Pearson’s X2 for Scientific Discovery](https://www.biorxiv.org/content/10.1101/2023.03.16.533008), bioRxiv (2023)
+[OASIS: An interpretable, finite-sample valid alternative to Pearson’s X2 for scientific discovery](https://www.pnas.org/doi/10.1073/pnas.2304671121), PNAS (2024)
 
-
-George Henderson, Adam Gudys, Tavor Baharav, Punit Sundaramurthy, Marek Kokot, Peter L. Wang, Sebastian Deorowicz, Allison F. Carey, Julia Salzman.
+George Henderson, Adam Gudys, Tavor Baharav, Punit Sundaramurthy, Marek Kokot, Peter L. Wang, Sebastian Deorowicz, Allison F. Carey, and Julia Salzman.
 [Ultra-efficient, unified discovery from microbial sequencing with SPLASH and precise statistical assembly](https://www.biorxiv.org/content/10.1101/2024.01.18.576133v1.full)
 bioRxiv 2024.01.18.576133 (2024)
