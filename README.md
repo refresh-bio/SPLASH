@@ -12,8 +12,6 @@ SPLASH is reference-free, sidestepping the computational challenges associated w
 The first version of [SPLASH](https://github.com/salzman-lab/nomad/) implementedf in Python proved its usefulness. Here we provide SPLASH2, a new and improved implementation in C++ and Python (Kokot et al. 2024).
 This new version is much more efficient and allows for the analysis of datasets >1TB size in hours on a workstation or even a laptop. 
 
-We have also extended the SPLASH framework to barcoded single-cell and spatial analysis, called sc-SPLASH (Dehghannasiri et al. 2024), enabling the detection of regulated sequence variation at single-cell resolution in high-throughput single-cell (10x) and spatial (Visium) transcriptomics. sc-SPLASH is integrated into the SPLASH2 pipeline and can be invoked by setting the input parameter `technology = 10x` for 10x scRNA-Seq analysis or `technology = visium` for Visium spatial analysis.
-
 ## How does it work
 
 A key concept of SPLASH is the analysis of composition of pairs of substrings *anchor*&ndash;*target* across many samples.
@@ -25,6 +23,9 @@ The image below presents the SPLASH pipeline on a high-level.
 <!-- ![image](https://user-images.githubusercontent.com/9378882/225988504-70266e4d-37e0-4c85-8c95-e47ad208cda9.png) -->
 
 <!-- ![image](https://user-images.githubusercontent.com/9378882/224449978-309a4708-0fa1-4cb8-8483-a32e36ec2d58.png) -->
+
+## sc-SPLASH 
+We have also extended the SPLASH framework (sc-SPLASH) to barcoded single-cell and spatial analysis (Dehghannasiri et al. 2024), enabling the detection of regulated sequence variation at single-cell resolution in high-throughput single-cell (10x) and spatial (Visium) transcriptomics. sc-SPLASH is integrated into the SPLASH2 pipeline and can be invoked by setting the input parameter `technology = 10x` for 10x scRNA-Seq analysis or `technology = visium` for Visium spatial analysis.
 
 ## Compactors
 
