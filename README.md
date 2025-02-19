@@ -27,7 +27,7 @@ The image below presents the SPLASH pipeline on a high-level.
 ## sc-SPLASH 
 We have also extended the SPLASH framework (sc-SPLASH) to barcoded single-cell and spatial analysis (Dehghannasiri et al. 2024), enabling the detection of regulated sequence variation at single-cell resolution in high-throughput single-cell (10x) and spatial (Visium) transcriptomics. sc-SPLASH is integrated into the SPLASH2 pipeline and can be invoked by setting the input parameter `technology = 10x` for 10x scRNA-Seq analysis or `technology = visium` for Visium spatial analysis.
 
-![image](https://github.com/user-attachments/assets/f11be09d-716a-48aa-924f-4479f8b92cc2)
+![image](https://github.com/user-attachments/assets/bade5676-fc27-40b8-98a5-458382f045c3)
 
 ## Compactors
 
