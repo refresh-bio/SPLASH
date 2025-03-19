@@ -23,7 +23,7 @@ namespace query_mode {
 		std::cerr
 			<< "Options:\n"
 			<< "    --input_fmt <string>   - input format, one of: fasta, extendors, compactors (default: fasta)\n"
-			<< "    --report_fmt <string>  - format of the detailed report, one of: plain (base format), ids (just ids), empty (do not report, useful when stats enabled with stats_fmt) (default: plain)\n"
+			<< "    --report_fmt <string>  - format of the detailed report, one of: plain (verbose format), concise (default), ids (just ids), empty (do not report, useful when stats enabled with stats_fmt) (default: concise)\n"
 			<< "    --stats_fmt <string>   - for each query report stats (#k-mers per category) one of: empty (don't print stats) or with_stats (print stats) (default: empty)\n"
 			<< "    --output_fmt <string>  - output format, one of: txt (one line for each query), extendors (only for extendors input, adds additional columns to the extendors file), compactors (default: txt)\n"
 			<< "    --kmer_skip <int>      - for each query sequence the next queried k-mer start on position <kmer_skip> + 1\n"

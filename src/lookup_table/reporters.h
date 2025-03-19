@@ -369,6 +369,9 @@ class ConciseReportMaker : public ICategoryReportMaker {
 			return;
 		}
 
+		if (current_state.separator_needed)
+			out << ", ";
+
 		out << cat << ":" << "<" << current_state.start_pos << ":" << current_state.n_kmers << ">";
 
 		if (cat == 1)
@@ -478,11 +481,7 @@ public:
 		++current_state.pos;
 	}
 	void MakeSeparator() override {
-		if (current_state.separator_needed)
-		{
-			out << ", ";
-			current_state.separator_needed = false;
-		}
+		//this implementation handles separator in flush
 	}
 
 	std::string ToString() override {
