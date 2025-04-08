@@ -70,7 +70,7 @@ if __name__ == "__main__":
     if system == "mac":
         make_command = "gmake"
 
-    platform = "axv"
+    platform = "avx"
 
     if hardware == "arm64":
         if system == "mac":
