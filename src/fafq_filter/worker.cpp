@@ -4,24 +4,25 @@
 // ******************************************************************************************
 bool CWorker::load_fastx(const string& in_fn)
 {
-	refresh::stream_in_buffered* f_in;
+	std::unique_ptr<refresh::stream_in_buffered> f_in;
 
 	if (in_fn.empty())
-		f_in = new refresh::stream_in_stdin();
+		f_in = std::make_unique<refresh::stream_in_stdin>();
 	else
 	{
-		f_in = new refresh::stream_in_file(in_fn);
+		auto typed_f_in = std::make_unique<refresh::stream_in_file>(in_fn);
 
-		if (!(dynamic_cast<refresh::stream_in_file*>(f_in)->is_open()))
+		if (!typed_f_in->is_open())
 		{
 			cerr << "Cannot open file " + in_fn + "\n";
-			delete f_in;
 
 			return false;
 		}
+
+		f_in = std::move(typed_f_in);
 	}
 
-	refresh::stream_decompression sd_in(f_in);
+	refresh::stream_decompression sd_in(f_in.get());
 	bool is_fasta = false;
 	bool read_allowed = true;
 	string line;
@@ -54,7 +55,6 @@ bool CWorker::load_fastx(const string& in_fn)
 		else
 		{
 			cerr << "Strange input line in: " + in_fn + " : " + line + "\n";
-			delete f_in;
 
 			return false;
 		}
@@ -62,7 +62,6 @@ bool CWorker::load_fastx(const string& in_fn)
 		if (sd_in.getline(line) < 0)
 		{
 			cerr << "Truncated file: " + in_fn + "\n";
-			delete f_in;
 
 			return false;
 		}
@@ -82,21 +81,17 @@ bool CWorker::load_fastx(const string& in_fn)
 			if (sd_in.getline(line) < 0)
 			{
 				cerr << "Truncated file: " + in_fn + "\n";
-				delete f_in;
 
 				return false;
 			}
 			if (sd_in.getline(line) < 0)
 			{
 				cerr << "Truncated file: " + in_fn + "\n";
-				delete f_in;
 
 				return false;
 			}
 		}
 	}
-
-	delete f_in;
 
 	return true;
 }
