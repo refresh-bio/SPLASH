@@ -114,9 +114,9 @@ bool CApplication::parse_args(int argc, char** argv)
 		else if ((par == "-n" && i + 1 < argc) || (par == "--top_target" && i + 1 < argc))
 		{
 			params.n_top_targets = atoi(argv[++i]);
-			if (params.n_top_targets < 1 || params.n_top_targets > 1000)
+			if (params.n_top_targets < 1 || params.n_top_targets > 1000000000)
 			{
-				cerr << "n must be in range [1, 1000]" << endl;
+				cerr << "n must be in range [1, 1000000000]" << endl;
 				return false;
 			}
 		}

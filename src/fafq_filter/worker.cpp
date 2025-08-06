@@ -291,6 +291,11 @@ void CWorker::look_for_anchors(const string& str)
 	prepare_kmers(str);
 
 	for (size_t i = 0; i < rec_kmers.size(); ++i)
-		if(rec_kmers[i] != empty_mask && accepted_anchors->IsAccepted(rec_kmers[i]))
-			anchor_stats[rec_kmers[i]][get_target(str, i + params.anchor_len)]++;
+		if (rec_kmers[i] != empty_mask && accepted_anchors->IsAccepted(rec_kmers[i]))
+		{
+			auto target = get_target(str, i + params.anchor_len);
+
+			if(target != empty_mask)
+				anchor_stats[rec_kmers[i]][target]++;
+		}
 }
