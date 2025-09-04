@@ -114,6 +114,7 @@ if __name__ == "__main__":
     run_cmd("cp example/download_10X.py bin/example/download_10X.py")
     run_cmd("cp example/test_data_cell_barcode_samplesheet.csv bin/example/test_data_cell_barcode_samplesheet.csv")
     run_cmd("cp example/test_non_10X_Cj_samplesheet.csv bin/example/test_non_10X_Cj_samplesheet.csv")
+    run_cmd("cp example/test_data_cell_barcode_samplesheet_GLM_supervised_test.tsv bin/example/test_data_cell_barcode_samplesheet_GLM_supervised_test.csv")
 
     run_cmd("cp example/input.txt bin/example")
 
