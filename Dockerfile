@@ -10,7 +10,8 @@ ARG PLATFORM
 COPY . src
 RUN  \
     apt-get update -y \
-    && apt-get install -y cmake make automake python3 g++ wget time git \
+    && apt-get install -y cmake make automake python3 g++ wget time git r-base \
+	&& R -e "install.packages(c('data.table', 'glmnet', 'ggplot2', 'gridExtra', 'pheatmap'), repos='https://cloud.r-project.org')" \
     && cp -r src build \ 
 	&& cd build \
 	&& make ${PLATFORM:+PLATFORM=$PLATFORM} -j \
