@@ -56,3 +56,8 @@ Tavor Baharav, David Tse, and Julia Salzman.
 George Henderson, Adam Gudys, Tavor Baharav, Punit Sundaramurthy, Marek Kokot, Peter L. Wang, Sebastian Deorowicz, Allison F. Carey, and Julia Salzman.
 [Ultra-efficient, unified discovery from microbial sequencing with SPLASH and precise statistical assembly](https://www.biorxiv.org/content/10.1101/2024.01.18.576133v1.full)
 bioRxiv 2024.01.18.576133 (2024)
+
+## Funding
+* National Institute of General Medical Sciences (grant no. R35 GM139517) and Chan Zuckerberg Data Insights (J.S.)
+* National Science Center, Poland (project no. DEC-2022/45/B/ST6/03032) (S.D., and M.K.)
+* Stanford Graduate Fellowship, the National Science Foundation Graduate Research Fellowships Program and the Eric and Wendy Schmidt Center at the Broad Institute of MIT and Harvard (T.Z.B.).
